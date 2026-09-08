@@ -160,6 +160,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             border-color: var(--primary);
             box-shadow: 0 0 0 3px rgba(229, 57, 53, 0.15);
         }
+        .login-tabs {
+            display: flex;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .tab-btn {
+            flex: 1;
+            text-align: center;
+            padding: 12px 10px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: #64748b;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .tab-btn.active {
+            color: var(--primary);
+            background: #ffffff;
+            border-bottom: 2px solid var(--primary);
+        }
+        .tab-btn:hover {
+            color: var(--primary);
+        }
         .login-btn {
             width: 100%;
             padding: 13px;
@@ -192,16 +215,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         .back-link {
             text-align: center;
-            margin-top: 24px;
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: #6b7280;
         }
         .back-link a {
-            color: #6b7280;
+            color: var(--primary);
             text-decoration: none;
-            font-size: 0.9rem;
-            font-weight: 500;
+            font-weight: 600;
         }
         .back-link a:hover {
-            color: var(--primary);
+            text-decoration: underline;
         }
     </style>
 </head>
@@ -210,10 +234,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="login-card">
         <div class="login-header">
             <div class="brand-badge">
-                <i class="fa-solid fa-lock"></i>
+                <i class="fa-solid fa-sun"></i>
             </div>
-            <h2>संपादक नियंत्रण कक्ष</h2>
-            <p><?php echo htmlspecialchars($settings['site_title'] ?? 'दैनिक खबर'); ?> - न्यूज़ मैनेजमेंट सिस्टम</p>
+            <h2><?php echo htmlspecialchars($settings['site_title'] ?? 'दैनिक खबर'); ?></h2>
+            <p>संपादक नियंत्रण कक्ष (Admin Login)</p>
+        </div>
+
+        <!-- Navigation Tabs: Login vs Sign Up -->
+        <div class="login-tabs">
+            <a href="<?php echo SITE_URL; ?>/admin/login.php" class="tab-btn active">
+                <i class="fa-solid fa-right-to-bracket"></i> लॉगिन (Login)
+            </a>
+            <a href="<?php echo SITE_URL; ?>/admin/signup.php" class="tab-btn">
+                <i class="fa-solid fa-user-plus"></i> नया खाता (Sign Up)
+            </a>
         </div>
 
         <div class="login-body">
@@ -226,7 +260,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <form method="POST" action="">
                 <div class="form-group">
-                    <label for="email">ईमेल पता (Admin Email)</label>
+                    <label for="email">ईमेल पता (Email)</label>
                     <div class="input-wrap">
                         <i class="fa-solid fa-envelope"></i>
                         <input type="email" id="email" name="email" value="<?php echo htmlspecialchars($_POST['email'] ?? 'admin@news.com'); ?>" required autocomplete="email">
@@ -247,7 +281,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </form>
 
             <div class="back-link">
-                <a href="<?php echo SITE_URL; ?>/"><i class="fa-solid fa-arrow-left"></i> मुख्य वेबसाइट पर वापस जाएं</a>
+                खाता नहीं है? <a href="<?php echo SITE_URL; ?>/admin/signup.php">नया खाता बनाएं (Sign Up)</a>
+                <br><br>
+                <a href="<?php echo SITE_URL; ?>/" style="color:#6b7280;"><i class="fa-solid fa-arrow-left"></i> मुख्य वेबसाइट पर वापस जाएं</a>
             </div>
         </div>
     </div>
