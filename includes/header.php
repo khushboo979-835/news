@@ -67,6 +67,9 @@ $currentCatSlug = $_GET['cat'] ?? ($_GET['slug'] ?? '');
       
       <!-- Left: Brand Logo (Sun + दैनिक खबर) -->
       <div class="bhaskar-header-left">
+        <button class="bhaskar-mobile-toggle" id="mobileDrawerOpen" aria-label="Open menu">
+          <i class="fa-solid fa-bars"></i>
+        </button>
         <a href="<?= BASE_URL ?>/index.php" class="bhaskar-brand-logo">
           <div class="bhaskar-logo-sun">
             <i class="fa-solid fa-sun"></i>
@@ -78,10 +81,26 @@ $currentCatSlug = $_GET['cat'] ?? ($_GET['slug'] ?? '');
         </a>
       </div>
 
-      <!-- Right: Exact 4 Bhaskar Header Icons -->
-      <div class="bhaskar-header-icons">
+      <!-- Desktop Navigation Menu (Desktop Only - Exact Bhaskar) -->
+      <nav class="bhaskar-desktop-nav desktop-only">
+        <a href="<?= BASE_URL ?>/index.php" class="bhaskar-nav-link <?= ($currentScript === 'index.php') ? 'active' : '' ?>">
+          <i class="fa-solid fa-house"></i> <span>होम</span>
+        </a>
+        <a href="<?= BASE_URL ?>/category.php?cat=top-news" class="bhaskar-nav-link <?= ($currentCatSlug === 'top-news') ? 'active' : '' ?>">
+          <i class="fa-regular fa-circle-play"></i> <span>वीडियो</span>
+        </a>
+        <button type="button" class="bhaskar-nav-link js-search-trigger" id="desktopSearchBtn">
+          <i class="fa-solid fa-magnifying-glass"></i> <span>सर्च</span>
+        </button>
+        <a href="<?= ADMIN_URL ?>/login.php" class="bhaskar-nav-link bhaskar-user-link" title="एडमिन लॉगिन">
+          <i class="fa-regular fa-circle-user"></i> <span>लॉगिन</span>
+        </a>
+      </nav>
+
+      <!-- Right: Mobile Header Icons (Mobile Only <= 767px) -->
+      <div class="bhaskar-header-icons mobile-only">
         
-        <!-- Icon 1: Stories / Web Stories -->
+        <!-- Icon 1: Stories -->
         <a href="<?= BASE_URL ?>/index.php" class="bhaskar-head-icon" title="वेब स्टोरीज">
           <i class="fa-regular fa-clone"></i>
         </a>
@@ -97,12 +116,12 @@ $currentCatSlug = $_GET['cat'] ?? ($_GET['slug'] ?? '');
         </a>
 
         <!-- Icon 4: Search Trigger -->
-        <button type="button" class="bhaskar-head-icon" id="searchModalTrigger" title="सर्च करें">
+        <button type="button" class="bhaskar-head-icon js-search-trigger" id="searchModalTrigger" title="सर्च करें">
           <i class="fa-solid fa-magnifying-glass"></i>
         </button>
 
-        <!-- Admin / User Profile -->
-        <a href="<?= ADMIN_URL ?>/login.php" class="bhaskar-head-icon bhaskar-user-pill" title="संपादक लॉगिन (Admin)">
+        <!-- Admin / Profile -->
+        <a href="<?= ADMIN_URL ?>/login.php" class="bhaskar-head-icon" title="संपादक लॉगिन (Admin)">
           <i class="fa-regular fa-circle-user"></i>
         </a>
 
@@ -112,9 +131,28 @@ $currentCatSlug = $_GET['cat'] ?? ($_GET['slug'] ?? '');
   </header>
 
   <!-- =========================================================================
-       2. Horizontal Category Swipe Bar (Exact Bhaskar Pill Bar)
+       2. Top Running Billboard Ad Banner (Exact Bhaskar Clean Ad Frame)
        ========================================================================= -->
-  <nav class="bhaskar-cat-nav-bar">
+  <div class="bhaskar-top-ad-wrapper">
+    <div class="container">
+      <div class="bhaskar-ad-banner-slot">
+        <?php if ($topLeaderboardAd): ?>
+          <a href="<?= htmlspecialchars($topLeaderboardAd['link_url']) ?>" target="_blank" rel="sponsored noopener">
+            <img src="<?= get_ad_image_url($topLeaderboardAd['image_url']) ?>" alt="<?= htmlspecialchars($topLeaderboardAd['title']) ?>" class="bhaskar-running-ad-img">
+          </a>
+        <?php else: ?>
+          <a href="https://coralwebtechnology.com" target="_blank" rel="noopener">
+            <img src="<?= ASSETS_URL ?>images/ad_header.svg" alt="Coral Web Technology" class="bhaskar-running-ad-img">
+          </a>
+        <?php endif; ?>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       3. Horizontal Category Swipe Bar (Mobile Only <= 991px)
+       ========================================================================= -->
+  <nav class="bhaskar-cat-nav-bar mobile-only">
     <div class="container bhaskar-cat-scroll">
       <?php 
       $bhaskarCategories = [
@@ -136,40 +174,3 @@ $currentCatSlug = $_GET['cat'] ?? ($_GET['slug'] ?? '');
       <?php endforeach; ?>
     </div>
   </nav>
-
-  <!-- =========================================================================
-       3. Trending Tags Bar (Exact Bhaskar Trending Pills)
-       ========================================================================= -->
-  <div class="bhaskar-trending-bar">
-    <div class="container bhaskar-trending-inner">
-      <span class="bhaskar-trend-badge">
-        <i class="fa-solid fa-arrow-trend-up"></i> ट्रेंडिंग
-      </span>
-      <div class="bhaskar-trend-pills">
-        <a href="<?= BASE_URL ?>/search.php?q=पुतिन" class="bhaskar-trend-pill">पुतिन भारत यात्रा &gt;</a>
-        <a href="<?= BASE_URL ?>/category.php?cat=bihar" class="bhaskar-trend-pill">बिहार एक्सप्रेसवे &gt;</a>
-        <a href="<?= BASE_URL ?>/category.php?cat=patna" class="bhaskar-trend-pill">पटना गंगा जलस्तर &gt;</a>
-        <a href="<?= BASE_URL ?>/category.php?cat=crime" class="bhaskar-trend-pill">सचिवालय बाइक चोरी &gt;</a>
-        <a href="<?= BASE_URL ?>/category.php?cat=patna" class="bhaskar-trend-pill">रिजेंट सिनेमा हनुमान चालीसा &gt;</a>
-      </div>
-    </div>
-  </div>
-
-  <!-- =========================================================================
-       4. Leaderboard Ad Banner (Compact 728x90)
-       ========================================================================= -->
-  <div class="bhaskar-top-ad-wrapper">
-    <div class="container">
-      <div class="bhaskar-ad-banner-slot">
-        <?php if ($topLeaderboardAd): ?>
-          <a href="<?= htmlspecialchars($topLeaderboardAd['link_url']) ?>" target="_blank" rel="sponsored noopener">
-            <img src="<?= get_ad_image_url($topLeaderboardAd['image_url']) ?>" alt="<?= htmlspecialchars($topLeaderboardAd['title']) ?>" class="bhaskar-running-ad-img">
-          </a>
-        <?php else: ?>
-          <a href="https://coralwebtechnology.com" target="_blank" rel="noopener">
-            <img src="<?= ASSETS_URL ?>images/ad_header.svg" alt="Coral Web Technology" class="bhaskar-running-ad-img">
-          </a>
-        <?php endif; ?>
-      </div>
-    </div>
-  </div>

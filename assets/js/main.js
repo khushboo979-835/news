@@ -22,18 +22,20 @@ function closeSearchModal() {
 
 document.addEventListener('DOMContentLoaded', () => {
   // 1. Mobile Drawer Navigation Toggle
-  const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+  const mobileMenuBtn = document.getElementById('mobileMenuBtn') || document.getElementById('mobileDrawerOpen');
   const leftNavDrawer = document.getElementById('bhaskarLeftNav');
   const mobileDrawerClose = document.getElementById('mobileDrawerClose');
 
   if (mobileMenuBtn && leftNavDrawer) {
-    mobileMenuBtn.addEventListener('click', () => {
+    mobileMenuBtn.addEventListener('click', (e) => {
+      e.preventDefault();
       leftNavDrawer.classList.add('drawer-open');
     });
   }
 
   if (mobileDrawerClose && leftNavDrawer) {
-    mobileDrawerClose.addEventListener('click', () => {
+    mobileDrawerClose.addEventListener('click', (e) => {
+      e.preventDefault();
       leftNavDrawer.classList.remove('drawer-open');
     });
   }
@@ -41,20 +43,20 @@ document.addEventListener('DOMContentLoaded', () => {
   // Close drawer when clicking outside
   document.addEventListener('click', (e) => {
     if (leftNavDrawer && leftNavDrawer.classList.contains('drawer-open')) {
-      if (!leftNavDrawer.contains(e.target) && !mobileMenuBtn.contains(e.target)) {
+      if (!leftNavDrawer.contains(e.target) && mobileMenuBtn && !mobileMenuBtn.contains(e.target)) {
         leftNavDrawer.classList.remove('drawer-open');
       }
     }
   });
 
   // 2. Search Modal Wire-up
-  const searchTrigger = document.getElementById('searchModalTrigger');
-  if (searchTrigger) {
-    searchTrigger.addEventListener('click', (e) => {
+  const searchTriggers = document.querySelectorAll('.js-search-trigger, #searchModalTrigger, #desktopSearchBtn');
+  searchTriggers.forEach(btn => {
+    btn.addEventListener('click', (e) => {
       e.preventDefault();
       openSearchModal();
     });
-  }
+  });
 
   // Close modal on Escape key
   document.addEventListener('keydown', (e) => {

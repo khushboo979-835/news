@@ -1,7 +1,11 @@
-/* ==========================================================================
-   Responsive Breakpoints for Dainik Bhaskar Layout (Mobile First Refinements)
-   Matches m.bhaskar.com on all mobile screens and tabs
-   ========================================================================== */
+/* Default visibility classes */
+.mobile-only {
+  display: none !important;
+}
+
+.desktop-only {
+  display: flex !important;
+}
 
 /* Laptops & Tablets (Max 1199px) */
 @media (max-width: 1199px) {
@@ -17,6 +21,18 @@
 
 /* Tablets (Max 991px) */
 @media (max-width: 991px) {
+  .desktop-only {
+    display: none !important;
+  }
+
+  .mobile-only {
+    display: flex !important;
+  }
+
+  nav.bhaskar-cat-nav-bar.mobile-only {
+    display: block !important;
+  }
+
   .bhaskar-grid-3col {
     grid-template-columns: 1fr;
     gap: 20px;
@@ -89,14 +105,21 @@
     display: none !important;
   }
 
+  .mobile-only {
+    display: flex !important;
+  }
+
+  nav.bhaskar-cat-nav-bar.mobile-only {
+    display: block !important;
+  }
+
   .bhaskar-top-header {
-    height: 58px;
+    height: 56px;
   }
 
   .bhaskar-logo-sun {
-    width: 36px;
-    height: 36px;
-    border-radius: 8px;
+    width: 34px;
+    height: 34px;
     font-size: 1.15rem;
   }
 
@@ -106,16 +129,27 @@
 
   .bhaskar-sub-domain {
     font-size: 0.55rem;
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
   }
 
-  /* Show Mobile Category Swipe Bar */
-  .bhaskar-mobile-cat-bar {
-    display: block;
+  /* Compact top ad on mobile so it doesn't take extra space */
+  .bhaskar-top-ad-wrapper {
+    padding: 8px 0 4px;
+  }
+
+  .bhaskar-ad-banner-slot {
+    min-height: 60px;
+    max-height: 75px;
+    border-radius: var(--radius-sm);
+  }
+
+  .bhaskar-running-ad-img {
+    max-height: 70px;
+    object-fit: contain;
   }
 
   .bhaskar-page-body {
-    padding: 12px 0 40px;
+    padding: 10px 0 65px;
   }
 
   .container {
@@ -123,44 +157,45 @@
     padding-right: 10px;
   }
 
-  .bhaskar-trending-tags-bar {
-    margin-bottom: 12px;
-  }
-
-  .bhaskar-story-card {
+  .bhaskar-card-hero {
     padding: 14px 12px;
-    margin-bottom: 16px;
+    margin-bottom: 14px;
     border-radius: var(--radius-sm);
   }
 
-  .bhaskar-headline {
-    font-size: 1.22rem;
+  .bhaskar-hero-headline {
+    font-size: 1.25rem;
     line-height: 1.38;
     margin-bottom: 6px;
   }
 
-  .bhaskar-subheadline {
+  .bhaskar-hero-subheadline {
     font-size: 0.92rem;
     line-height: 1.4;
+    margin-bottom: 10px;
   }
 
-  .bhaskar-media-box {
-    margin: 10px 0;
+  /* Split Cards on mobile (Cards 2+) */
+  .bhaskar-card-split {
+    padding: 12px;
+    margin-bottom: 12px;
+    border-radius: var(--radius-sm);
   }
 
-  .bhaskar-media-box img.bhaskar-media-elem {
-    max-height: 360px;
+  .bhaskar-split-headline {
+    font-size: 1.05rem;
+    line-height: 1.35;
   }
 
-  .bhaskar-story-footer {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
+  .bhaskar-split-right .bhaskar-thumb-link {
+    width: 105px;
+    min-width: 105px;
+    height: 80px;
   }
 
-  .bhaskar-share-btns {
-    width: 100%;
-    justify-content: flex-end;
+  .bhaskar-card-bottom-bar {
+    margin-top: 8px;
+    padding-top: 6px;
   }
 
   /* Single Article Page Mobile Specifics */
