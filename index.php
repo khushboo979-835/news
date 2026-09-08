@@ -1,6 +1,6 @@
 <?php
 /**
- * Dainik Bhaskar Style Homepage
+ * Dainik Bhaskar Exact Homepage Feed
  * Hindi News Portal
  */
 
@@ -9,16 +9,17 @@ require_once __DIR__ . '/includes/functions.php';
 // Fetch Global Settings
 $siteSettings = get_site_settings($pdo);
 
-$pageTitle = 'होम - देश और दुनिया की ताज़ा ख़बरें';
-$pageDescription = 'दैनिक खबर: देश, बिहार, पटना, राजनीति, क्राइम, चुनाव और अंतरराष्ट्रीय मुद्दों की ताज़ा एवं निष्पक्ष खबरें।';
+$pageTitle = 'दैनिक खबर - सच्ची और निष्पक्ष पत्रकारिता';
+$pageDescription = 'दैनिक खबर: देश, बिहार, पटना, राजनीति, क्राइम, चुनाव और अंतरराष्ट्रीय मुद्दों की ताज़ा खबरें।';
 
 // Fetch Stories ordered by priority_order ASC, created_at DESC
-$mainStories = get_prioritized_news($pdo, 10);
+$allStories = get_prioritized_news($pdo, 12);
 
-// Fetch Sidebar Ad
+$heroStory = !empty($allStories) ? $allStories[0] : null;
+$feedStories = !empty($allStories) ? array_slice($allStories, 1) : [];
+
+// Fetch Sidebar Ad & Trending Stories
 $sidebarAd = get_ad_by_position($pdo, 'sidebar_banner');
-
-// Fetch Trending Stories (by views)
 $trendingArticles = get_trending_news($pdo, 5);
 
 require_once __DIR__ . '/includes/header.php';
@@ -28,86 +29,113 @@ require_once __DIR__ . '/includes/header.php';
   <div class="container">
     <div class="bhaskar-grid-3col">
       
-      <!-- 1. Left Sticky Navigation Sidebar (Strictly 7 Curated Categories) -->
+      <!-- 1. Left Sticky Navigation Sidebar (Desktop) -->
       <?php require_once __DIR__ . '/includes/left-sidebar.php'; ?>
 
-      <!-- 2. Center Main News Feed -->
+      <!-- 2. Center Main Dainik Bhaskar Feed -->
       <main class="bhaskar-main-feed">
         
-        <!-- Trending Tags Row -->
-        <div class="bhaskar-trending-tags-bar">
-          <span class="trending-badge">
-            <i class="fa-solid fa-arrow-trend-up"></i> ट्रेंडिंग
-          </span>
-          <a href="<?= BASE_URL ?>/search.php?q=पुतिन" class="trending-pill">पुतिन भारत यात्रा &gt;</a>
-          <a href="<?= BASE_URL ?>/category.php?cat=bihar" class="trending-pill">बिहार एक्सप्रेसवे &gt;</a>
-          <a href="<?= BASE_URL ?>/category.php?cat=election" class="trending-pill">विधानसभा चुनाव &gt;</a>
-          <a href="<?= BASE_URL ?>/category.php?cat=patna" class="trending-pill">पटना मेट्रो ट्रायल &gt;</a>
-          <a href="<?= BASE_URL ?>/search.php?q=शेयर+बाजार" class="trending-pill">शेयर बाजार रिकॉर्ड &gt;</a>
-        </div>
+        <?php if ($heroStory): 
+          $heroUrl = BASE_URL . '/article.php?slug=' . urlencode($heroStory['slug']);
+          $shareMsg = urlencode($heroStory['headline'] . "\n" . $heroUrl);
+        ?>
+          <!-- HERO CARD 1: Big Signature Card (Exact Bhaskar Screenshot 1) -->
+          <article class="bhaskar-card-hero">
+            
+            <!-- Headline with Color Highlight -->
+            <h1 class="bhaskar-hero-headline">
+              <a href="<?= $heroUrl ?>">
+                <?= htmlspecialchars($heroStory['headline']) ?>
+              </a>
+            </h1>
 
-        <!-- News Stories Feed (Sorted by manual priority_order) -->
-        <div class="bhaskar-news-feed-list">
-          <?php if (!empty($mainStories)): ?>
-            <?php foreach ($mainStories as $story): 
-              $storyUrl = BASE_URL . '/article.php?slug=' . urlencode($story['slug']);
-            ?>
-              <article class="bhaskar-story-card">
+            <?php if (!empty($heroStory['subheadline'])): ?>
+              <div class="bhaskar-hero-subheadline">
+                <?= htmlspecialchars($heroStory['subheadline']) ?>
+              </div>
+            <?php endif; ?>
+
+            <!-- Media Container with Play Overlay & Time Badge -->
+            <div class="bhaskar-hero-media">
+              <a href="<?= $heroUrl ?>">
+                <?= render_media_container($heroStory['media_type'], $heroStory['media_url'], $heroStory['headline']) ?>
+              </a>
+            </div>
+
+            <!-- Card Bottom: Category Tag on Left, Share on Right -->
+            <div class="bhaskar-card-bottom-bar">
+              <a href="<?= BASE_URL ?>/category.php?cat=<?= urlencode($heroStory['category_slug']) ?>" class="bhaskar-tag-pill">
+                <?= htmlspecialchars($heroStory['category_name']) ?> &gt;
+              </a>
+
+              <a href="https://api.whatsapp.com/send?text=<?= $shareMsg ?>" target="_blank" rel="noopener" class="bhaskar-share-btn">
+                <i class="fa-brands fa-whatsapp"></i> <span>शेयर</span>
+              </a>
+            </div>
+
+          </article>
+        <?php endif; ?>
+
+        <!-- Feed Stories List (Exact Bhaskar Split Cards - Screenshot 2) -->
+        <div class="bhaskar-feed-stream">
+          <?php 
+          $cardCounter = 0;
+          foreach ($feedStories as $story): 
+            $cardCounter++;
+            $storyUrl = BASE_URL . '/article.php?slug=' . urlencode($story['slug']);
+            $storyShare = urlencode($story['headline'] . "\n" . $storyUrl);
+          ?>
+            
+            <!-- In-feed Google Follow Banner between cards -->
+            <?php if ($cardCounter === 2): ?>
+              <div class="bhaskar-infeed-google-card">
+                <div class="bhaskar-infeed-google-text">
+                  दैनिक खबर को Google पर पसंदीदा सोर्स बनाएं &rarr;
+                </div>
+                <a href="https://news.google.com" target="_blank" rel="noopener" class="bhaskar-google-badge-btn">
+                  <i class="fa-brands fa-google"></i> <span>On Google</span>
+                </a>
+              </div>
+            <?php endif; ?>
+
+            <article class="bhaskar-card-split">
+              <!-- Left Content Box -->
+              <div class="bhaskar-split-left">
+                <h2 class="bhaskar-split-headline">
+                  <a href="<?= $storyUrl ?>">
+                    <?= htmlspecialchars($story['headline']) ?>
+                  </a>
+                </h2>
                 
-                <div class="bhaskar-story-header">
-                  <a href="<?= BASE_URL ?>/category.php?cat=<?= urlencode($story['category_slug']) ?>" class="bhaskar-category-pill">
-                    <?= htmlspecialchars($story['category_name']) ?>
+                <?php if (!empty($story['subheadline'])): ?>
+                  <p class="bhaskar-split-sub">
+                    <?= htmlspecialchars(mb_substr($story['subheadline'], 0, 75)) . (mb_strlen($story['subheadline']) > 75 ? '...' : '') ?>
+                  </p>
+                <?php endif; ?>
+
+                <div class="bhaskar-card-bottom-bar">
+                  <a href="<?= BASE_URL ?>/category.php?cat=<?= urlencode($story['category_slug']) ?>" class="bhaskar-tag-pill">
+                    <?= htmlspecialchars($story['category_name']) ?> &gt;
                   </a>
 
-                  <!-- Headline with theme color highlight hover -->
-                  <h2 class="bhaskar-headline">
-                    <a href="<?= $storyUrl ?>">
-                      <?= htmlspecialchars($story['headline']) ?>
-                    </a>
-                  </h2>
+                  <a href="https://api.whatsapp.com/send?text=<?= $storyShare ?>" target="_blank" rel="noopener" class="bhaskar-share-btn">
+                    <i class="fa-brands fa-whatsapp"></i> <span>शेयर</span>
+                  </a>
+                </div>
+              </div>
 
-                  <!-- Dedicated Subheadline -->
-                  <?php if (!empty($story['subheadline'])): ?>
-                    <div class="bhaskar-subheadline">
-                      <?= htmlspecialchars($story['subheadline']) ?>
-                    </div>
+              <!-- Right Media Thumbnail Box -->
+              <div class="bhaskar-split-right">
+                <a href="<?= $storyUrl ?>" class="bhaskar-thumb-link">
+                  <img src="<?= get_media_url($story['media_url'], $story['media_type']) ?>" alt="<?= htmlspecialchars($story['headline']) ?>" loading="lazy">
+                  <?php if ($story['media_type'] === 'video_embed' || $story['media_type'] === 'video_upload'): ?>
+                    <span class="bhaskar-thumb-play"><i class="fa-solid fa-play"></i></span>
                   <?php endif; ?>
-                </div>
+                </a>
+              </div>
+            </article>
 
-                <!-- Aspect-Ratio-Safe Media (Zero Cropping / Zero Distortion) -->
-                <?= render_media_container($story['media_type'], $story['media_url'], $story['headline']) ?>
-
-                <!-- Story Footer Meta & One-Click Social Sharing -->
-                <div class="bhaskar-story-footer">
-                  <div class="bhaskar-meta-info">
-                    <span><i class="fa-regular fa-clock" style="color: var(--theme-color);"></i> <?= time_ago_hindi($story['created_at']) ?></span>
-                    <span>•</span>
-                    <span><i class="fa-regular fa-eye"></i> <?= number_format($story['views']) ?> व्यूज</span>
-                  </div>
-
-                  <div class="bhaskar-share-btns">
-                    <a href="https://api.whatsapp.com/send?text=<?= urlencode($story['headline'] . ' ' . $storyUrl) ?>" target="_blank" rel="noopener" class="share-icon-btn whatsapp" title="WhatsApp पर शेयर करें">
-                      <i class="fa-brands fa-whatsapp"></i>
-                    </a>
-                    <a href="https://www.facebook.com/sharer/sharer.php?u=<?= urlencode($storyUrl) ?>" target="_blank" rel="noopener" class="share-icon-btn facebook" title="Facebook">
-                      <i class="fa-brands fa-facebook-f"></i>
-                    </a>
-                    <a href="https://twitter.com/intent/tweet?text=<?= urlencode($story['headline']) ?>&url=<?= urlencode($storyUrl) ?>" target="_blank" rel="noopener" class="share-icon-btn twitter" title="Twitter / X">
-                      <i class="fa-brands fa-x-twitter"></i>
-                    </a>
-                    <button type="button" class="share-icon-btn copy js-copy-link" data-url="<?= htmlspecialchars($storyUrl) ?>" title="लिंक कॉपी करें">
-                      <i class="fa-solid fa-link"></i>
-                    </button>
-                  </div>
-                </div>
-
-              </article>
-            <?php endforeach; ?>
-          <?php else: ?>
-            <div style="background: #ffffff; padding: 40px; border-radius: var(--radius-md); text-align: center; border: 1px solid var(--gray-200);">
-              <h3>कोई समाचार उपलब्ध नहीं है।</h3>
-            </div>
-          <?php endif; ?>
+          <?php endforeach; ?>
         </div>
 
       </main>
@@ -118,7 +146,7 @@ require_once __DIR__ . '/includes/header.php';
         <!-- Google Follow Box -->
         <div class="google-follow-card">
           <div class="google-follow-text">
-            दैनिक खबर को Google पर पसंदीदा सोर्स बनाएं →
+            दैनिक खबर को Google पर पसंदीदा सोर्स बनाएं &rarr;
           </div>
           <a href="https://news.google.com" target="_blank" rel="noopener" class="google-follow-btn">
             <i class="fa-brands fa-google"></i> +Follow us
@@ -133,7 +161,7 @@ require_once __DIR__ . '/includes/header.php';
             </a>
           <?php else: ?>
             <a href="https://coralwebtechnology.com" target="_blank" rel="noopener">
-              <img src="<?= ASSETS_URL ?>uploads/ads/ad_sidebar.jpg" alt="Advertisement">
+              <img src="<?= ASSETS_URL ?>images/ad_sidebar.svg" alt="Advertisement">
             </a>
           <?php endif; ?>
         </div>

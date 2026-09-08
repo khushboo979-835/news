@@ -1,7 +1,7 @@
 <?php
 /**
- * Global Frontend Footer
- * Dainik Bhaskar Style layout with verified client information & Coral Web Technology developer credits
+ * Global Frontend Footer (Dainik Bhaskar Style)
+ * Includes Mobile Bottom Navigation Bar and Coral Web Technology Credits
  */
 $settings = get_site_settings();
 $categories = get_all_categories();
@@ -39,7 +39,7 @@ $categories = get_all_categories();
             <!-- Col 1: About & Branding -->
             <div class="footer-col brand-col">
                 <div class="footer-logo">
-                    <span class="logo-icon"><i class="fa-solid fa-newspaper"></i></span>
+                    <span class="logo-icon"><i class="fa-solid fa-sun"></i></span>
                     <span class="logo-text"><?php echo htmlspecialchars($settings['site_title'] ?? 'दैनिक खबर'); ?></span>
                 </div>
                 <p class="brand-desc">
@@ -51,7 +51,6 @@ $categories = get_all_categories();
                     <a href="https://youtube.com" target="_blank" rel="noopener" aria-label="YouTube"><i class="fa-brands fa-youtube"></i></a>
                     <a href="https://instagram.com" target="_blank" rel="noopener" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
                     <a href="https://whatsapp.com" target="_blank" rel="noopener" aria-label="WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>
-                    <a href="https://t.me" target="_blank" rel="noopener" aria-label="Telegram"><i class="fa-brands fa-telegram"></i></a>
                 </div>
             </div>
 
@@ -118,18 +117,36 @@ $categories = get_all_categories();
     <div class="footer-bottom">
         <div class="container footer-bottom-inner">
             <div class="copyright-text">
-                &copy; <?php echo date('Y'); ?> <strong><?php echo htmlspecialchars($settings['site_title'] ?? 'दैनिक खबर'); ?></strong>. सर्वाधिकार सुरक्षित (All Rights Reserved).
+                &copy; <?php echo date('Y'); ?> <strong><?php echo htmlspecialchars($settings['site_title'] ?? 'दैनिक खबर'); ?></strong>. सर्वाधिकार सुरक्षित.
             </div>
             <div class="developer-credit-box">
                 <a href="https://coralwebtechnology.com/" target="_blank" rel="noopener" class="developer-badge">
                     <span class="sparkle"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
-                    <span class="dev-text">Designed & Developed with Passion by <strong>Coral Web Technology</strong></span>
+                    <span class="dev-text">Designed & Developed by <strong>Coral Web Technology</strong></span>
                     <span class="external-icon"><i class="fa-solid fa-arrow-up-right-from-square"></i></span>
                 </a>
             </div>
         </div>
     </div>
 </footer>
+
+<!-- =========================================================================
+     Mobile Sticky Bottom Navigation Bar (Exact Dainik Bhaskar Mobile App/Web)
+     ========================================================================= -->
+<nav class="bhaskar-mobile-bottom-nav">
+    <a href="<?php echo SITE_URL; ?>/" class="bhaskar-bottom-nav-item active">
+        <i class="fa-solid fa-house"></i>
+        <span>पढ़ें</span>
+    </a>
+    <a href="<?php echo SITE_URL; ?>/category.php?cat=top-news" class="bhaskar-bottom-nav-item">
+        <i class="fa-regular fa-circle-play"></i>
+        <span>देखें</span>
+    </a>
+    <a href="<?php echo SITE_URL; ?>/admin/login.php" class="bhaskar-bottom-nav-item">
+        <i class="fa-regular fa-circle-user"></i>
+        <span>प्रोफ़ाइल</span>
+    </a>
+</nav>
 
 <!-- Floating Back to Top Button -->
 <button id="backToTop" class="back-to-top" aria-label="Back to top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">

@@ -1,6 +1,6 @@
 <?php
 /**
- * Header Template (Dainik Bhaskar Style)
+ * Header Template (Exact Dainik Bhaskar bhaskar.com Standard)
  * Hindi News Portal
  */
 
@@ -45,8 +45,8 @@ $currentCatSlug = $_GET['cat'] ?? ($_GET['slug'] ?? '');
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
   <!-- Portal Stylesheets -->
-  <link rel="stylesheet" href="<?= ASSETS_URL ?>css/style.css?v=3.5">
-  <link rel="stylesheet" href="<?= ASSETS_URL ?>css/responsive.css?v=3.5">
+  <link rel="stylesheet" href="<?= ASSETS_URL ?>css/style.css?v=4.0">
+  <link rel="stylesheet" href="<?= ASSETS_URL ?>css/responsive.css?v=4.0">
 
   <!-- Dynamic Theme Color from Database Settings -->
   <style>
@@ -60,17 +60,13 @@ $currentCatSlug = $_GET['cat'] ?? ($_GET['slug'] ?? '');
 <body>
 
   <!-- =========================================================================
-       1. Top Horizontal Utility Header (Exact Dainik Bhaskar Standard)
+       1. Top Horizontal Header (Exact Bhaskar Top Bar)
        ========================================================================= -->
   <header class="bhaskar-top-header">
     <div class="bhaskar-header-container">
       
-      <!-- Left: Mobile Drawer Button & Portal Brand Logo -->
+      <!-- Left: Brand Logo (Sun + दैनिक खबर) -->
       <div class="bhaskar-header-left">
-        <button class="bhaskar-mobile-toggle" id="mobileMenuBtn" aria-label="Open Navigation">
-          <i class="fa-solid fa-bars"></i>
-        </button>
-
         <a href="<?= BASE_URL ?>/index.php" class="bhaskar-brand-logo">
           <div class="bhaskar-logo-sun">
             <i class="fa-solid fa-sun"></i>
@@ -82,30 +78,32 @@ $currentCatSlug = $_GET['cat'] ?? ($_GET['slug'] ?? '');
         </a>
       </div>
 
-      <!-- Right: Utility Items (Home, Search, Alerts, Admin) - Clean & Responsive -->
-      <div class="bhaskar-header-utilities">
+      <!-- Right: Exact 4 Bhaskar Header Icons -->
+      <div class="bhaskar-header-icons">
         
-        <!-- Home (होम) -->
-        <a href="<?= BASE_URL ?>/index.php" class="bhaskar-util-btn desktop-only <?= ($currentScript === 'index.php' && empty($currentCatSlug)) ? 'active' : '' ?>">
-          <i class="fa-solid fa-house"></i>
-          <span>होम</span>
+        <!-- Icon 1: Stories / Web Stories -->
+        <a href="<?= BASE_URL ?>/index.php" class="bhaskar-head-icon" title="वेब स्टोरीज">
+          <i class="fa-regular fa-clone"></i>
         </a>
 
-        <!-- Search (सर्च) -->
-        <button type="button" class="bhaskar-util-btn" id="searchModalTrigger" title="खबरें खोजें">
+        <!-- Icon 2: News Feed -->
+        <a href="<?= BASE_URL ?>/index.php" class="bhaskar-head-icon" title="समाचार फ़ीड">
+          <i class="fa-regular fa-newspaper"></i>
+        </a>
+
+        <!-- Icon 3: Video Watch -->
+        <a href="<?= BASE_URL ?>/category.php?cat=top-news" class="bhaskar-head-icon" title="वीडियो">
+          <i class="fa-brands fa-youtube"></i>
+        </a>
+
+        <!-- Icon 4: Search Trigger -->
+        <button type="button" class="bhaskar-head-icon" id="searchModalTrigger" title="सर्च करें">
           <i class="fa-solid fa-magnifying-glass"></i>
-          <span class="desktop-only">सर्च</span>
         </button>
 
-        <!-- Alerts (अलर्ट्स) -->
-        <button type="button" class="bhaskar-util-btn desktop-only" id="notificationTrigger" title="ताज़ा अलर्ट्स">
-          <i class="fa-regular fa-bell"></i>
-          <span>अलर्ट्स</span>
-        </button>
-
-        <!-- Admin Control (संपादक लॉगिन) -->
-        <a href="<?= ADMIN_URL ?>/index.php" class="bhaskar-admin-btn" title="संपादक नियंत्रण कक्ष (Admin Panel)">
-          <i class="fa-solid fa-user-shield"></i>
+        <!-- Admin / User Profile -->
+        <a href="<?= ADMIN_URL ?>/login.php" class="bhaskar-head-icon bhaskar-user-pill" title="संपादक लॉगिन (Admin)">
+          <i class="fa-regular fa-circle-user"></i>
         </a>
 
       </div>
@@ -113,32 +111,52 @@ $currentCatSlug = $_GET['cat'] ?? ($_GET['slug'] ?? '');
     </div>
   </header>
 
-  <!-- Mobile Swipeable Horizontal Category Bar (Exact m.bhaskar.com style) -->
-  <nav class="bhaskar-mobile-cat-bar">
-    <div class="bhaskar-mobile-cat-scroll">
+  <!-- =========================================================================
+       2. Horizontal Category Swipe Bar (Exact Bhaskar Pill Bar)
+       ========================================================================= -->
+  <nav class="bhaskar-cat-nav-bar">
+    <div class="container bhaskar-cat-scroll">
       <?php 
-      $mobileCategories = [
-        ['name' => 'टॉप न्यूज़', 'slug' => 'top-news', 'icon' => 'fa-fire-flame-curved'],
-        ['name' => 'बिहार', 'slug' => 'bihar', 'icon' => 'fa-location-dot'],
-        ['name' => 'पटना', 'slug' => 'patna', 'icon' => 'fa-city'],
-        ['name' => 'राजनीति', 'slug' => 'political', 'icon' => 'fa-landmark'],
-        ['name' => 'क्राइम', 'slug' => 'crime', 'icon' => 'fa-shield-halved'],
-        ['name' => 'चुनाव', 'slug' => 'election', 'icon' => 'fa-check-to-slot'],
-        ['name' => 'अन्य', 'slug' => 'anya', 'icon' => 'fa-layer-group'],
+      $bhaskarCategories = [
+        ['name' => 'टॉप न्यूज़', 'slug' => 'top-news', 'icon' => 'fa-fire-flame-curved', 'color' => '#e53935'],
+        ['name' => 'बिहार', 'slug' => 'bihar', 'icon' => 'fa-location-dot', 'color' => '#ea580c'],
+        ['name' => 'पटना', 'slug' => 'patna', 'icon' => 'fa-city', 'color' => '#0891b2'],
+        ['name' => 'राजनीति', 'slug' => 'political', 'icon' => 'fa-landmark', 'color' => '#2563eb'],
+        ['name' => 'क्राइम', 'slug' => 'crime', 'icon' => 'fa-shield-halved', 'color' => '#dc2626'],
+        ['name' => 'चुनाव', 'slug' => 'election', 'icon' => 'fa-check-to-slot', 'color' => '#7c3aed'],
+        ['name' => 'अन्य', 'slug' => 'anya', 'icon' => 'fa-layer-group', 'color' => '#475569'],
       ];
-      foreach ($mobileCategories as $mCat): 
-        $isActive = ($currentCatSlug === $mCat['slug']) || ($currentScript === 'index.php' && empty($currentCatSlug) && $mCat['slug'] === 'top-news');
+      foreach ($bhaskarCategories as $bCat): 
+        $isActive = ($currentCatSlug === $bCat['slug']) || ($currentScript === 'index.php' && empty($currentCatSlug) && $bCat['slug'] === 'top-news');
       ?>
-        <a href="<?= BASE_URL ?>/category.php?cat=<?= urlencode($mCat['slug']) ?>" class="bhaskar-m-cat-pill <?= $isActive ? 'active' : '' ?>">
-          <i class="fa-solid <?= $mCat['icon'] ?>"></i>
-          <span><?= htmlspecialchars($mCat['name']) ?></span>
+        <a href="<?= BASE_URL ?>/category.php?cat=<?= urlencode($bCat['slug']) ?>" class="bhaskar-cat-item <?= $isActive ? 'active' : '' ?>">
+          <i class="fa-solid <?= $bCat['icon'] ?>" style="color: <?= htmlspecialchars($bCat['color']) ?>;"></i>
+          <span><?= htmlspecialchars($bCat['name']) ?></span>
         </a>
       <?php endforeach; ?>
     </div>
   </nav>
 
   <!-- =========================================================================
-       2. Running Top Banner Ad Slot (Leaderboard 728x90 strictly sized)
+       3. Trending Tags Bar (Exact Bhaskar Trending Pills)
+       ========================================================================= -->
+  <div class="bhaskar-trending-bar">
+    <div class="container bhaskar-trending-inner">
+      <span class="bhaskar-trend-badge">
+        <i class="fa-solid fa-arrow-trend-up"></i> ट्रेंडिंग
+      </span>
+      <div class="bhaskar-trend-pills">
+        <a href="<?= BASE_URL ?>/search.php?q=पुतिन" class="bhaskar-trend-pill">पुतिन भारत यात्रा &gt;</a>
+        <a href="<?= BASE_URL ?>/category.php?cat=bihar" class="bhaskar-trend-pill">बिहार एक्सप्रेसवे &gt;</a>
+        <a href="<?= BASE_URL ?>/category.php?cat=patna" class="bhaskar-trend-pill">पटना गंगा जलस्तर &gt;</a>
+        <a href="<?= BASE_URL ?>/category.php?cat=crime" class="bhaskar-trend-pill">सचिवालय बाइक चोरी &gt;</a>
+        <a href="<?= BASE_URL ?>/category.php?cat=patna" class="bhaskar-trend-pill">रिजेंट सिनेमा हनुमान चालीसा &gt;</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       4. Leaderboard Ad Banner (Compact 728x90)
        ========================================================================= -->
   <div class="bhaskar-top-ad-wrapper">
     <div class="container">

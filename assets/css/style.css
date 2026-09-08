@@ -1,33 +1,32 @@
 /* ==========================================================================
-   Dainik Bhaskar Style Hindi News Portal Stylesheet
-   Modern Utility Header, Running Top Banner, Sticky Left Nav, Aspect-Ratio Media
+   Dainik Bhaskar Exact Hindi News Portal Stylesheet
+   Matches bhaskar.com on Desktop & m.bhaskar.com on Mobile
    ========================================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700;800;900&family=Poppins:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Mukta:wght@300;400;500;600;700;800;900&family=Noto+Sans+Devanagari:wght@400;500;600;700;800;900&family=Poppins:wght@400;500;600;700;800&display=swap');
 
 :root {
   --theme-color: #e53935;
   --theme-color-hover: #c62828;
-  --theme-light: rgba(229, 57, 53, 0.1);
+  --theme-light: rgba(229, 57, 53, 0.08);
   --secondary: #0f172a;
-  --gray-900: #0f172a;
-  --gray-800: #1e293b;
-  --gray-700: #334155;
-  --gray-600: #475569;
-  --gray-500: #64748b;
-  --gray-400: #94a3b8;
-  --gray-300: #cbd5e1;
-  --gray-200: #e2e8f0;
-  --gray-100: #f1f5f9;
-  --gray-50:  #f8fafc;
+  --gray-900: #111827;
+  --gray-800: #1f2937;
+  --gray-700: #374151;
+  --gray-600: #4b5563;
+  --gray-500: #6b7280;
+  --gray-400: #9ca3af;
+  --gray-300: #d1d5db;
+  --gray-200: #e5e7eb;
+  --gray-100: #f3f4f6;
+  --gray-50:  #f9fafb;
   --white:    #ffffff;
   
-  --font-hindi: 'Noto Sans Devanagari', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-hindi: 'Mukta', 'Noto Sans Devanagari', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-latin: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
-  --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
-  --shadow-lg: 0 10px 25px rgba(15, 23, 42, 0.12);
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.08);
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 16px;
@@ -42,9 +41,9 @@
 
 body {
   font-family: var(--font-hindi);
-  background-color: #f8fafc;
+  background-color: #f1f5f9;
   color: var(--gray-800);
-  line-height: 1.6;
+  line-height: 1.5;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
 }
@@ -67,7 +66,7 @@ ul, ol {
 
 .container {
   width: 100%;
-  max-width: 1320px;
+  max-width: 1280px;
   margin-left: auto;
   margin-right: auto;
   padding-left: 16px;
@@ -75,7 +74,7 @@ ul, ol {
 }
 
 /* ==========================================================================
-   1. Top Horizontal Utility Header (Bhaskar Style)
+   1. Top Horizontal Header (Exact Bhaskar Top Bar)
    ========================================================================== */
 .bhaskar-top-header {
   background: #ffffff;
@@ -83,15 +82,15 @@ ul, ol {
   position: sticky;
   top: 0;
   z-index: 1000;
-  box-shadow: var(--shadow-sm);
-  height: 68px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  height: 60px;
   display: flex;
   align-items: center;
 }
 
 .bhaskar-header-container {
   width: 100%;
-  max-width: 1320px;
+  max-width: 1280px;
   margin: 0 auto;
   padding: 0 16px;
   display: flex;
@@ -102,7 +101,7 @@ ul, ol {
 .bhaskar-header-left {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
 }
 
 .bhaskar-mobile-toggle {
@@ -112,26 +111,26 @@ ul, ol {
   font-size: 1.35rem;
   color: var(--gray-800);
   cursor: pointer;
-  padding: 6px;
+  padding: 4px;
 }
 
 .bhaskar-brand-logo {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .bhaskar-logo-sun {
-  width: 44px;
-  height: 44px;
-  background: linear-gradient(135deg, #f97316 0%, var(--theme-color) 100%);
-  border-radius: 12px;
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, #f97316 0%, #e53935 100%);
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #ffffff;
-  font-size: 1.4rem;
-  box-shadow: 0 4px 10px rgba(229, 57, 53, 0.3);
+  font-size: 1.25rem;
+  box-shadow: 0 2px 6px rgba(229, 57, 53, 0.3);
 }
 
 .bhaskar-logo-text {
@@ -140,141 +139,163 @@ ul, ol {
 }
 
 .bhaskar-main-name {
-  font-size: 1.6rem;
+  font-size: 1.55rem;
   font-weight: 900;
-  color: var(--gray-900);
+  color: #000000;
   line-height: 1.1;
   letter-spacing: -0.5px;
 }
 
 .bhaskar-sub-domain {
   font-family: var(--font-latin);
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   font-weight: 800;
-  letter-spacing: 1.5px;
+  letter-spacing: 1px;
   color: var(--theme-color);
   text-transform: uppercase;
 }
 
-/* Header Utilities */
-.bhaskar-header-utilities {
+/* Header Icons (Exact 4 Icons from Bhaskar Screenshot) */
+.bhaskar-header-icons {
   display: flex;
   align-items: center;
-  gap: 8px;
-}
-
-.bhaskar-util-btn {
-  display: inline-flex;
-  align-items: center;
   gap: 6px;
-  padding: 8px 14px;
-  border-radius: 20px;
-  font-size: 0.92rem;
-  font-weight: 600;
-  color: var(--gray-700);
-  background: transparent;
-  border: 1px solid transparent;
-  cursor: pointer;
-  transition: all 0.2s ease;
 }
 
-.bhaskar-util-btn:hover {
-  background: var(--gray-100);
-  color: var(--theme-color);
-}
-
-.bhaskar-util-btn.active {
-  background: var(--theme-light);
-  color: var(--theme-color);
-}
-
-.bhaskar-util-btn.epaper-highlight {
-  border-color: var(--gray-200);
-  background: #ffffff;
-}
-.bhaskar-util-btn.epaper-highlight:hover {
-  border-color: var(--theme-color);
-  color: var(--theme-color);
-}
-
-.bhaskar-admin-btn {
+.bhaskar-head-icon {
   width: 38px;
   height: 38px;
-  border-radius: 50%;
-  background: var(--gray-100);
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--gray-700);
-  margin-left: 6px;
-}
-.bhaskar-admin-btn:hover {
-  background: var(--theme-color);
-  color: #ffffff;
+  font-size: 1.25rem;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
-/* Mobile Category Swipe Bar (Exact m.bhaskar.com) */
-.bhaskar-mobile-cat-bar {
-  display: none;
+.bhaskar-head-icon:hover {
+  background: var(--gray-100);
+  color: var(--theme-color);
+}
+
+.bhaskar-user-pill {
+  font-size: 1.35rem;
+  color: var(--gray-800);
+  margin-left: 4px;
+}
+
+/* ==========================================================================
+   2. Horizontal Category Swipe Bar
+   ========================================================================== */
+.bhaskar-cat-nav-bar {
   background: #ffffff;
   border-bottom: 1px solid var(--gray-200);
   position: sticky;
-  top: 56px;
-  z-index: 990;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+  top: 60px;
+  z-index: 950;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
 }
 
-.bhaskar-mobile-cat-scroll {
+.bhaskar-cat-scroll {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
+  gap: 16px;
+  padding: 8px 16px;
   overflow-x: auto;
   white-space: nowrap;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
 }
 
-.bhaskar-mobile-cat-scroll::-webkit-scrollbar {
+.bhaskar-cat-scroll::-webkit-scrollbar {
   display: none;
 }
 
-.bhaskar-m-cat-pill {
+.bhaskar-cat-item {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-size: 0.88rem;
-  font-weight: 700;
+  padding: 6px 12px;
   color: var(--gray-700);
-  background: var(--gray-100);
-  border: 1px solid var(--gray-200);
-  text-decoration: none;
-  flex-shrink: 0;
-  transition: all 0.2s ease;
+  font-size: 0.95rem;
+  font-weight: 700;
+  border-radius: 20px;
+  transition: all 0.2s;
 }
 
-.bhaskar-m-cat-pill.active {
-  background: var(--theme-color);
-  color: #ffffff;
-  border-color: var(--theme-color);
-  box-shadow: 0 2px 8px rgba(229, 57, 53, 0.3);
+.bhaskar-cat-item:hover, .bhaskar-cat-item.active {
+  color: var(--theme-color);
+  background: var(--theme-light);
 }
 
-.bhaskar-m-cat-pill i {
-  font-size: 0.85rem;
-}
-
-.bhaskar-m-cat-pill.active i {
-  color: #ffffff;
+.bhaskar-cat-item.active {
+  font-weight: 800;
 }
 
 /* ==========================================================================
-   2. Top Running Leaderboard Ad Slot (728x90 Compact Header Banner)
+   3. Trending Tags Bar
    ========================================================================== */
-.bhaskar-top-ad-wrapper,
-.bhaskar-top-ad-banner {
+.bhaskar-trending-bar {
+  background: #ffffff;
+  border-bottom: 1px solid var(--gray-200);
+  padding: 8px 0;
+}
+
+.bhaskar-trending-inner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.bhaskar-trending-inner::-webkit-scrollbar {
+  display: none;
+}
+
+.bhaskar-trend-badge {
+  color: #e53935;
+  font-weight: 800;
+  font-size: 0.92rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  padding: 4px 8px;
+}
+
+.bhaskar-trend-pills {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.bhaskar-trend-pill {
+  display: inline-block;
+  padding: 4px 12px;
+  background: var(--gray-50);
+  border: 1px solid var(--gray-200);
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--gray-700);
+  transition: all 0.2s;
+}
+
+.bhaskar-trend-pill:hover {
+  border-color: var(--theme-color);
+  color: var(--theme-color);
+  background: var(--theme-light);
+}
+
+/* ==========================================================================
+   4. Top Running Leaderboard Ad Slot (728x90)
+   ========================================================================== */
+.bhaskar-top-ad-wrapper {
   background: #f8fafc;
   border-bottom: 1px solid var(--gray-200);
   padding: 8px 0;
@@ -282,8 +303,7 @@ ul, ol {
   justify-content: center;
 }
 
-.bhaskar-ad-banner-slot,
-.bhaskar-ad-slot-728x90 {
+.bhaskar-ad-banner-slot {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -296,9 +316,7 @@ ul, ol {
   box-shadow: 0 1px 3px rgba(0,0,0,0.06);
 }
 
-.bhaskar-running-ad-img,
-.bhaskar-ad-slot-728x90 img,
-.bhaskar-ad-banner-slot img {
+.bhaskar-running-ad-img {
   width: 100%;
   max-width: 728px;
   height: 90px !important;
@@ -307,37 +325,28 @@ ul, ol {
   display: block;
 }
 
-@media (max-width: 768px) {
-  .bhaskar-ad-banner-slot,
-  .bhaskar-ad-slot-728x90,
-  .bhaskar-running-ad-img {
-    height: 60px !important;
-    max-height: 60px !important;
-  }
-}
-
 /* ==========================================================================
-   3. 3-Column Bhaskar Layout Grid
+   5. 3-Column Layout Grid
    ========================================================================== */
 .bhaskar-page-body {
-  padding: 24px 0 60px;
+  padding: 20px 0 60px;
 }
 
 .bhaskar-grid-3col {
   display: grid;
-  grid-template-columns: 210px minmax(0, 1fr) 300px;
-  gap: 24px;
+  grid-template-columns: 200px minmax(0, 1fr) 300px;
+  gap: 20px;
   align-items: start;
 }
 
-/* Sticky Left Nav (Strictly 7 Categories) */
+/* Sticky Left Nav */
 .bhaskar-left-nav {
   position: sticky;
-  top: 86px;
+  top: 120px;
   background: #ffffff;
   border-radius: var(--radius-md);
   border: 1px solid var(--gray-200);
-  padding: 12px 8px;
+  padding: 10px 6px;
   box-shadow: var(--shadow-sm);
 }
 
@@ -354,37 +363,30 @@ ul, ol {
 .bhaskar-nav-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
+  gap: 10px;
+  padding: 9px 12px;
   border-radius: var(--radius-sm);
   color: var(--gray-700);
   font-weight: 600;
-  font-size: 0.98rem;
+  font-size: 0.95rem;
   transition: all 0.2s ease;
 }
 
-.bhaskar-nav-item:hover {
-  background: var(--gray-100);
-  color: var(--theme-color);
-  transform: translateX(3px);
-}
-
-.bhaskar-nav-item.active {
+.bhaskar-nav-item:hover, .bhaskar-nav-item.active {
   background: var(--theme-light);
   color: var(--theme-color);
   font-weight: 800;
-  border-left: 3px solid var(--theme-color);
 }
 
 .bhaskar-nav-icon {
-  font-size: 1.15rem;
+  font-size: 1.1rem;
   width: 22px;
   text-align: center;
 }
 
 .bhaskar-left-footer {
-  margin-top: 14px;
-  padding-top: 12px;
+  margin-top: 12px;
+  padding-top: 10px;
   border-top: 1px dashed var(--gray-200);
 }
 
@@ -396,221 +398,220 @@ ul, ol {
   color: var(--gray-500);
   font-family: var(--font-latin);
   font-weight: 600;
-  padding: 6px 10px;
+  padding: 6px 8px;
   border-radius: 4px;
   background: var(--gray-50);
 }
-.left-coral-badge i {
-  color: #eab308;
-}
 
 /* ==========================================================================
-   4. Center Main Feed & Cards
+   6. Main Bhaskar Feed Cards (Exact Screenshot 1 & 2 UI)
    ========================================================================== */
-.bhaskar-trending-tags-bar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  overflow-x: auto;
-  padding-bottom: 12px;
-  margin-bottom: 16px;
-  scrollbar-width: none;
-}
-.bhaskar-trending-tags-bar::-webkit-scrollbar {
-  display: none;
-}
 
-.trending-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 5px 10px;
-  background: var(--theme-color);
-  color: #ffffff;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.trending-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 5px 12px;
-  background: #ffffff;
-  border: 1px solid var(--gray-200);
-  border-radius: 20px;
-  font-size: 0.84rem;
-  color: var(--gray-700);
-  font-weight: 600;
-  white-space: nowrap;
-  transition: all 0.2s;
-}
-
-.trending-pill:hover {
-  border-color: var(--theme-color);
-  color: var(--theme-color);
-  background: var(--theme-light);
-}
-
-/* Story Card */
-.bhaskar-story-card {
+/* Hero Card 1 (Big Headline + Large Media + Bottom Bar) */
+.bhaskar-card-hero {
   background: #ffffff;
   border-radius: var(--radius-md);
   border: 1px solid var(--gray-200);
   padding: 20px;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
   box-shadow: var(--shadow-sm);
-  transition: box-shadow 0.2s ease;
 }
 
-.bhaskar-story-card:hover {
-  box-shadow: var(--shadow-md);
-}
-
-.bhaskar-story-header {
-  margin-bottom: 14px;
-}
-
-.bhaskar-category-pill {
-  display: inline-block;
-  padding: 3px 10px;
-  background: var(--theme-light);
-  color: var(--theme-color);
-  font-size: 0.78rem;
-  font-weight: 700;
-  border-radius: 4px;
-  text-transform: uppercase;
-  margin-bottom: 8px;
-}
-
-.bhaskar-headline {
-  font-size: 1.45rem;
+.bhaskar-hero-headline {
+  font-size: 1.55rem;
   font-weight: 800;
   line-height: 1.35;
-  color: var(--gray-900);
+  color: #111827;
   margin-bottom: 8px;
 }
 
-.bhaskar-headline a:hover {
+.bhaskar-hero-headline a:hover {
   color: var(--theme-color);
 }
 
-.bhaskar-subheadline {
-  font-size: 0.98rem;
+.bhaskar-hero-subheadline {
+  font-size: 1rem;
   color: var(--gray-600);
   line-height: 1.45;
   font-weight: 500;
+  margin-bottom: 12px;
 }
 
-/* Dynamic Media Box (No Left/Right Black Bars, Clean Full Image Display) */
-.bhaskar-media-box {
+.bhaskar-hero-media {
   width: 100%;
   border-radius: var(--radius-sm);
   overflow: hidden;
+  margin: 12px 0;
   position: relative;
-  margin: 14px 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
 }
 
-.bhaskar-media-box img.bhaskar-media-elem {
+.bhaskar-hero-media img,
+.bhaskar-hero-media video {
   width: 100%;
   height: auto;
-  max-height: 500px;
+  max-height: 480px;
   object-fit: cover;
   border-radius: var(--radius-sm);
   display: block;
 }
 
-.bhaskar-media-box video.bhaskar-media-elem {
-  width: 100%;
-  max-height: 460px;
+/* Bottom Bar: Category on Left, Share on Right */
+.bhaskar-card-bottom-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--gray-100);
+}
+
+.bhaskar-tag-pill {
+  display: inline-block;
+  padding: 4px 10px;
+  background: var(--gray-100);
+  color: var(--gray-700);
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  transition: all 0.2s;
+}
+
+.bhaskar-tag-pill:hover {
+  background: var(--theme-light);
+  color: var(--theme-color);
+}
+
+.bhaskar-share-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #16a34a; /* WhatsApp Green */
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.bhaskar-share-btn i {
+  font-size: 1.1rem;
+}
+
+.bhaskar-share-btn:hover {
+  background: #dcfce7;
+}
+
+/* Infeed Google Follow Banner */
+.bhaskar-infeed-google-card {
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+  border-radius: var(--radius-md);
+  padding: 12px 18px;
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.bhaskar-infeed-google-text {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #78350f;
+}
+
+.bhaskar-google-badge-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #2563eb;
+  color: #ffffff;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Feed Split Cards (Screenshot 2: Headline Left, Media Right) */
+.bhaskar-card-split {
+  background: #ffffff;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--gray-200);
+  padding: 16px;
+  margin-bottom: 16px;
+  display: grid;
+  grid-template-columns: 1fr 140px;
+  gap: 16px;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.2s;
+}
+
+.bhaskar-card-split:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.bhaskar-split-left {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.bhaskar-split-headline {
+  font-size: 1.15rem;
+  font-weight: 800;
+  line-height: 1.35;
+  color: #111827;
+  margin-bottom: 6px;
+}
+
+.bhaskar-split-headline a:hover {
+  color: var(--theme-color);
+}
+
+.bhaskar-split-sub {
+  font-size: 0.88rem;
+  color: var(--gray-500);
+  line-height: 1.4;
+  margin-bottom: 10px;
+}
+
+.bhaskar-split-right {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.bhaskar-thumb-link {
+  width: 140px;
+  height: 95px;
   border-radius: var(--radius-sm);
-  background: #0f172a;
+  overflow: hidden;
+  position: relative;
   display: block;
-}
-
-/* For video embeds only, keep 16:9 ratio */
-.bhaskar-media-box[data-video-embed] {
-  aspect-ratio: 16 / 9;
   background: #0f172a;
 }
 
-.bhaskar-media-box[data-video-embed] img.bhaskar-media-elem {
+.bhaskar-thumb-link img {
+  width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.bhaskar-play-overlay {
+.bhaskar-thumb-play {
   position: absolute;
-  width: 56px;
-  height: 56px;
-  background: rgba(229, 57, 53, 0.9);
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.35);
   color: #ffffff;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.4rem;
-  border: none;
-  cursor: pointer;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.4);
-  transition: transform 0.2s;
+  font-size: 1.1rem;
 }
-
-.bhaskar-play-overlay:hover {
-  transform: scale(1.1);
-  background: var(--theme-color);
-}
-
-.bhaskar-story-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 14px;
-  padding-top: 12px;
-  border-top: 1px solid var(--gray-100);
-  font-size: 0.85rem;
-  color: var(--gray-500);
-}
-
-.bhaskar-meta-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.bhaskar-share-btns {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.share-icon-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--gray-100);
-  color: var(--gray-700);
-  font-size: 0.9rem;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.share-icon-btn.whatsapp:hover { background: #25d366; color: #fff; }
-.share-icon-btn.facebook:hover { background: #1877f2; color: #fff; }
-.share-icon-btn.twitter:hover  { background: #000000; color: #fff; }
-.share-icon-btn.copy:hover     { background: var(--theme-color); color: #fff; }
 
 /* ==========================================================================
-   5. Right Rail Widgets
+   7. Right Rail Widgets
    ========================================================================== */
 .bhaskar-right-rail {
   display: flex;
@@ -731,7 +732,7 @@ ul, ol {
 }
 
 /* ==========================================================================
-   6. Search Modal (Fixed Overlay)
+   8. Search Modal (Fixed Popup Overlay)
    ========================================================================== */
 .search-modal {
   display: none;
@@ -758,9 +759,9 @@ ul, ol {
   position: relative;
   background: #ffffff;
   width: 100%;
-  max-width: 620px;
+  max-width: 600px;
   border-radius: var(--radius-lg);
-  padding: 28px;
+  padding: 24px;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
   z-index: 10;
   animation: modalPop 0.25s ease-out;
@@ -775,7 +776,7 @@ ul, ol {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 20px;
+  margin-bottom: 18px;
 }
 
 .search-modal-header h3 {
@@ -790,17 +791,16 @@ ul, ol {
 .search-close-btn {
   background: var(--gray-100);
   border: none;
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  font-size: 1.4rem;
+  font-size: 1.3rem;
   line-height: 1;
   color: var(--gray-700);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
 }
 
 .search-close-btn:hover {
@@ -814,44 +814,37 @@ ul, ol {
   border: 2px solid var(--gray-200);
   border-radius: var(--radius-md);
   overflow: hidden;
-  transition: border-color 0.2s;
 }
 
 .search-input-group:focus-within {
   border-color: var(--theme-color);
-  box-shadow: 0 0 0 3px var(--theme-light);
 }
 
 .search-input-group input {
   flex-grow: 1;
-  padding: 14px 18px;
+  padding: 12px 16px;
   border: none;
   outline: none;
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-family: inherit;
 }
 
 .search-input-group button {
-  padding: 14px 22px;
+  padding: 12px 20px;
   background: var(--theme-color);
   color: #ffffff;
   border: none;
   cursor: pointer;
-  font-size: 1.1rem;
-  transition: background 0.2s;
-}
-
-.search-input-group button:hover {
-  background: var(--theme-color-hover);
+  font-size: 1.05rem;
 }
 
 .search-quick-tags {
-  margin-top: 16px;
+  margin-top: 14px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
-  font-size: 0.88rem;
+  font-size: 0.85rem;
 }
 
 .search-quick-tags span {
@@ -865,16 +858,10 @@ ul, ol {
   padding: 3px 10px;
   border-radius: 12px;
   font-weight: 600;
-  transition: background 0.2s;
-}
-
-.search-quick-tags a:hover {
-  background: var(--theme-color);
-  color: #ffffff;
 }
 
 /* ==========================================================================
-   7. Main Footer (Dainik Bhaskar Standard & Coral Web Tech Credits)
+   9. Footer & Mobile Bottom Navigation Bar (Exact 3-Tab Bar)
    ========================================================================== */
 .site-footer {
   background: #0f172a;
@@ -884,27 +871,27 @@ ul, ol {
 }
 
 .footer-top {
-  padding: 50px 0 35px;
+  padding: 45px 0 30px;
 }
 
 .footer-grid {
   display: grid;
   grid-template-columns: 1.5fr 1fr 1fr 1.3fr;
-  gap: 36px;
+  gap: 32px;
 }
 
 .brand-col .footer-logo {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
 .brand-col .logo-icon {
-  width: 38px;
-  height: 38px;
+  width: 36px;
+  height: 36px;
   background: var(--theme-color);
-  border-radius: 8px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -913,16 +900,16 @@ ul, ol {
 }
 
 .brand-col .logo-text {
-  font-size: 1.5rem;
+  font-size: 1.45rem;
   font-weight: 800;
   color: #ffffff;
 }
 
 .brand-desc {
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   line-height: 1.6;
   color: #94a3b8;
-  margin-bottom: 20px;
+  margin-bottom: 18px;
 }
 
 .social-links {
@@ -932,31 +919,30 @@ ul, ol {
 }
 
 .social-links a {
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   background: #1e293b;
   color: #94a3b8;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   transition: all 0.2s;
 }
 
 .social-links a:hover {
   background: var(--theme-color);
   color: #ffffff;
-  transform: translateY(-2px);
 }
 
 .footer-title {
-  font-size: 1.08rem;
+  font-size: 1.05rem;
   font-weight: 700;
   color: #ffffff;
-  margin-bottom: 18px;
+  margin-bottom: 16px;
   position: relative;
-  padding-bottom: 8px;
+  padding-bottom: 6px;
 }
 
 .footer-title::after {
@@ -964,18 +950,18 @@ ul, ol {
   position: absolute;
   bottom: 0;
   left: 0;
-  width: 32px;
+  width: 28px;
   height: 2px;
   background: var(--theme-color);
 }
 
 .footer-links-list li {
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .footer-links-list a {
   color: #94a3b8;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -983,52 +969,41 @@ ul, ol {
 
 .footer-links-list a:hover {
   color: #ffffff;
-  padding-left: 4px;
 }
 
-.footer-links-list a i {
-  font-size: 0.75rem;
-  color: var(--theme-color);
-}
-
-/* Contact Card */
 .contact-card {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .contact-item {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  font-size: 0.9rem;
+  gap: 10px;
+  font-size: 0.88rem;
   color: #94a3b8;
 }
 
 .contact-item i {
   color: var(--theme-color);
-  font-size: 1.05rem;
+  font-size: 1rem;
   margin-top: 3px;
-  width: 18px;
+  width: 16px;
 }
 
 .contact-item a {
   color: #e2e8f0;
   font-weight: 600;
 }
-.contact-item a:hover {
-  color: var(--theme-color);
-}
 
 .contact-item strong {
   color: #ffffff;
 }
 
-/* Footer Bottom with Animated Developer Credit */
 .footer-bottom {
   background: #090d16;
-  padding: 18px 0;
+  padding: 16px 0;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -1037,92 +1012,91 @@ ul, ol {
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 14px;
-  font-size: 0.88rem;
+  gap: 12px;
+  font-size: 0.85rem;
 }
 
 .copyright-text {
   color: #64748b;
 }
-.copyright-text strong {
-  color: #94a3b8;
-}
 
 .developer-badge {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   background: linear-gradient(135deg, rgba(229, 57, 53, 0.15), rgba(37, 99, 235, 0.15));
   border: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 8px 16px;
+  padding: 6px 14px;
   border-radius: 30px;
   color: #e2e8f0;
   text-decoration: none;
-  font-size: 0.86rem;
+  font-size: 0.84rem;
   transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
 }
 
 .developer-badge:hover {
   background: linear-gradient(135deg, var(--theme-color), #2563eb);
   color: #ffffff;
-  border-color: transparent;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 14px rgba(229, 57, 53, 0.4);
 }
 
-.developer-badge .sparkle {
-  color: #fbbf24;
-  animation: pulseGlow 2s infinite;
+/* Mobile Sticky Bottom Navigation Bar (Exact 3-Tab Bar) */
+.bhaskar-mobile-bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 56px;
+  background: #ffffff;
+  border-top: 1px solid var(--gray-200);
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.08);
+  z-index: 2000;
+  align-items: center;
+  justify-content: space-around;
 }
 
-.developer-badge .external-icon {
-  font-size: 0.78rem;
-  opacity: 0.8;
+.bhaskar-bottom-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  color: var(--gray-500);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-decoration: none;
+  flex: 1;
+  height: 100%;
+}
+
+.bhaskar-bottom-nav-item i {
+  font-size: 1.25rem;
+}
+
+.bhaskar-bottom-nav-item.active {
+  color: #f97316; /* Bhaskar active orange */
+}
+
+.bhaskar-bottom-nav-item.active i {
+  color: #f97316;
 }
 
 /* Back to Top */
 .back-to-top {
   position: fixed;
-  bottom: 24px;
-  right: 24px;
-  width: 44px;
-  height: 44px;
+  bottom: 70px;
+  right: 18px;
+  width: 40px;
+  height: 40px;
   background: var(--theme-color);
   color: #ffffff;
   border: none;
   border-radius: 50%;
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: center;
-  font-size: 1.1rem;
-  box-shadow: 0 4px 12px rgba(229, 57, 53, 0.4);
+  font-size: 1rem;
+  box-shadow: 0 4px 10px rgba(229, 57, 53, 0.4);
   cursor: pointer;
-  z-index: 800;
-  transition: all 0.2s ease;
-  opacity: 0.9;
-}
-
-.back-to-top:hover {
-  opacity: 1;
-  transform: translateY(-3px);
-}
-
-/* Responsive Footer */
-@media (max-width: 991px) {
-  .footer-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: 30px;
-  }
-}
-
-@media (max-width: 640px) {
-  .footer-grid {
-    grid-template-columns: 1fr;
-    gap: 24px;
-  }
-  .footer-bottom-inner {
-    flex-direction: column;
-    text-align: center;
-  }
+  z-index: 1500;
 }
