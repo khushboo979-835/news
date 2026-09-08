@@ -1,0 +1,748 @@
+/* ==========================================================================
+   Dainik Bhaskar Style Hindi News Portal Stylesheet
+   Modern Utility Header, Running Top Banner, Sticky Left Nav, Aspect-Ratio Media
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700;800;900&family=Poppins:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --theme-color: #e53935;
+  --theme-color-hover: #c62828;
+  --theme-light: rgba(229, 57, 53, 0.1);
+  --secondary: #0f172a;
+  --gray-900: #0f172a;
+  --gray-800: #1e293b;
+  --gray-700: #334155;
+  --gray-600: #475569;
+  --gray-500: #64748b;
+  --gray-400: #94a3b8;
+  --gray-300: #cbd5e1;
+  --gray-200: #e2e8f0;
+  --gray-100: #f1f5f9;
+  --gray-50:  #f8fafc;
+  --white:    #ffffff;
+  
+  --font-hindi: 'Noto Sans Devanagari', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-latin: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
+  --shadow-lg: 0 10px 25px rgba(15, 23, 42, 0.12);
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+}
+
+/* Base Reset */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-hindi);
+  background-color: #f8fafc;
+  color: var(--gray-800);
+  line-height: 1.6;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+img, video {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+ul, ol {
+  list-style: none;
+}
+
+.container {
+  width: 100%;
+  max-width: 1320px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+/* ==========================================================================
+   1. Top Horizontal Utility Header (Bhaskar Style)
+   ========================================================================== */
+.bhaskar-top-header {
+  background: #ffffff;
+  border-bottom: 1px solid var(--gray-200);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  box-shadow: var(--shadow-sm);
+  height: 68px;
+  display: flex;
+  align-items: center;
+}
+
+.bhaskar-header-container {
+  width: 100%;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.bhaskar-header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.bhaskar-mobile-toggle {
+  display: none;
+  background: transparent;
+  border: none;
+  font-size: 1.3rem;
+  color: var(--gray-800);
+  cursor: pointer;
+  padding: 6px;
+}
+
+.bhaskar-brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.bhaskar-logo-sun {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #f59e0b, #e53935);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 1.25rem;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
+}
+
+.bhaskar-logo-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.bhaskar-main-name {
+  font-size: 1.55rem;
+  font-weight: 900;
+  color: #0f172a;
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+}
+
+.bhaskar-sub-domain {
+  font-family: var(--font-latin);
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--theme-color);
+  letter-spacing: 2px;
+}
+
+/* Header Right: 4 Utilities */
+.bhaskar-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bhaskar-utility-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--gray-700);
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.bhaskar-utility-item:hover,
+.bhaskar-utility-item.active {
+  background: var(--theme-light);
+  color: var(--theme-color);
+  border-color: rgba(229, 57, 53, 0.2);
+}
+
+.bhaskar-utility-icon {
+  font-size: 1.05rem;
+}
+
+.bhaskar-bell-dot {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 8px;
+  height: 8px;
+  background: var(--theme-color);
+  border-radius: 50%;
+  animation: pulseGlow 1.5s infinite;
+}
+
+.bhaskar-user-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--gray-100);
+  color: var(--gray-700);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  margin-left: 6px;
+  transition: all 0.2s ease;
+}
+
+.bhaskar-user-icon:hover {
+  background: var(--theme-color);
+  color: #ffffff;
+}
+
+/* ==========================================================================
+   2. Running Top Banner Ad Area (Leaderboard)
+   ========================================================================== */
+.bhaskar-top-ad-wrapper {
+  background: #ffffff;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--gray-200);
+  text-align: center;
+}
+
+.bhaskar-ad-banner-slot {
+  max-width: 970px;
+  margin: 0 auto;
+  background: #f1f5f9;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.bhaskar-running-ad-img {
+  width: 100%;
+  max-height: 120px;
+  object-fit: cover;
+  display: block;
+}
+
+/* ==========================================================================
+   3. Main 3-Column Layout (Left Nav + Center Feed + Right Rail)
+   ========================================================================== */
+.bhaskar-page-body {
+  padding: 20px 0 50px;
+}
+
+.bhaskar-grid-3col {
+  display: grid;
+  grid-template-columns: 200px 1fr 340px;
+  gap: 24px;
+  align-items: start;
+}
+
+/* Sticky Left Navigation Sidebar */
+.bhaskar-left-nav {
+  position: sticky;
+  top: 84px;
+  background: #ffffff;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--gray-200);
+  padding: 14px 10px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bhaskar-nav-header-mobile {
+  display: none;
+}
+
+.bhaskar-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--gray-700);
+  transition: all 0.2s ease;
+}
+
+.bhaskar-nav-item:hover {
+  background: var(--gray-100);
+  color: var(--gray-900);
+  transform: translateX(3px);
+}
+
+.bhaskar-nav-item.active {
+  background: var(--theme-light);
+  color: var(--theme-color);
+  font-weight: 800;
+  border-left: 4px solid var(--theme-color);
+}
+
+.bhaskar-nav-icon {
+  font-size: 1.05rem;
+  width: 22px;
+  text-align: center;
+}
+
+.bhaskar-left-footer {
+  margin-top: 15px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--gray-200);
+  text-align: center;
+}
+
+.left-coral-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #7c3aed;
+  background: #f3e8ff;
+  padding: 4px 8px;
+  border-radius: 999px;
+  transition: all 0.2s ease;
+}
+
+.left-coral-badge:hover {
+  background: #7c3aed;
+  color: #ffffff;
+}
+
+/* ==========================================================================
+   4. Center News Feed & Trending Tags
+   ========================================================================== */
+.bhaskar-trending-tags-bar {
+  background: #ffffff;
+  border-radius: var(--radius-md);
+  padding: 10px 16px;
+  margin-bottom: 20px;
+  border: 1px solid var(--gray-200);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.trending-badge {
+  color: var(--theme-color);
+  font-weight: 800;
+  font-size: 0.88rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.trending-pill {
+  background: var(--gray-100);
+  color: var(--gray-700);
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid var(--gray-200);
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.trending-pill:hover {
+  background: var(--theme-color);
+  color: #ffffff;
+  border-color: var(--theme-color);
+}
+
+/* Main Feed News Card */
+.bhaskar-news-feed-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.bhaskar-story-card {
+  background: #ffffff;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--gray-200);
+  padding: 22px;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.bhaskar-story-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+/* High Contrast Headline & Subheadline */
+.bhaskar-story-header {
+  margin-bottom: 14px;
+}
+
+.bhaskar-category-pill {
+  display: inline-block;
+  background: var(--theme-light);
+  color: var(--theme-color);
+  font-weight: 800;
+  font-size: 0.78rem;
+  padding: 3px 10px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.bhaskar-headline {
+  font-size: 1.45rem;
+  font-weight: 900;
+  line-height: 1.35;
+  color: var(--gray-900);
+  margin-bottom: 8px;
+  transition: color 0.2s ease;
+}
+
+.bhaskar-headline a:hover {
+  color: var(--theme-color);
+}
+
+.bhaskar-subheadline {
+  font-size: 1.02rem;
+  font-weight: 500;
+  color: var(--gray-600);
+  line-height: 1.5;
+  margin-bottom: 14px;
+}
+
+/* Aspect-Ratio-Safe Media Box (Zero Cropping / Zero Distortion) */
+.bhaskar-media-box {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #0f172a;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bhaskar-media-elem {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.bhaskar-play-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 56px;
+  height: 56px;
+  background: rgba(229, 57, 53, 0.9);
+  color: #ffffff;
+  border-radius: 50%;
+  border: none;
+  font-size: 1.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 0 25px rgba(229, 57, 53, 0.8);
+  transition: all 0.25s ease;
+}
+
+.bhaskar-play-overlay:hover {
+  transform: translate(-50%, -50%) scale(1.15);
+  background: #ff0000;
+}
+
+/* Story Meta & Share Bar */
+.bhaskar-story-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid var(--gray-100);
+  padding-top: 12px;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 0.82rem;
+  color: var(--gray-500);
+}
+
+.bhaskar-meta-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.bhaskar-share-btns {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.share-icon-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 0.82rem;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.share-icon-btn:hover {
+  transform: translateY(-2px);
+}
+
+.share-icon-btn.whatsapp { background: #25d366; }
+.share-icon-btn.facebook { background: #1877f2; }
+.share-icon-btn.twitter  { background: #000000; }
+.share-icon-btn.copy     { background: var(--gray-700); }
+
+/* ==========================================================================
+   5. Right Rail (Google Follow Box, Ads, Trending Ranking)
+   ========================================================================== */
+.bhaskar-right-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.google-follow-card {
+  background: #ffffff;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: var(--shadow-sm);
+}
+
+.google-follow-text {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--gray-900);
+}
+
+.google-follow-btn {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #2563eb;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.google-follow-btn:hover {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+/* Sidebar Ad Box */
+.bhaskar-sidebar-ad {
+  background: #ffffff;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+}
+
+.bhaskar-sidebar-ad img {
+  width: 100%;
+  max-height: 280px;
+  object-fit: cover;
+}
+
+/* Trending Rank Widget */
+.bhaskar-trending-widget {
+  background: #ffffff;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  padding: 18px;
+  box-shadow: var(--shadow-sm);
+}
+
+.bhaskar-widget-header {
+  font-size: 1.12rem;
+  font-weight: 800;
+  color: var(--gray-900);
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--theme-color);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bhaskar-rank-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  border-bottom: 1px dashed var(--gray-200);
+}
+
+.bhaskar-rank-item:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.bhaskar-rank-num {
+  width: 26px;
+  height: 26px;
+  background: var(--gray-100);
+  color: var(--gray-700);
+  font-weight: 800;
+  font-family: var(--font-latin);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.bhaskar-rank-item:nth-child(1) .bhaskar-rank-num { background: var(--theme-color); color: #ffffff; }
+.bhaskar-rank-item:nth-child(2) .bhaskar-rank-num { background: #f97316; color: #ffffff; }
+.bhaskar-rank-item:nth-child(3) .bhaskar-rank-num { background: #eab308; color: #ffffff; }
+
+.bhaskar-rank-title {
+  font-size: 0.92rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--gray-800);
+}
+
+.bhaskar-rank-title:hover {
+  color: var(--theme-color);
+}
+
+/* Modals */
+.bhaskar-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(6px);
+  z-index: 2000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.bhaskar-modal.active {
+  display: flex;
+}
+
+.bhaskar-modal-dialog {
+  background: #ffffff;
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 600px;
+  position: relative;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+.bhaskar-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  background: var(--gray-100);
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: var(--gray-700);
+}
+
+.bhaskar-modal-body {
+  padding: 25px;
+}
+
+.bhaskar-search-form {
+  display: flex;
+  gap: 10px;
+}
+
+.bhaskar-search-input {
+  flex-grow: 1;
+  padding: 12px 16px;
+  border: 2px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  outline: none;
+}
+
+.bhaskar-search-input:focus {
+  border-color: var(--theme-color);
+}
+
+.bhaskar-search-btn {
+  background: var(--theme-color);
+  color: #ffffff;
+  border: none;
+  padding: 0 20px;
+  border-radius: var(--radius-md);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+}
+.btn-primary { background: var(--theme-color); color: #ffffff; }
+.btn-primary:hover { background: var(--theme-color-hover); }
+
+/* Pulse animation */
+@keyframes pulseGlow {
+  0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(229, 57, 53, 0.7); }
+  70% { transform: scale(1.1); box-shadow: 0 0 0 6px rgba(229, 57, 53, 0); }
+  100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(229, 57, 53, 0); }
+}

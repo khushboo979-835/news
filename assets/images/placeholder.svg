@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" width="100%" height="100%">
+  <rect width="800" height="450" fill="#0f172a"/>
+  <g fill="#334155" opacity="0.6">
+    <circle cx="400" cy="180" r="60"/>
+    <path d="M220 340 L340 220 L440 310 L520 250 L640 340 Z"/>
+  </g>
+  <text x="50%" y="390" font-family="'Mukta', sans-serif" font-size="28" font-weight="700" fill="#94a3b8" text-anchor="middle">दैनिक खबर डिजिटल न्यूज़</text>
+</svg>

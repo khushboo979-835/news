@@ -1,0 +1,104 @@
+/* ==========================================================================
+   Responsive Breakpoints for Dainik Bhaskar Layout
+   ========================================================================== */
+
+/* Laptops & Tablets (Max 1199px) */
+@media (max-width: 1199px) {
+  .bhaskar-grid-3col {
+    grid-template-columns: 180px 1fr 300px;
+    gap: 16px;
+  }
+  
+  .bhaskar-headline {
+    font-size: 1.3rem;
+  }
+}
+
+/* Tablets (Max 991px) */
+@media (max-width: 991px) {
+  .bhaskar-grid-3col {
+    grid-template-columns: 1fr 300px;
+  }
+
+  /* Left nav becomes mobile drawer */
+  .bhaskar-left-nav {
+    position: fixed;
+    top: 0;
+    left: -280px;
+    width: 270px;
+    height: 100vh;
+    z-index: 2100;
+    border-radius: 0;
+    border: none;
+    box-shadow: 5px 0 25px rgba(0,0,0,0.25);
+    overflow-y: auto;
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .bhaskar-left-nav.drawer-open {
+    left: 0;
+  }
+
+  .bhaskar-mobile-toggle {
+    display: block;
+  }
+
+  .bhaskar-nav-header-mobile {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px 12px 10px;
+    border-bottom: 1px solid var(--gray-200);
+    margin-bottom: 10px;
+  }
+
+  .bhaskar-nav-title {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--gray-900);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .bhaskar-nav-close {
+    background: var(--gray-100);
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    font-size: 1.2rem;
+    cursor: pointer;
+  }
+}
+
+/* Mobiles (Max 767px) */
+@media (max-width: 767px) {
+  .bhaskar-grid-3col {
+    grid-template-columns: 1fr;
+  }
+
+  .bhaskar-utility-label {
+    display: none;
+  }
+
+  .bhaskar-utility-item {
+    padding: 8px 10px;
+  }
+
+  .bhaskar-main-name {
+    font-size: 1.3rem;
+  }
+
+  .bhaskar-story-card {
+    padding: 16px;
+  }
+
+  .bhaskar-headline {
+    font-size: 1.18rem;
+  }
+
+  .bhaskar-subheadline {
+    font-size: 0.92rem;
+  }
+}
