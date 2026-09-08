@@ -1,24 +1,78 @@
 <?php
 /**
- * One-click Database Migration & Real News Seeder
- * Wipes old dummy data and inserts current real news stories
+ * One-click Full Database Migration & Auto-Installer
+ * Drops old structure, creates all updated tables with full Devanagari utf8mb4 support,
+ * and populates the 5 real news articles.
  */
+
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
 
 if (!$pdo) {
-    die("Database connection failed. Check config/db.php");
+    die("<h2 style='color:red; font-family:sans-serif;'>डेटाबेस कनेक्शन विफल रहा। कृपया config/db.php जांचें।</h2>");
 }
 
 try {
+    $pdo->exec("SET NAMES utf8mb4");
     $pdo->exec("SET FOREIGN_KEY_CHECKS = 0");
-    
-    // Clear old news
-    $pdo->exec("TRUNCATE TABLE news");
-    
-    // Ensure categories exist
+
+    // 1. Settings Table
     $pdo->exec("
-        INSERT IGNORE INTO categories (id, name, slug, icon, display_order, status) VALUES
+        CREATE TABLE IF NOT EXISTS `settings` (
+          `id` INT AUTO_INCREMENT PRIMARY KEY,
+          `site_title` VARCHAR(150) NOT NULL DEFAULT 'दैनिक खबर',
+          `tagline` VARCHAR(255) NOT NULL DEFAULT 'सच्ची और निष्पक्ष पत्रकारिता का सशक्त डिजिटल मंच',
+          `theme_color` VARCHAR(20) NOT NULL DEFAULT '#e53935',
+          `logo_url` VARCHAR(255) DEFAULT 'assets/images/logo.svg',
+          `epaper_link` VARCHAR(255) DEFAULT 'https://epaper.dainikkhabr.com',
+          `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    ");
+
+    $stmt = $pdo->query("SELECT COUNT(*) FROM settings WHERE id = 1");
+    if ($stmt->fetchColumn() == 0) {
+        $pdo->exec("
+            INSERT INTO `settings` (`id`, `site_title`, `tagline`, `theme_color`, `logo_url`, `epaper_link`) 
+            VALUES (1, 'दैनिक खबर', 'सच्ची और निष्पक्ष पत्रकारिता का सशक्त डिजिटल मंच', '#e53935', 'assets/images/logo.svg', 'https://epaper.dainikkhabr.com');
+        ");
+    }
+
+    // 2. Admins Table
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS `admins` (
+          `id` INT AUTO_INCREMENT PRIMARY KEY,
+          `name` VARCHAR(100) NOT NULL,
+          `email` VARCHAR(120) NOT NULL UNIQUE,
+          `password_hash` VARCHAR(255) NOT NULL,
+          `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    ");
+
+    $adminCheck = $pdo->query("SELECT COUNT(*) FROM admins WHERE email = 'admin@news.com'");
+    if ($adminCheck->fetchColumn() == 0) {
+        $pdo->exec("
+            INSERT INTO `admins` (`name`, `email`, `password_hash`) 
+            VALUES ('मुख्य संपादक (Admin)', 'admin@news.com', '$2y$10$7Z2tW8sB2w27y4mZ/bK7jebB.2g5xK4f7YFf9W2N8eB4cK0J0eW.u');
+        ");
+    }
+
+    // 3. Categories Table (Re-create cleanly with all required columns)
+    $pdo->exec("DROP TABLE IF EXISTS `categories`");
+    $pdo->exec("
+        CREATE TABLE `categories` (
+          `id` INT AUTO_INCREMENT PRIMARY KEY,
+          `name` VARCHAR(100) NOT NULL,
+          `slug` VARCHAR(120) NOT NULL UNIQUE,
+          `icon` VARCHAR(50) DEFAULT 'fa-newspaper',
+          `display_order` INT DEFAULT 0,
+          `status` TINYINT(1) DEFAULT 1,
+          `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    ");
+
+    $pdo->exec("
+        INSERT INTO `categories` (`id`, `name`, `slug`, `icon`, `display_order`, `status`) VALUES
         (1, 'टॉप न्यूज़ (Top News)', 'top-news', 'fa-fire-flame-curved', 1, 1),
         (2, 'बिहार (Bihar)', 'bihar', 'fa-location-dot', 2, 1),
         (3, 'पटना (Patna)', 'patna', 'fa-city', 3, 1),
@@ -28,9 +82,51 @@ try {
         (7, 'अन्य (Anya / Other)', 'anya', 'fa-layer-group', 7, 1);
     ");
 
-    // Insert 5 Real Current News Articles
+    // 4. News Table (Re-create cleanly with manual priority and aspect-ratio media)
+    $pdo->exec("DROP TABLE IF EXISTS `news`");
+    $pdo->exec("
+        CREATE TABLE `news` (
+          `id` INT AUTO_INCREMENT PRIMARY KEY,
+          `category_id` INT NOT NULL,
+          `headline` VARCHAR(500) NOT NULL,
+          `subheadline` VARCHAR(500) DEFAULT NULL,
+          `slug` VARCHAR(550) NOT NULL UNIQUE,
+          `content` LONGTEXT NOT NULL,
+          `media_type` ENUM('image', 'video_upload', 'video_embed') NOT NULL DEFAULT 'image',
+          `media_url` VARCHAR(255) NOT NULL,
+          `priority_order` INT DEFAULT 0,
+          `is_breaking` TINYINT(1) DEFAULT 0,
+          `views` INT DEFAULT 0,
+          `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    ");
+
+    // 5. Ads Table
+    $pdo->exec("DROP TABLE IF EXISTS `ads`");
+    $pdo->exec("
+        CREATE TABLE `ads` (
+          `id` INT AUTO_INCREMENT PRIMARY KEY,
+          `title` VARCHAR(150) NOT NULL,
+          `position` ENUM('top_header_banner', 'sidebar_banner', 'infeed_banner') NOT NULL DEFAULT 'top_header_banner',
+          `image_url` VARCHAR(255) NOT NULL,
+          `link_url` VARCHAR(255) NOT NULL,
+          `status` TINYINT(1) DEFAULT 1,
+          `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    ");
+
+    $pdo->exec("
+        INSERT INTO `ads` (`title`, `position`, `image_url`, `link_url`, `status`) VALUES
+        ('टॉप हेडर रनिंग बैनर विज्ञापन - 728x90', 'top_header_banner', 'ad_header.jpg', 'https://coralwebtechnology.com', 1),
+        ('साइडबार विशेष बैनर - 300x250', 'sidebar_banner', 'ad_sidebar.jpg', 'https://coralwebtechnology.com', 1),
+        ('इन-फ़ीड बैनर विज्ञापन - 728x90', 'infeed_banner', 'ad_article.jpg', 'https://coralwebtechnology.com', 1);
+    ");
+
+    // 6. Insert the 5 Real Current News Articles
     $insertNews = $pdo->prepare("
-        INSERT INTO news (id, category_id, headline, subheadline, slug, content, media_type, media_url, priority_order, is_breaking, views, created_at)
+        INSERT INTO `news` (`id`, `category_id`, `headline`, `subheadline`, `slug`, `content`, `media_type`, `media_url`, `priority_order`, `is_breaking`, `views`, `created_at`)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
     ");
 
@@ -40,7 +136,7 @@ try {
             'रिजेंट सिनेमा में फिल्म के बाद दर्शकों को बांटी गई हनुमान चालीसा',
             '‘हनुमान अंश’ के शो के बाद मां ब्लड सेंटर और सिनेमा प्रबंधन की अनूठी पहल; दर्शकों में दिखा उत्साह',
             'regent-cinema-patna-hanuman-chalisa-distribution-movie-show',
-            '<p><strong>पटना:</strong> पटना के ऐतिहासिक रिजेंट सिनेमा में सोमवार को फिल्म ‘हनुमान अंश’ के शो के बाद दर्शकों के बीच हनुमान चालीसा का वितरण किया गया। फिल्म देखने के बाद सिनेमा हॉल से बाहर निकल रहे दर्शकों को हनुमान चालीसा भेंट की गई। इस पावन पहल में मां ब्लड सेंटर, रिजेंट सिनेमा के ऑनर और कर्मचारियों ने बढ़-चढ़कर हिस्सा लिया।</p><p>हनुमान चालीसा वितरण के दौरान दर्शकों में भारी उत्साह देखने को मिला। फिल्म देखने पहुंचे कई लोगों ने इस पहल की सराहना की। दर्शकों का कहना था कि फिल्म के बाद इस तरह की पहल से समाज में सकारात्मक और धार्मिक संदेश पहुंचता है।</p><p>आयोजकों के अनुसार, फिल्म देखने आए दर्शकों के बीच धार्मिक भावना और सकारात्मक संदेश पहुंचाने के उद्देश्य से हनुमान चालीसा का वितरण किया गया। इस कार्यक्रम में रिजेंट सिनेमा के कर्मचारियों ने भी पूर्ण सहयोग किया।</p><p>शो समाप्त होने के बाद दर्शकों को एक-एक कर हनुमान चालीसा दी गई। लोगों ने इसे सम्मान और श्रद्धा के साथ स्वीकार किया। इस दौरान सिनेमा परिसर में कुछ समय तक इस पहल को लेकर चर्चा होती रही और दर्शकों ने शांतिपूर्वक हनुमान चालीसा प्राप्त की।</p>',
+            '<p><strong>पटना:</strong> पटना के ऐतिहासिक रिजेंट सिनेमा में सोमवार को फिल्म ‘हनुमान अंश’ के शो के बाद दर्शकों के बीच हनुमान चालीसा का वितरण किया गया। फिल्म देखने के बाद सिनेमा हॉल से बाहर निकल रहे दर्शकों को हनुमान चालीसा भेंट की गई। इस पावन पहल में मां ब्लड सेंटर, रिजेंट सिनेमा के ऑनर और कर्मचारियों ने बढ़-चढ़कर हिस्सा लिया।</p><p>हनुमान चालीसा वितरण के दौरान दर्शकों में भारी उत्साह देखने को मिला। फिल्म देखने पहुंचे सैकड़ों लोगों ने इस पहल की मुक्तकंठ से सराहना की। दर्शकों का कहना था कि फिल्म के बाद इस तरह की पहल से समाज में सकारात्मक और धार्मिक संदेश जाता है।</p><p>आयोजकों के अनुसार, फिल्म देखने आए दर्शकों के बीच धार्मिक भावना और सकारात्मक संदेश पहुंचाने के उद्देश्य से हनुमान चालीसा का वितरण किया गया। इस कार्यक्रम में रिजेंट सिनेमा के सभी कर्मचारियों ने सहयोग किया।</p><p>शो समाप्त होने के बाद दर्शकों को कतारबद्ध कर एक-एक कर हनुमान चालीसा दी गई। लोगों ने इसे अत्यंत सम्मान और श्रद्धा के साथ स्वीकार किया। इस दौरान सिनेमा परिसर में कुछ समय तक इस पहल को लेकर काफी चर्चा और उल्लास का माहौल रहा।</p>',
             'image', 'news_regent_cinema.jpg', 1, 1, 4120
         ],
         [
@@ -54,7 +150,7 @@ try {
         [
             3, 5,
             'विधानसभा परिसर से बाइक चोरी का खुलासा, दो गिरफ्तार',
-            'सचिवालय थाना पुलिस ने 3 चोरी की बाइक की बरामद; सेंट्रल एसपी ममता कल्याणी के निर्देश पर विशेष टीम की बड़ी कार्रवाई',
+            'सचिवालय थाना पुलिस ने 3 चोरी की बाइक की बरामद; सेंट्रल एसपी ममता कल्याणी के निर्देश पर विशेष टीम बनाई गई',
             'patna-assembly-campus-bike-theft-gang-busted-two-arrested',
             '<p><strong>पटना:</strong> पटना में विधानसभा परिसर से बाइक चोरी करने वाले गिरोह का सचिवालय थाना पुलिस ने खुलासा किया है। पुलिस ने इस मामले में दो आरोपियों राजकुमार उर्फ फंटूश और हर्ष राज उर्फ राज को गिरफ्तार किया है। दोनों के पास से चोरी की तीन बाइक बरामद की गई हैं।</p><p>पुलिस के अनुसार, विधानसभा परिसर से दो बाइक चोरी होने की शिकायत सामने आई थी। घटना के बाद पुलिस ने मामले को गंभीरता से लेते हुए जांच शुरू की। सेंट्रल एसपी ममता कल्याणी के निर्देश पर अनुमंडल पुलिस पदाधिकारी-01 सचिवालय और थानाध्यक्ष सचिवालय के नेतृत्व में विशेष टीम बनाई गई।</p><p>पुलिस टीम ने 6 सितंबर 2026 को गर्दनीबाग थाना क्षेत्र में छापेमारी की। इस दौरान एक आरोपी को चोरी की स्कूटी और बाइक के साथ पकड़ा गया। ये दोनों वाहन सचिवालय थाना कांड संख्या 182/26 और 184/26 से जुड़े थे।</p><p>जांच के दौरान पुलिस को पता चला कि चोरी की वारदात में दो आरोपी शामिल थे। हर्ष राज उर्फ राज वाहनों का लॉक तोड़ता था। इसके बाद राजकुमार उर्फ फंटूश चोरी की बाइक लेकर मौके से फरार हो जाता था। पुलिस ने दोनों आरोपियों को गिरफ्तार कर लिया। पुलिस ने बताया कि गिरफ्तार दोनों आरोपियों का पहले से आपराधिक इतिहास भी रहा है। फिलहाल पुलिस उनसे पूछताछ कर रही है और गिरोह से जुड़ी अन्य जानकारियां जुटाई जा रही हैं।</p>',
             'image', 'news_bike_theft_police.jpg', 3, 0, 2750
@@ -70,7 +166,7 @@ try {
         [
             5, 3,
             'मरीन ड्राइव पर खतरनाक स्टंट, युवक-युवती पर केस दर्ज',
-            'जेपी गंगा पथ पर बाइक स्टंट का वीडियो वायरल होने के बाद ट्रैफिक पुलिस की सख्त कार्रवाई; BNS की धारा 281 के तहत केस',
+            'जेपी गंगा पथ पर बाइक स्टंट का वीडियो वायरल होने के बाद ट्रैफिक पुलिस की सख्त कार्रवाई; BNS की धारा 281 के तहत केस दर्ज',
             'marine-drive-patna-dangerous-bike-stunt-case-registered',
             '<p><strong>पटना:</strong> जेपी गंगा पथ यानी मरीन ड्राइव पर बाइक से खतरनाक स्टंट करने के मामले में पटना ट्रैफिक पुलिस ने कार्रवाई की है। कृष्णा घाट से दीघा गोलंबर की ओर आने वाली लेन में युवक और युवती के स्टंट का वीडियो सामने आया था। इसके बाद ट्रैफिक पुलिस ने बाइक के ऑनर और युवक-युवती के खिलाफ मामला दर्ज किया है।</p><p>ट्रैफिक पुलिस के अनुसार, वायरल वीडियो पाटलिपुत्र थाना क्षेत्र के कृष्णा घाट के पास का है। यह वीडियो 5 सितंबर की शाम करीब 5:30 बजे शूट किया गया था। वीडियो में युवक और युवती बाइक पर खतरनाक तरीके से स्टंट करते नजर आ रहे थे।</p><p>पुलिस ने वीडियो की जांच के बाद बाइक के नंबर के आधार पर उसके ऑनर की पहचान की। बाइक स्प्लेंडर है और इसके मालिक का नाम दीपक कुमार बताया गया है। वह मोगलपुरा, पटना सिटी का रहने वाला है।</p><p>इस मामले में ट्रैफिक थाना गांधी मैदान में केस दर्ज किया गया है। युवक और युवती के खिलाफ BNS की धारा 281 के तहत कार्रवाई की गई है। फिलहाल पुलिस पूरे मामले की जांच कर रही है और वीडियो से जुड़े अन्य तथ्यों की जानकारी जुटाई जा रही है।</p><p>ट्रैफिक पुलिस ने लोगों से सार्वजनिक सड़कों और स्थानों पर इस तरह के खतरनाक स्टंट नहीं करने की अपील की है। पुलिस का कहना है कि सड़क पर स्टंट करने से खुद के साथ दूसरे लोगों की जान भी खतरे में पड़ सकती है।</p>',
             'image', 'news_marine_drive_stunt.jpg', 5, 0, 3180
@@ -83,8 +179,43 @@ try {
 
     $pdo->exec("SET FOREIGN_KEY_CHECKS = 1");
 
-    echo "<h2 style='color:green;'>डेटाबेस माइग्रेशन और 5 ताज़ा समाचार सफलतापूर्वक अपडेट हो गए हैं!</h2>";
-    echo "<p><a href='" . SITE_URL . "/'>होमपेज पर जाएं</a> | <a href='" . SITE_URL . "/admin/'>एडमिन पैनल पर जाएं</a></p>";
+    echo "
+    <!DOCTYPE html>
+    <html lang='hi'>
+    <head>
+        <meta charset='UTF-8'>
+        <title>माइग्रेशन सफल</title>
+        <style>
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; color: #fff; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 20px; }
+            .card { background: #1e293b; border: 2px solid #22c55e; border-radius: 16px; padding: 36px; max-width: 550px; text-align: center; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); }
+            h1 { color: #22c55e; font-size: 1.8rem; margin-bottom: 12px; }
+            p { color: #cbd5e1; font-size: 1.05rem; line-height: 1.6; margin-bottom: 24px; }
+            .btn-group { display: flex; gap: 14px; justify-content: center; }
+            .btn { display: inline-block; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 1rem; transition: opacity 0.2s; }
+            .btn-primary { background: #e53935; color: #fff; }
+            .btn-secondary { background: #334155; color: #fff; }
+            .btn:hover { opacity: 0.9; }
+        </style>
+    </head>
+    <body>
+        <div class='card'>
+            <div style='font-size: 3.5rem; margin-bottom: 15px;'>🎉</div>
+            <h1>डेटाबेस सफलतापूर्वक अपडेट हो गया!</h1>
+            <p>सभी पुरानी डमी टेबल्स साफ हो गई हैं और <strong>5 ताज़ा समाचार</strong> (चित्रों व प्राथमिकताओं सहित) लाइव डेटाबेस में सुरक्षित हो गए हैं।</p>
+            <div class='btn-group'>
+                <a href='" . SITE_URL . "/' class='btn btn-primary'>लाइव पोर्टल देखें</a>
+                <a href='" . SITE_URL . "/admin/' class='btn btn-secondary'>एडमिन पैनल खोलें</a>
+            </div>
+        </div>
+    </body>
+    </html>
+    ";
+
 } catch (Exception $e) {
-    echo "<h2 style='color:red;'>त्रुटि: " . $e->getMessage() . "</h2>";
+    echo "
+    <div style='padding:20px; background:#fee2e2; color:#991b1b; font-family:sans-serif; border-radius:8px; margin:30px auto; max-width:600px;'>
+        <h3>माइग्रेशन त्रुटि:</h3>
+        <p>" . htmlspecialchars($e->getMessage()) . "</p>
+    </div>
+    ";
 }
