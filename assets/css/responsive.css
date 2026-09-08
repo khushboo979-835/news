@@ -1,4 +1,21 @@
-/* Default visibility classes */
+/* ==========================================================================
+   Dainik Bhaskar Style Responsive CSS
+   Ensures 100% responsive, mobile-first, no horizontal overflow layout
+   ========================================================================== */
+
+/* Universal Box & Overflow Reset */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden !important;
+  position: relative;
+}
+
+/* Visibility Utilities */
 .mobile-only {
   display: none !important;
 }
@@ -7,19 +24,9 @@
   display: flex !important;
 }
 
-/* Global overflow prevention */
-html, body {
-  max-width: 100%;
-  overflow-x: hidden !important;
-  position: relative;
-  width: 100%;
-}
-
-*, *::before, *::after {
-  box-sizing: border-box;
-}
-
-/* Laptops & Tablets (Max 1199px) */
+/* ==========================================================================
+   1. Large Screens & Laptops (Max 1199px)
+   ========================================================================== */
 @media (max-width: 1199px) {
   .bhaskar-grid-3col {
     grid-template-columns: 190px minmax(0, 1fr) 280px;
@@ -36,7 +43,9 @@ html, body {
   }
 }
 
-/* Tablets (Max 991px) */
+/* ==========================================================================
+   2. Tablets & Small Laptops (Max 991px)
+   ========================================================================== */
 @media (max-width: 991px) {
   .desktop-only {
     display: none !important;
@@ -50,13 +59,16 @@ html, body {
     display: block !important;
   }
 
+  /* Single Column Stack */
   .bhaskar-grid-3col {
-    grid-template-columns: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
     width: 100% !important;
     gap: 16px !important;
   }
 
-  .bhaskar-main-feed, .bhaskar-right-rail {
+  .bhaskar-main-feed,
+  .bhaskar-right-rail {
     width: 100% !important;
     max-width: 100% !important;
     min-width: 0 !important;
@@ -66,13 +78,7 @@ html, body {
     order: 3;
   }
 
-  /* Footer responsiveness on tablets */
-  .footer-grid {
-    grid-template-columns: 1fr 1fr !important;
-    gap: 24px !important;
-  }
-
-  /* Left nav becomes mobile drawer */
+  /* Drawer Navigation on Tablets */
   .bhaskar-left-nav {
     position: fixed;
     top: 0;
@@ -127,9 +133,17 @@ html, body {
     align-items: center;
     justify-content: center;
   }
+
+  /* Footer 2-Columns on Tablets */
+  .footer-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 24px !important;
+  }
 }
 
-/* Mobiles (Max 767px - Exact m.bhaskar.com) */
+/* ==========================================================================
+   3. Mobiles (Max 767px - Exact m.bhaskar.com Layout)
+   ========================================================================== */
 @media (max-width: 767px) {
   .desktop-only {
     display: none !important;
@@ -141,6 +155,54 @@ html, body {
 
   nav.bhaskar-cat-nav-bar.mobile-only {
     display: block !important;
+  }
+
+  /* Sticky Bottom Navigation Bar on Mobile */
+  .bhaskar-mobile-bottom-nav {
+    display: flex !important;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: 56px;
+    background: #ffffff;
+    border-top: 1px solid var(--gray-200);
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.08);
+    z-index: 2000;
+    align-items: center;
+    justify-content: space-around;
+  }
+
+  .bhaskar-bottom-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    color: var(--gray-500);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-decoration: none;
+    flex: 1;
+    height: 100%;
+  }
+
+  .bhaskar-bottom-nav-item i {
+    font-size: 1.25rem;
+  }
+
+  .bhaskar-bottom-nav-item.active {
+    color: #f97316;
+  }
+
+  .bhaskar-bottom-nav-item.active i {
+    color: #f97316;
+  }
+
+  /* Body Padding for Bottom Nav */
+  body {
+    padding-bottom: 56px;
   }
 
   .bhaskar-top-header {
@@ -166,7 +228,7 @@ html, body {
     letter-spacing: 0.5px;
   }
 
-  /* Category Scroll Bar */
+  /* Category Swipe Bar */
   .bhaskar-cat-scroll {
     padding: 6px 10px;
     gap: 10px;
@@ -177,7 +239,7 @@ html, body {
     padding: 4px 10px;
   }
 
-  /* Compact top ad on mobile */
+  /* Compact Top Billboard Ad on Mobile */
   .bhaskar-top-ad-wrapper {
     padding: 6px 0 2px;
     width: 100%;
@@ -197,7 +259,7 @@ html, body {
   }
 
   .bhaskar-page-body {
-    padding: 8px 0 65px;
+    padding: 8px 0 30px;
   }
 
   .container {
@@ -211,11 +273,13 @@ html, body {
     padding-bottom: 8px;
   }
 
+  /* Hero Story Card 1 */
   .bhaskar-card-hero {
     padding: 12px;
     margin-bottom: 12px;
     border-radius: var(--radius-sm);
     width: 100%;
+    box-sizing: border-box;
     overflow: hidden;
   }
 
@@ -233,7 +297,17 @@ html, body {
     word-break: break-word;
   }
 
-  /* Split Cards on mobile (Cards 2+) - 100% Width Safe */
+  .bhaskar-hero-media {
+    margin: 8px 0;
+  }
+
+  .bhaskar-hero-media img,
+  .bhaskar-hero-media video {
+    max-height: 280px;
+    object-fit: cover;
+  }
+
+  /* Split Cards (Cards 2+) - 100% Fit without Overflow */
   .bhaskar-card-split {
     display: flex !important;
     flex-direction: row !important;
@@ -255,7 +329,7 @@ html, body {
   }
 
   .bhaskar-split-headline {
-    font-size: 1rem !important;
+    font-size: 0.98rem !important;
     line-height: 1.35 !important;
     margin-bottom: 4px !important;
     word-break: break-word !important;
@@ -282,17 +356,17 @@ html, body {
   }
 
   .bhaskar-split-right {
-    flex: 0 0 100px !important;
-    width: 100px !important;
-    max-width: 100px !important;
+    flex: 0 0 95px !important;
+    width: 95px !important;
+    max-width: 95px !important;
     margin-left: 6px;
   }
 
   .bhaskar-split-right .bhaskar-thumb-link {
-    width: 100px !important;
-    min-width: 100px !important;
-    max-width: 100px !important;
-    height: 75px !important;
+    width: 95px !important;
+    min-width: 95px !important;
+    max-width: 95px !important;
+    height: 72px !important;
     border-radius: 6px;
   }
 
@@ -311,27 +385,35 @@ html, body {
     padding: 3px 8px;
   }
 
-  /* In-feed Google follow card */
+  /* In-feed Google Follow Card */
   .bhaskar-infeed-google-card {
     padding: 10px 12px;
     gap: 8px;
+    box-sizing: border-box;
+    width: 100%;
   }
+
   .bhaskar-infeed-google-text {
     font-size: 0.82rem;
   }
+
   .bhaskar-google-badge-btn {
     font-size: 0.75rem;
     padding: 4px 8px;
   }
 
-  /* Right Rail & Footer Mobile Stacking */
+  /* Right Rail Widgets on Mobile */
   .google-follow-card {
     padding: 12px;
     gap: 8px;
+    width: 100%;
+    box-sizing: border-box;
   }
+
   .google-follow-text {
     font-size: 0.85rem;
   }
+
   .google-follow-btn {
     font-size: 0.8rem;
     padding: 4px 8px;
@@ -339,16 +421,27 @@ html, body {
 
   .bhaskar-sidebar-ad {
     margin-bottom: 16px;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .bhaskar-trending-widget {
     padding: 14px 12px;
+    width: 100%;
+    box-sizing: border-box;
   }
 
-  /* Footer Complete 1-Column Mobile Layout */
+  /* Footer 1-Column Stacking on Mobile */
+  .site-footer {
+    margin-top: 25px;
+    width: 100%;
+    overflow: hidden;
+  }
+
   .footer-grid {
     grid-template-columns: 1fr !important;
     gap: 24px !important;
+    width: 100% !important;
   }
 
   .footer-col {
@@ -357,7 +450,7 @@ html, body {
   }
 
   .footer-top {
-    padding: 30px 0 20px;
+    padding: 25px 0 15px;
   }
 
   .footer-bottom-inner {
@@ -366,7 +459,7 @@ html, body {
     gap: 12px !important;
   }
 
-  /* Single Article Page Mobile Specifics */
+  /* Article Reading Page Mobile */
   .article-rich-body {
     font-size: 1.05rem !important;
     line-height: 1.7 !important;

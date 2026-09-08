@@ -44,9 +44,9 @@ $currentCatSlug = $_GET['cat'] ?? ($_GET['slug'] ?? '');
   <!-- FontAwesome 6 Icons CDN -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-  <!-- Portal Stylesheets -->
-  <link rel="stylesheet" href="<?= ASSETS_URL ?>css/style.css?v=4.0">
-  <link rel="stylesheet" href="<?= ASSETS_URL ?>css/responsive.css?v=4.0">
+  <!-- Portal Stylesheets with Cache Busting -->
+  <link rel="stylesheet" href="<?= ASSETS_URL ?>css/style.css?v=<?= time() ?>">
+  <link rel="stylesheet" href="<?= ASSETS_URL ?>css/responsive.css?v=<?= time() ?>">
 
   <!-- Dynamic Theme Color from Database Settings -->
   <style>
