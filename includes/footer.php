@@ -74,7 +74,6 @@ $categories = get_all_categories();
                 <h4 class="footer-title">महत्वपूर्ण लिंक (Useful Links)</h4>
                 <ul class="footer-links-list">
                     <li><a href="<?php echo SITE_URL; ?>/"><i class="fa-solid fa-angle-right"></i> मुख्य पृष्ठ (Home)</a></li>
-                    <li><a href="<?php echo htmlspecialchars($settings['epaper_link'] ?? '#'); ?>" target="_blank"><i class="fa-solid fa-angle-right"></i> डिजिटल ई-पेपर (E-Paper)</a></li>
                     <li><a href="<?php echo SITE_URL; ?>/search.php"><i class="fa-solid fa-angle-right"></i> समाचार आर्काइव (Archive)</a></li>
                     <li><a href="<?php echo SITE_URL; ?>/admin/login.php"><i class="fa-solid fa-angle-right"></i> संपादक लॉगिन (Admin Portal)</a></li>
                     <li><a href="#terms"><i class="fa-solid fa-angle-right"></i> नियम एवं शर्तें (Terms & Conditions)</a></li>

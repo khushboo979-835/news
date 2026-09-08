@@ -116,20 +116,11 @@ require_once __DIR__ . '/includes/header.php';
             </div>
 
             <!-- Tagline -->
-            <div style="margin-bottom: 20px;">
+            <div style="margin-bottom: 24px;">
                 <label style="display:block; font-weight:600; margin-bottom:6px; font-size:0.95rem;">
                     टैगलाइन / स्लोगन (Tagline)
                 </label>
                 <input type="text" name="tagline" value="<?php echo htmlspecialchars($settings['tagline'] ?? ''); ?>" style="width: 100%; padding: 11px 14px; border: 1px solid #d1d5db; border-radius: 6px; font-family: inherit; font-size: 0.95rem;">
-            </div>
-
-            <!-- E-Paper Link -->
-            <div style="margin-bottom: 24px;">
-                <label style="display:block; font-weight:600; margin-bottom:6px; font-size:0.95rem;">
-                    ई-पेपर लिंक (E-Paper URL / Reader Link)
-                </label>
-                <input type="url" name="epaper_link" value="<?php echo htmlspecialchars($settings['epaper_link'] ?? ''); ?>" placeholder="https://epaper.dainikkhabr.com" style="width: 100%; padding: 11px 14px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.95rem;">
-                <small style="color: #6b7280; display: block; margin-top: 4px;">यह लिंक टॉप हेडर के "ई-पेपर" बटन पर क्लिक करने पर सीधे खुलेगा।</small>
             </div>
 
             <button type="submit" class="btn btn-primary" style="padding: 12px 24px; font-size: 1rem;">

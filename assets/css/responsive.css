@@ -1,11 +1,12 @@
 /* ==========================================================================
-   Responsive Breakpoints for Dainik Bhaskar Layout
+   Responsive Breakpoints for Dainik Bhaskar Layout (Mobile First Refinements)
+   Matches m.bhaskar.com on all mobile screens and tabs
    ========================================================================== */
 
 /* Laptops & Tablets (Max 1199px) */
 @media (max-width: 1199px) {
   .bhaskar-grid-3col {
-    grid-template-columns: 180px 1fr 300px;
+    grid-template-columns: 190px 1fr 280px;
     gap: 16px;
   }
   
@@ -17,20 +18,25 @@
 /* Tablets (Max 991px) */
 @media (max-width: 991px) {
   .bhaskar-grid-3col {
-    grid-template-columns: 1fr 300px;
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .bhaskar-right-rail {
+    order: 3;
   }
 
   /* Left nav becomes mobile drawer */
   .bhaskar-left-nav {
     position: fixed;
     top: 0;
-    left: -280px;
-    width: 270px;
+    left: -290px;
+    width: 280px;
     height: 100vh;
     z-index: 2100;
     border-radius: 0;
     border: none;
-    box-shadow: 5px 0 25px rgba(0,0,0,0.25);
+    box-shadow: 5px 0 25px rgba(0,0,0,0.3);
     overflow-y: auto;
     transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
@@ -40,20 +46,22 @@
   }
 
   .bhaskar-mobile-toggle {
-    display: block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .bhaskar-nav-header-mobile {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 15px 12px 10px;
+    padding: 16px 14px;
     border-bottom: 1px solid var(--gray-200);
     margin-bottom: 10px;
   }
 
   .bhaskar-nav-title {
-    font-size: 1.1rem;
+    font-size: 1.15rem;
     font-weight: 800;
     color: var(--gray-900);
     display: flex;
@@ -64,41 +72,104 @@
   .bhaskar-nav-close {
     background: var(--gray-100);
     border: none;
-    width: 32px;
-    height: 32px;
+    width: 34px;
+    height: 34px;
     border-radius: 50%;
-    font-size: 1.2rem;
+    font-size: 1.3rem;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 }
 
-/* Mobiles (Max 767px) */
+/* Mobiles (Max 767px - Exact m.bhaskar.com) */
 @media (max-width: 767px) {
-  .bhaskar-grid-3col {
-    grid-template-columns: 1fr;
+  .desktop-only {
+    display: none !important;
   }
 
-  .bhaskar-utility-label {
-    display: none;
+  .bhaskar-top-header {
+    height: 58px;
   }
 
-  .bhaskar-utility-item {
-    padding: 8px 10px;
+  .bhaskar-logo-sun {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    font-size: 1.15rem;
   }
 
   .bhaskar-main-name {
     font-size: 1.3rem;
   }
 
+  .bhaskar-sub-domain {
+    font-size: 0.55rem;
+    letter-spacing: 1px;
+  }
+
+  /* Show Mobile Category Swipe Bar */
+  .bhaskar-mobile-cat-bar {
+    display: block;
+  }
+
+  .bhaskar-page-body {
+    padding: 12px 0 40px;
+  }
+
+  .container {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .bhaskar-trending-tags-bar {
+    margin-bottom: 12px;
+  }
+
   .bhaskar-story-card {
-    padding: 16px;
+    padding: 14px 12px;
+    margin-bottom: 16px;
+    border-radius: var(--radius-sm);
   }
 
   .bhaskar-headline {
-    font-size: 1.18rem;
+    font-size: 1.22rem;
+    line-height: 1.38;
+    margin-bottom: 6px;
   }
 
   .bhaskar-subheadline {
     font-size: 0.92rem;
+    line-height: 1.4;
+  }
+
+  .bhaskar-media-box {
+    margin: 10px 0;
+  }
+
+  .bhaskar-media-box img.bhaskar-media-elem {
+    max-height: 360px;
+  }
+
+  .bhaskar-story-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .bhaskar-share-btns {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  /* Single Article Page Mobile Specifics */
+  .article-rich-body {
+    font-size: 1.08rem !important;
+    line-height: 1.75 !important;
+  }
+
+  .article-rich-body p {
+    margin-bottom: 14px;
   }
 }

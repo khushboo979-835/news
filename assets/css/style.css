@@ -213,6 +213,63 @@ ul, ol {
   color: #ffffff;
 }
 
+/* Mobile Category Swipe Bar (Exact m.bhaskar.com) */
+.bhaskar-mobile-cat-bar {
+  display: none;
+  background: #ffffff;
+  border-bottom: 1px solid var(--gray-200);
+  position: sticky;
+  top: 56px;
+  z-index: 990;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+}
+
+.bhaskar-mobile-cat-scroll {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.bhaskar-mobile-cat-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.bhaskar-m-cat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--gray-700);
+  background: var(--gray-100);
+  border: 1px solid var(--gray-200);
+  text-decoration: none;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.bhaskar-m-cat-pill.active {
+  background: var(--theme-color);
+  color: #ffffff;
+  border-color: var(--theme-color);
+  box-shadow: 0 2px 8px rgba(229, 57, 53, 0.3);
+}
+
+.bhaskar-m-cat-pill i {
+  font-size: 0.85rem;
+}
+
+.bhaskar-m-cat-pill.active i {
+  color: #ffffff;
+}
+
 /* ==========================================================================
    2. Top Running Leaderboard Ad Slot (728x90 Compact Header Banner)
    ========================================================================== */

@@ -14,7 +14,7 @@ $topLeaderboardAd = get_top_leaderboard_ad($pdo);
 
 // Current Page
 $currentScript = basename($_SERVER['PHP_SELF']);
-$currentCatSlug = $_GET['cat'] ?? '';
+$currentCatSlug = $_GET['cat'] ?? ($_GET['slug'] ?? '');
 ?>
 <!DOCTYPE html>
 <html lang="hi" dir="ltr">
@@ -39,14 +39,14 @@ $currentCatSlug = $_GET['cat'] ?? '';
   <!-- Google Fonts: Mukta, Noto Sans Devanagari & Poppins -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@300;400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700;800;900&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@300;400;500;600;700;800;900&family=Noto+Sans+Devanagari:wght@400;500;600;700;800;900&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <!-- FontAwesome 6 Icons CDN -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
   <!-- Portal Stylesheets -->
-  <link rel="stylesheet" href="<?= ASSETS_URL ?>css/style.css?v=3.0">
-  <link rel="stylesheet" href="<?= ASSETS_URL ?>css/responsive.css?v=3.0">
+  <link rel="stylesheet" href="<?= ASSETS_URL ?>css/style.css?v=3.5">
+  <link rel="stylesheet" href="<?= ASSETS_URL ?>css/responsive.css?v=3.5">
 
   <!-- Dynamic Theme Color from Database Settings -->
   <style>
@@ -60,12 +60,12 @@ $currentCatSlug = $_GET['cat'] ?? '';
 <body>
 
   <!-- =========================================================================
-       1. Top Horizontal Utility Header (Dainik Bhaskar Standard)
+       1. Top Horizontal Utility Header (Exact Dainik Bhaskar Standard)
        ========================================================================= -->
   <header class="bhaskar-top-header">
     <div class="bhaskar-header-container">
       
-      <!-- Left: Mobile Menu Toggle & Brand Logo -->
+      <!-- Left: Mobile Drawer Button & Portal Brand Logo -->
       <div class="bhaskar-header-left">
         <button class="bhaskar-mobile-toggle" id="mobileMenuBtn" aria-label="Open Navigation">
           <i class="fa-solid fa-bars"></i>
@@ -82,35 +82,29 @@ $currentCatSlug = $_GET['cat'] ?? '';
         </a>
       </div>
 
-      <!-- Right: Strictly 4 Utility Items (Home, Search, E-Paper, Notification) -->
+      <!-- Right: Utility Items (Home, Search, Alerts, Admin) - Clean & Responsive -->
       <div class="bhaskar-header-utilities">
         
-        <!-- 1. Home (होम) -->
-        <a href="<?= BASE_URL ?>/index.php" class="bhaskar-util-btn <?= ($currentScript === 'index.php' && empty($currentCatSlug)) ? 'active' : '' ?>">
+        <!-- Home (होम) -->
+        <a href="<?= BASE_URL ?>/index.php" class="bhaskar-util-btn desktop-only <?= ($currentScript === 'index.php' && empty($currentCatSlug)) ? 'active' : '' ?>">
           <i class="fa-solid fa-house"></i>
           <span>होम</span>
         </a>
 
-        <!-- 2. Search (सर्च) -->
+        <!-- Search (सर्च) -->
         <button type="button" class="bhaskar-util-btn" id="searchModalTrigger" title="खबरें खोजें">
           <i class="fa-solid fa-magnifying-glass"></i>
-          <span>सर्च</span>
+          <span class="desktop-only">सर्च</span>
         </button>
 
-        <!-- 3. E-Paper (ई-पेपर) -->
-        <a href="<?= htmlspecialchars($siteSettings['epaper_link'] ?? '#') ?>" target="_blank" rel="noopener" class="bhaskar-util-btn epaper-highlight" title="ई-पेपर पढ़ें">
-          <i class="fa-regular fa-newspaper"></i>
-          <span>ई-पेपर</span>
-        </a>
-
-        <!-- 4. Notification (नोटिफिकेशन) -->
-        <button type="button" class="bhaskar-util-btn" id="notificationTrigger" title="ताज़ा अलर्ट्स">
+        <!-- Alerts (अलर्ट्स) -->
+        <button type="button" class="bhaskar-util-btn desktop-only" id="notificationTrigger" title="ताज़ा अलर्ट्स">
           <i class="fa-regular fa-bell"></i>
           <span>अलर्ट्स</span>
         </button>
 
-        <!-- Admin Profile Icon -->
-        <a href="<?= ADMIN_URL ?>/index.php" class="bhaskar-admin-btn" title="संपादक नियंत्रण कक्ष (Admin)">
+        <!-- Admin Control (संपादक लॉगिन) -->
+        <a href="<?= ADMIN_URL ?>/index.php" class="bhaskar-admin-btn" title="संपादक नियंत्रण कक्ष (Admin Panel)">
           <i class="fa-solid fa-user-shield"></i>
         </a>
 
@@ -118,6 +112,30 @@ $currentCatSlug = $_GET['cat'] ?? '';
 
     </div>
   </header>
+
+  <!-- Mobile Swipeable Horizontal Category Bar (Exact m.bhaskar.com style) -->
+  <nav class="bhaskar-mobile-cat-bar">
+    <div class="bhaskar-mobile-cat-scroll">
+      <?php 
+      $mobileCategories = [
+        ['name' => 'टॉप न्यूज़', 'slug' => 'top-news', 'icon' => 'fa-fire-flame-curved'],
+        ['name' => 'बिहार', 'slug' => 'bihar', 'icon' => 'fa-location-dot'],
+        ['name' => 'पटना', 'slug' => 'patna', 'icon' => 'fa-city'],
+        ['name' => 'राजनीति', 'slug' => 'political', 'icon' => 'fa-landmark'],
+        ['name' => 'क्राइम', 'slug' => 'crime', 'icon' => 'fa-shield-halved'],
+        ['name' => 'चुनाव', 'slug' => 'election', 'icon' => 'fa-check-to-slot'],
+        ['name' => 'अन्य', 'slug' => 'anya', 'icon' => 'fa-layer-group'],
+      ];
+      foreach ($mobileCategories as $mCat): 
+        $isActive = ($currentCatSlug === $mCat['slug']) || ($currentScript === 'index.php' && empty($currentCatSlug) && $mCat['slug'] === 'top-news');
+      ?>
+        <a href="<?= BASE_URL ?>/category.php?cat=<?= urlencode($mCat['slug']) ?>" class="bhaskar-m-cat-pill <?= $isActive ? 'active' : '' ?>">
+          <i class="fa-solid <?= $mCat['icon'] ?>"></i>
+          <span><?= htmlspecialchars($mCat['name']) ?></span>
+        </a>
+      <?php endforeach; ?>
+    </div>
+  </nav>
 
   <!-- =========================================================================
        2. Running Top Banner Ad Slot (Leaderboard 728x90 strictly sized)
