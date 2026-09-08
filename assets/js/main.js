@@ -2,6 +2,24 @@
  * Dainik Bhaskar Style Hindi News Portal - Main JavaScript
  */
 
+function openSearchModal() {
+  const modal = document.getElementById('searchModal');
+  if (modal) {
+    modal.classList.add('active');
+    modal.classList.add('show');
+    const input = modal.querySelector('input[type="text"]');
+    if (input) setTimeout(() => input.focus(), 100);
+  }
+}
+
+function closeSearchModal() {
+  const modal = document.getElementById('searchModal');
+  if (modal) {
+    modal.classList.remove('active');
+    modal.classList.remove('show');
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   // 1. Mobile Drawer Navigation Toggle
   const mobileMenuBtn = document.getElementById('mobileMenuBtn');
@@ -29,26 +47,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // 2. Search Modal
+  // 2. Search Modal Wire-up
   const searchTrigger = document.getElementById('searchModalTrigger');
-  const searchModal = document.getElementById('searchModal');
-  const searchClose = document.getElementById('searchModalClose');
-  const searchInput = document.getElementById('searchKeywordInput');
-
-  if (searchTrigger && searchModal) {
-    searchTrigger.addEventListener('click', () => {
-      searchModal.classList.add('active');
-      setTimeout(() => searchInput && searchInput.focus(), 100);
-    });
-
-    if (searchClose) {
-      searchClose.addEventListener('click', () => searchModal.classList.remove('active'));
-    }
-
-    searchModal.addEventListener('click', (e) => {
-      if (e.target === searchModal) searchModal.classList.remove('active');
+  if (searchTrigger) {
+    searchTrigger.addEventListener('click', (e) => {
+      e.preventDefault();
+      openSearchModal();
     });
   }
+
+  // Close modal on Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeSearchModal();
+    }
+  });
 
   // 3. Notification Modal
   const notifTrigger = document.getElementById('notificationTrigger');
@@ -56,14 +69,22 @@ document.addEventListener('DOMContentLoaded', () => {
   const notifClose = document.getElementById('notificationModalClose');
   const enableNotifBtn = document.getElementById('enableNotificationsBtn');
 
-  if (notifTrigger && notifModal) {
-    notifTrigger.addEventListener('click', () => notifModal.classList.add('active'));
-    if (notifClose) {
-      notifClose.addEventListener('click', () => notifModal.classList.remove('active'));
-    }
-    notifModal.addEventListener('click', (e) => {
-      if (e.target === notifModal) notifModal.classList.remove('active');
+  if (notifTrigger) {
+    notifTrigger.addEventListener('click', () => {
+      if (notifModal) {
+        notifModal.classList.add('active');
+      } else if ("Notification" in window) {
+        Notification.requestPermission().then(perm => {
+          if (perm === "granted") {
+            alert("दैनिक खबर अलर्ट्स सक्रिय हो गए हैं!");
+          }
+        });
+      }
     });
+  }
+
+  if (notifClose && notifModal) {
+    notifClose.addEventListener('click', () => notifModal.classList.remove('active'));
   }
 
   if (enableNotifBtn) {
@@ -73,11 +94,11 @@ document.addEventListener('DOMContentLoaded', () => {
           if (permission === "granted") {
             alert("दैनिक खबर नोटिफिकेशन्स सफलतापूर्वक सक्रिय हो गए हैं!");
           }
-          notifModal.classList.remove('active');
+          if (notifModal) notifModal.classList.remove('active');
         });
       } else {
         alert("आपका ब्राउज़र नोटिफिकेशन्स सपोर्ट नहीं करता।");
-        notifModal.classList.remove('active');
+        if (notifModal) notifModal.classList.remove('active');
       }
     });
   }
@@ -102,50 +123,43 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (videoModalClose) {
       videoModalClose.addEventListener('click', () => {
-        videoModal.classList.remove('active');
         videoIframe.src = '';
+        videoModal.classList.remove('active');
       });
     }
 
     videoModal.addEventListener('click', (e) => {
       if (e.target === videoModal) {
-        videoModal.classList.remove('active');
         videoIframe.src = '';
+        videoModal.classList.remove('active');
       }
     });
   }
 
-  // 5. Copy Link Action
+  // 5. One-Click Copy Link
   const copyButtons = document.querySelectorAll('.js-copy-link');
   copyButtons.forEach(btn => {
     btn.addEventListener('click', function () {
       const url = this.getAttribute('data-url') || window.location.href;
       navigator.clipboard.writeText(url).then(() => {
-        alert("लिंक कॉपी हो गया!");
-      }).catch(() => {
-        const tempInput = document.createElement("input");
-        tempInput.value = url;
-        document.body.appendChild(tempInput);
-        tempInput.select();
-        document.execCommand("copy");
-        document.body.removeChild(tempInput);
-        alert("लिंक कॉपी हो गया!");
+        const origHtml = this.innerHTML;
+        this.innerHTML = '<i class="fa-solid fa-check" style="color:#22c55e;"></i>';
+        setTimeout(() => {
+          this.innerHTML = origHtml;
+        }, 2000);
       });
     });
   });
 
-  // 6. Back To Top
-  const backToTopBtn = document.getElementById('backToTopBtn');
+  // 6. Back To Top Button visibility
+  const backToTopBtn = document.getElementById('backToTop');
   if (backToTopBtn) {
     window.addEventListener('scroll', () => {
       if (window.scrollY > 400) {
-        backToTopBtn.classList.add('show');
+        backToTopBtn.style.display = 'flex';
       } else {
-        backToTopBtn.classList.remove('show');
+        backToTopBtn.style.display = 'none';
       }
-    });
-    backToTopBtn.addEventListener('click', () => {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
     });
   }
 });
