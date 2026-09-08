@@ -210,11 +210,30 @@ function get_top_leaderboard_ad($pdo_conn = null) {
 }
 
 /**
+ * Ad Image URL Resolver
+ */
+function get_ad_image_url($image_url) {
+    if (empty($image_url)) {
+        return ASSETS_URL . 'images/placeholder.svg';
+    }
+    if (strpos($image_url, 'http://') === 0 || strpos($image_url, 'https://') === 0) {
+        return $image_url;
+    }
+    if (file_exists(UPLOAD_DIR . $image_url)) {
+        return UPLOAD_URL . $image_url;
+    }
+    if (file_exists(__DIR__ . '/../assets/images/' . $image_url)) {
+        return ASSETS_URL . 'images/' . $image_url;
+    }
+    return ASSETS_URL . 'images/placeholder.svg';
+}
+
+/**
  * Media URL Resolver
  */
 function get_media_url($url, $media_type = 'image') {
     if (empty($url)) {
-        return SITE_URL . '/assets/images/placeholder.svg';
+        return ASSETS_URL . 'images/placeholder.svg';
     }
     if (strpos($url, 'http://') === 0 || strpos($url, 'https://') === 0) {
         if ($media_type === 'video_embed') {
@@ -222,12 +241,13 @@ function get_media_url($url, $media_type = 'image') {
         }
         return $url;
     }
-    // Check if uploaded file exists
     if (file_exists(UPLOAD_DIR . $url)) {
         return UPLOAD_URL . $url;
     }
-    // Check assets/images
-    return SITE_URL . '/assets/images/' . $url;
+    if (file_exists(__DIR__ . '/../assets/images/' . $url)) {
+        return ASSETS_URL . 'images/' . $url;
+    }
+    return ASSETS_URL . 'images/placeholder.svg';
 }
 
 /**
@@ -249,7 +269,7 @@ function get_youtube_embed_url($url) {
 
 function get_youtube_thumbnail($url) {
     $id = get_youtube_video_id($url);
-    return $id ? "https://img.youtube.com/vi/{$id}/hqdefault.jpg" : SITE_URL . '/assets/images/placeholder.svg';
+    return $id ? "https://img.youtube.com/vi/{$id}/hqdefault.jpg" : ASSETS_URL . 'images/placeholder.svg';
 }
 
 /**
