@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 250" width="100%" height="250">
+  <defs>
+    <linearGradient id="sideGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+  </defs>
+  <rect width="300" height="250" rx="10" fill="url(#sideGrad)" stroke="#334155" stroke-width="1.5"/>
+  
+  <rect x="20" y="20" width="46" height="46" rx="8" fill="#e53935"/>
+  <text x="43" y="52" font-family="'Mukta', sans-serif" font-size="22" font-weight="900" fill="#ffffff" text-anchor="middle">ख़बर</text>
+  
+  <text x="78" y="42" font-family="'Mukta', sans-serif" font-size="16" font-weight="800" fill="#ffffff">विशेष विज्ञापन</text>
+  <text x="78" y="58" font-family="'Mukta', sans-serif" font-size="11" font-weight="600" fill="#94a3b8">300x250 Banner Slot</text>
+  
+  <text x="150" y="115" font-family="'Mukta', sans-serif" font-size="18" font-weight="800" fill="#f8fafc" text-anchor="middle">डिजिटल मीडिया प्रमोशन</text>
+  <text x="150" y="145" font-family="'Mukta', sans-serif" font-size="13" font-weight="500" fill="#cbd5e1" text-anchor="middle">वेबसाइट एवं ऐप पर विज्ञापन लगाएं</text>
+  <text x="150" y="168" font-family="'Mukta', sans-serif" font-size="13" font-weight="700" fill="#38bdf8" text-anchor="middle">Call: +91 8709318992</text>
+  
+  <rect x="50" y="190" width="200" height="38" rx="19" fill="#e53935"/>
+  <text x="150" y="214" font-family="'Mukta', sans-serif" font-size="14" font-weight="800" fill="#ffffff" text-anchor="middle">Contact Coral Web Tech →</text>
+</svg>

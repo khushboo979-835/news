@@ -36,17 +36,17 @@ $currentCatSlug = $_GET['cat'] ?? '';
   <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="<?= ASSETS_URL ?>images/logo.svg">
 
-  <!-- Google Fonts: Noto Sans Devanagari & Poppins -->
+  <!-- Google Fonts: Mukta, Noto Sans Devanagari & Poppins -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700;800;900&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@300;400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700;800;900&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <!-- FontAwesome 6 Icons CDN -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
   <!-- Portal Stylesheets -->
-  <link rel="stylesheet" href="<?= ASSETS_URL ?>css/style.css?v=2.0">
-  <link rel="stylesheet" href="<?= ASSETS_URL ?>css/responsive.css?v=2.0">
+  <link rel="stylesheet" href="<?= ASSETS_URL ?>css/style.css?v=2.5">
+  <link rel="stylesheet" href="<?= ASSETS_URL ?>css/responsive.css?v=2.5">
 
   <!-- Dynamic Theme Color from Database Settings -->
   <style>
@@ -83,37 +83,34 @@ $currentCatSlug = $_GET['cat'] ?? '';
       </div>
 
       <!-- Right: Strictly 4 Utility Items (Home, Search, E-Paper, Notification) -->
-      <div class="bhaskar-header-right">
+      <div class="bhaskar-header-utilities">
         
         <!-- 1. Home (होम) -->
-        <a href="<?= BASE_URL ?>/index.php" class="bhaskar-utility-item <?= ($currentScript === 'index.php' && empty($currentCatSlug)) ? 'active' : '' ?>">
-          <span class="bhaskar-utility-icon"><i class="fa-solid fa-house"></i></span>
-          <span class="bhaskar-utility-label">होम</span>
+        <a href="<?= BASE_URL ?>/index.php" class="bhaskar-util-btn <?= ($currentScript === 'index.php' && empty($currentCatSlug)) ? 'active' : '' ?>">
+          <i class="fa-solid fa-house"></i>
+          <span>होम</span>
         </a>
 
         <!-- 2. Search (सर्च) -->
-        <button type="button" class="bhaskar-utility-item" id="searchModalTrigger" title="खबरें खोजें">
-          <span class="bhaskar-utility-icon"><i class="fa-solid fa-magnifying-glass"></i></span>
-          <span class="bhaskar-utility-label">सर्च</span>
+        <button type="button" class="bhaskar-util-btn" id="searchModalTrigger" title="खबरें खोजें">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <span>सर्च</span>
         </button>
 
         <!-- 3. E-Paper (ई-पेपर) -->
-        <a href="<?= htmlspecialchars($siteSettings['epaper_link'] ?? '#') ?>" target="_blank" rel="noopener" class="bhaskar-utility-item" title="ई-पेपर पढ़ें">
-          <span class="bhaskar-utility-icon"><i class="fa-regular fa-newspaper"></i></span>
-          <span class="bhaskar-utility-label">ई-पेपर</span>
+        <a href="<?= htmlspecialchars($siteSettings['epaper_link'] ?? '#') ?>" target="_blank" rel="noopener" class="bhaskar-util-btn epaper-highlight" title="ई-पेपर पढ़ें">
+          <i class="fa-regular fa-newspaper"></i>
+          <span>ई-पेपर</span>
         </a>
 
         <!-- 4. Notification (नोटिफिकेशन) -->
-        <button type="button" class="bhaskar-utility-item" id="notificationTrigger" title="ताज़ा अलर्ट्स">
-          <span class="bhaskar-utility-icon" style="position: relative;">
-            <i class="fa-regular fa-bell"></i>
-            <span class="bhaskar-bell-dot"></span>
-          </span>
-          <span class="bhaskar-utility-label">अलर्ट्स</span>
+        <button type="button" class="bhaskar-util-btn" id="notificationTrigger" title="ताज़ा अलर्ट्स">
+          <i class="fa-regular fa-bell"></i>
+          <span>अलर्ट्स</span>
         </button>
 
         <!-- Admin Profile Icon -->
-        <a href="<?= ADMIN_URL ?>/index.php" class="bhaskar-user-icon" title="एडमिन पोर्टल">
+        <a href="<?= ADMIN_URL ?>/index.php" class="bhaskar-admin-btn" title="संपादक नियंत्रण कक्ष (Admin)">
           <i class="fa-solid fa-user-shield"></i>
         </a>
 
@@ -123,7 +120,7 @@ $currentCatSlug = $_GET['cat'] ?? '';
   </header>
 
   <!-- =========================================================================
-       2. Running Top Banner Ad Slot (Leaderboard 728x90)
+       2. Running Top Banner Ad Slot (Leaderboard 728x90 strictly sized)
        ========================================================================= -->
   <div class="bhaskar-top-ad-wrapper">
     <div class="container">
@@ -134,27 +131,9 @@ $currentCatSlug = $_GET['cat'] ?? '';
           </a>
         <?php else: ?>
           <a href="https://coralwebtechnology.com" target="_blank" rel="noopener">
-            <img src="<?= ASSETS_URL ?>images/placeholder.svg" alt="Advertisement" class="bhaskar-running-ad-img">
+            <img src="<?= ASSETS_URL ?>images/ad_header.svg" alt="Coral Web Technology" class="bhaskar-running-ad-img">
           </a>
         <?php endif; ?>
-      </div>
-    </div>
-  </div>
-
-  <!-- Search Modal Overlay -->
-  <div class="bhaskar-modal" id="searchModal">
-    <div class="bhaskar-modal-dialog">
-      <button class="bhaskar-modal-close" id="searchModalClose">&times;</button>
-      <div class="bhaskar-modal-body">
-        <h3 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 6px; color: var(--gray-900);">समाचार खोजें (Search News)</h3>
-        <p style="font-size: 0.88rem; color: var(--gray-500); margin-bottom: 18px;">ताज़ा खबरें, राजनीति, बिहार या अपनी पसंद का विषय खोजें...</p>
-        
-        <form action="<?= BASE_URL ?>/search.php" method="GET" class="bhaskar-search-form">
-          <input type="text" name="q" id="searchKeywordInput" class="bhaskar-search-input" placeholder="कीवर्ड दर्ज करें (उदा. पुतिन, बजट, पटना मेट्रो)..." required autocomplete="off">
-          <button type="submit" class="bhaskar-search-btn">
-            <i class="fa-solid fa-magnifying-glass"></i> खोजें
-          </button>
-        </form>
       </div>
     </div>
   </div>
