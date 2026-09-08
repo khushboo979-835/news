@@ -18,10 +18,36 @@
         // Toggle mobile sidebar
         const toggleBtn = document.getElementById('adminSidebarToggle');
         const sidebar = document.getElementById('adminSidebar');
-        if (toggleBtn && sidebar) {
-            toggleBtn.addEventListener('click', () => {
-                sidebar.classList.toggle('show');
+        const backdrop = document.getElementById('adminSidebarBackdrop');
+        const closeBtn = document.getElementById('adminSidebarClose');
+
+        function openAdminSidebar() {
+            if (sidebar) sidebar.classList.add('show');
+            if (backdrop) backdrop.classList.add('show');
+        }
+
+        function closeAdminSidebar() {
+            if (sidebar) sidebar.classList.remove('show');
+            if (backdrop) backdrop.classList.remove('show');
+        }
+
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (sidebar && sidebar.classList.contains('show')) {
+                    closeAdminSidebar();
+                } else {
+                    openAdminSidebar();
+                }
             });
+        }
+
+        if (backdrop) {
+            backdrop.addEventListener('click', closeAdminSidebar);
+        }
+
+        if (closeBtn) {
+            closeBtn.addEventListener('click', closeAdminSidebar);
         }
 
         // Initialize Summernote Rich Text Editor

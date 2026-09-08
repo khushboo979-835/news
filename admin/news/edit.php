@@ -139,7 +139,7 @@ require_once __DIR__ . '/../includes/header.php';
 <?php endif; ?>
 
 <form method="POST" action="" enctype="multipart/form-data">
-    <div style="display: grid; grid-template-columns: 2.2fr 1fr; gap: 24px;">
+    <div class="admin-grid-2col">
         
         <!-- Left Col: Main Form -->
         <div>

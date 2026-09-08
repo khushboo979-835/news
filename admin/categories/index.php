@@ -66,7 +66,7 @@ require_once __DIR__ . '/../includes/header.php';
     </div>
 <?php endif; ?>
 
-<div style="display: grid; grid-template-columns: 1.8fr 1.2fr; gap: 24px;">
+<div class="admin-grid-2col-even">
     
     <!-- Category List Table -->
     <div class="card">

@@ -38,7 +38,7 @@ require_once __DIR__ . '/includes/header.php';
         <h1><i class="fa-solid fa-chart-pie" style="color:var(--admin-theme);"></i> संपादकीय डैशबोर्ड (Dashboard)</h1>
         <p style="color:#6b7280; margin-top:4px;">दैनिक खबर पोर्टल के लाइव आंकड़े और त्वरित नियंत्रण</p>
     </div>
-    <div style="display:flex; gap:10px;">
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
         <a href="<?php echo SITE_URL; ?>/admin/news/add.php" class="btn btn-primary">
             <i class="fa-solid fa-plus"></i> नई खबर प्रकाशित करें
         </a>
@@ -49,7 +49,7 @@ require_once __DIR__ . '/includes/header.php';
 </div>
 
 <!-- Stats Grid -->
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 28px;">
+<div class="admin-stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px;">
     <!-- Stat 1 -->
     <div class="card" style="display: flex; align-items: center; gap: 18px; margin-bottom: 0; border-left: 4px solid var(--admin-theme);">
         <div style="width: 52px; height: 52px; background: rgba(229, 57, 53, 0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--admin-theme); font-size: 1.5rem;">

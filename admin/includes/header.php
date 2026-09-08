@@ -363,27 +363,102 @@ $current_dir = basename(dirname($_SERVER['PHP_SELF']));
         @media (max-width: 991px) {
             .admin-sidebar {
                 transform: translateX(-100%);
+                box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             }
             .admin-sidebar.show {
                 transform: translateX(0);
             }
-            .admin-main {
-                margin-left: 0;
+            .admin-sidebar-backdrop {
+                display: none;
+                position: fixed;
+                inset: 0;
+                background: rgba(0,0,0,0.5);
+                z-index: 999;
+                backdrop-filter: blur(2px);
             }
-            .mobile-menu-toggle {
+            .admin-sidebar-backdrop.show {
                 display: block;
             }
+            .admin-main {
+                margin-left: 0;
+                width: 100%;
+                max-width: 100%;
+                overflow-x: hidden;
+            }
+            .mobile-menu-toggle {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 38px;
+                height: 38px;
+                background: #f3f4f6;
+                border-radius: 6px;
+            }
+            .admin-body {
+                padding: 16px 12px;
+            }
+            .admin-topbar {
+                padding: 10px 14px;
+            }
+            .topbar-right .view-site-btn span,
+            .topbar-right .logout-btn span {
+                display: none;
+            }
+            .admin-grid-2col {
+                grid-template-columns: 1fr !important;
+                gap: 16px !important;
+            }
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+            .page-header h1 {
+                font-size: 1.3rem;
+            }
+        }
+
+        .admin-grid-2col {
+            display: grid;
+            grid-template-columns: 2.2fr 1fr;
+            gap: 24px;
+        }
+
+        .admin-grid-2col-even {
+            display: grid;
+            grid-template-columns: 1.8fr 1.2fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 991px) {
+            .admin-grid-2col,
+            .admin-grid-2col-even {
+                grid-template-columns: 1fr !important;
+                gap: 16px !important;
+            }
+        }
+
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
     </style>
 </head>
 <body>
 
+    <!-- Backdrop for mobile drawer -->
+    <div class="admin-sidebar-backdrop" id="adminSidebarBackdrop"></div>
+
     <!-- Admin Sidebar Navigation -->
     <aside class="admin-sidebar" id="adminSidebar">
-        <a href="<?php echo SITE_URL; ?>/admin/" class="sidebar-brand">
-            <div class="brand-icon"><i class="fa-solid fa-newspaper"></i></div>
-            <div class="brand-title">संपादक पोर्टल</div>
-        </a>
+        <div style="display:flex; align-items:center; justify-content:space-between; padding-right:12px;">
+            <a href="<?php echo SITE_URL; ?>/admin/" class="sidebar-brand" style="flex:1; border-bottom:none;">
+                <div class="brand-icon"><i class="fa-solid fa-newspaper"></i></div>
+                <div class="brand-title">संपादक पोर्टल</div>
+            </a>
+            <button type="button" id="adminSidebarClose" style="display:none; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; padding:6px 10px;" class="mobile-close-btn">&times;</button>
+        </div>
 
         <ul class="sidebar-menu">
             <li class="menu-label">मुख्य मेन्यू</li>
@@ -444,16 +519,16 @@ $current_dir = basename(dirname($_SERVER['PHP_SELF']));
                 <button class="mobile-menu-toggle" id="adminSidebarToggle" aria-label="Toggle Navigation">
                     <i class="fa-solid fa-bars"></i>
                 </button>
-                <h3 style="font-size:1.1rem; font-weight:600; color:#4b5563;">
-                    <?php echo htmlspecialchars($site_settings['site_title'] ?? 'दैनिक खबर'); ?> - नियंत्रण कक्ष
+                <h3 style="font-size:1.05rem; font-weight:700; color:#1f2937;">
+                    <?php echo htmlspecialchars($site_settings['site_title'] ?? 'दैनिक खबर'); ?> <span style="font-weight:400; color:#6b7280; font-size:0.9rem;">- नियंत्रण कक्ष</span>
                 </h3>
             </div>
             <div class="topbar-right">
                 <a href="<?php echo SITE_URL; ?>/" target="_blank" class="view-site-btn">
-                    <i class="fa-solid fa-globe"></i> लाइव वेबसाइट देखें
+                    <i class="fa-solid fa-globe"></i> <span>लाइव वेबसाइट</span>
                 </a>
                 <a href="<?php echo SITE_URL; ?>/admin/logout.php" class="logout-btn">
-                    <i class="fa-solid fa-right-from-bracket"></i> लॉगआउट
+                    <i class="fa-solid fa-right-from-bracket"></i> <span>लॉगआउट</span>
                 </a>
             </div>
         </header>
