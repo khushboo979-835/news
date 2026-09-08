@@ -45,8 +45,8 @@ $currentCatSlug = $_GET['cat'] ?? '';
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
   <!-- Portal Stylesheets -->
-  <link rel="stylesheet" href="<?= ASSETS_URL ?>css/style.css?v=2.5">
-  <link rel="stylesheet" href="<?= ASSETS_URL ?>css/responsive.css?v=2.5">
+  <link rel="stylesheet" href="<?= ASSETS_URL ?>css/style.css?v=3.0">
+  <link rel="stylesheet" href="<?= ASSETS_URL ?>css/responsive.css?v=3.0">
 
   <!-- Dynamic Theme Color from Database Settings -->
   <style>
@@ -134,23 +134,6 @@ $currentCatSlug = $_GET['cat'] ?? '';
             <img src="<?= ASSETS_URL ?>images/ad_header.svg" alt="Coral Web Technology" class="bhaskar-running-ad-img">
           </a>
         <?php endif; ?>
-      </div>
-    </div>
-  </div>
-
-  <!-- Notification Alert Modal -->
-  <div class="bhaskar-modal" id="notificationModal">
-    <div class="bhaskar-modal-dialog" style="max-width: 480px; text-align: center;">
-      <button class="bhaskar-modal-close" id="notificationModalClose">&times;</button>
-      <div class="bhaskar-modal-body" style="padding: 30px 20px;">
-        <div style="width: 60px; height: 60px; border-radius: 50%; background: var(--theme-light); color: var(--theme-color); font-size: 1.8rem; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
-          <i class="fa-solid fa-bell"></i>
-        </div>
-        <h3 style="font-size: 1.3rem; font-weight: 800; color: var(--gray-900);">दैनिक खबर नोटिफिकेशन्स</h3>
-        <p style="font-size: 0.9rem; color: var(--gray-600); margin: 10px 0 20px;">देश, बिहार, राजनीति और ब्रेकिंग न्यूज़ के सबसे तेज़ अलर्ट्स सीधे अपने फ़ोन/कंप्यूटर पर पाएं।</p>
-        <button type="button" class="btn btn-primary" id="enableNotificationsBtn" style="padding: 10px 24px; border-radius: 999px; font-weight: 700; width: 100%;">
-          <i class="fa-solid fa-check"></i> नोटिफिकेशन चालू करें (Allow)
-        </button>
       </div>
     </div>
   </div>
