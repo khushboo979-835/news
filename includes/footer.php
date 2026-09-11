@@ -40,10 +40,6 @@ $categories = get_all_categories();
             <div class="footer-col brand-col">
                 <div class="footer-logo">
                     <img src="<?php echo SITE_URL; ?>/assets/images/logo.png" alt="<?php echo htmlspecialchars($settings['site_title'] ?? 'दैनिक खबर'); ?>" class="footer-brand-logo-img">
-                    <div class="footer-brand-text">
-                        <span class="footer-brand-title"><?php echo htmlspecialchars($settings['site_title'] ?? 'दैनिक खबर'); ?></span>
-                        <span class="footer-brand-tagline">हर खबर सबसे पहले</span>
-                    </div>
                 </div>
                 <p class="brand-desc">
                     <?php echo htmlspecialchars($settings['tagline'] ?? 'सच्ची और निष्पक्ष पत्रकारिता का सशक्त डिजिटल मंच। देश, विदेश, राज्य और शहर की हर बड़ी खबर सबसे पहले।'); ?>
