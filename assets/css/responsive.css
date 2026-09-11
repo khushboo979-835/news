@@ -213,14 +213,15 @@ html, body {
     padding: 0 10px;
   }
 
-  .bhaskar-logo-sun {
-    width: 34px;
-    height: 34px;
-    font-size: 1.15rem;
+  .bhaskar-brand-logo-img {
+    height: 38px;
+    max-height: 38px;
+    width: auto;
   }
 
-  .bhaskar-main-name {
-    font-size: 1.3rem;
+  .footer-brand-logo-img {
+    height: 44px;
+    max-height: 44px;
   }
 
   .bhaskar-sub-domain {

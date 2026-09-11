@@ -42,11 +42,11 @@ require_once __DIR__ . '/includes/header.php';
               <i class="fa-solid fa-arrow-trend-up"></i> ट्रेंडिंग
             </span>
             <div class="bhaskar-trend-pills">
-              <a href="<?= BASE_URL ?>/search.php?q=पुतिन" class="bhaskar-trend-pill">पुतिन भारत यात्रा &gt;</a>
-              <a href="<?= BASE_URL ?>/category.php?cat=bihar" class="bhaskar-trend-pill">बिहार एक्सप्रेसवे &gt;</a>
+              <a href="<?= BASE_URL ?>/category.php?cat=bihar" class="bhaskar-trend-pill">दारोगा ट्विटर आंदोलन &gt;</a>
               <a href="<?= BASE_URL ?>/category.php?cat=patna" class="bhaskar-trend-pill">पटना गंगा जलस्तर &gt;</a>
-              <a href="<?= BASE_URL ?>/category.php?cat=crime" class="bhaskar-trend-pill">सचिवालय बाइक चोरी &gt;</a>
               <a href="<?= BASE_URL ?>/category.php?cat=patna" class="bhaskar-trend-pill">हनुमान चालीसा &gt;</a>
+              <a href="<?= BASE_URL ?>/category.php?cat=crime" class="bhaskar-trend-pill">सचिवालय बाइक चोरी &gt;</a>
+              <a href="<?= BASE_URL ?>/category.php?cat=crime" class="bhaskar-trend-pill">कोतवाली सट्टा रेड &gt;</a>
             </div>
           </div>
         </div>

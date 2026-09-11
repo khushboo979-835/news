@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * Admin / Reporter Registration (Sign Up)
  */
@@ -241,9 +241,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <div class="login-card">
         <div class="login-header">
-            <div class="brand-badge">
-                <i class="fa-solid fa-sun"></i>
-            </div>
+            <img src="<?php echo SITE_URL; ?>/assets/images/logo.png" alt="Logo" style="height:55px; width:auto; object-fit:contain; margin-bottom:12px; background:#fff; padding:4px 10px; border-radius:10px;">
             <h2><?php echo htmlspecialchars($settings['site_title'] ?? 'दैनिक खबर'); ?></h2>
             <p>संपादक / रिपोर्टर पंजीकरण (Sign Up)</p>
         </div>

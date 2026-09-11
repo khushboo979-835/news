@@ -65,19 +65,13 @@ $currentCatSlug = $_GET['cat'] ?? ($_GET['slug'] ?? '');
   <header class="bhaskar-top-header">
     <div class="bhaskar-header-container">
       
-      <!-- Left: Brand Logo (Sun + दैनिक खबर) -->
+      <!-- Left: Brand Logo (User Provided Dainik Khabar Logo) -->
       <div class="bhaskar-header-left">
         <button class="bhaskar-mobile-toggle" id="mobileDrawerOpen" aria-label="Open menu">
           <i class="fa-solid fa-bars"></i>
         </button>
         <a href="<?= BASE_URL ?>/index.php" class="bhaskar-brand-logo">
-          <div class="bhaskar-logo-sun">
-            <i class="fa-solid fa-sun"></i>
-          </div>
-          <div class="bhaskar-logo-text">
-            <span class="bhaskar-main-name"><?= htmlspecialchars($siteSettings['site_title']) ?></span>
-            <span class="bhaskar-sub-domain">DAINIKKHABR.COM</span>
-          </div>
+          <img src="<?= ASSETS_URL ?>images/logo.png" alt="<?= htmlspecialchars($siteSettings['site_title'] ?? 'दैनिक खबर') ?>" class="bhaskar-brand-logo-img">
         </a>
       </div>
 

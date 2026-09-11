@@ -156,7 +156,7 @@ function get_site_settings($pdo_conn = null) {
             'site_title'  => 'दैनिक खबर',
             'tagline'     => 'सच्ची और निष्पक्ष पत्रकारिता का सशक्त डिजिटल मंच',
             'theme_color' => '#e53935',
-            'logo_url'    => 'assets/images/logo.svg',
+            'logo_url'    => 'assets/images/logo.png',
             'epaper_link' => 'https://epaper.dainikkhabr.com'
         ];
         
