@@ -233,7 +233,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <div class="login-card">
         <div class="login-header">
-            <img src="<?php echo SITE_URL; ?>/assets/images/logo.png" alt="Logo" style="height:55px; width:auto; object-fit:contain; margin-bottom:12px; background:#fff; padding:4px 10px; border-radius:10px;">
+            <img src="<?php echo SITE_URL; ?>/assets/images/logo.png" alt="Logo" style="height:70px; width:auto; object-fit:contain; margin-bottom:12px; background:#fff; padding:6px 14px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.08);">
             <h2><?php echo htmlspecialchars($settings['site_title'] ?? 'दैनिक खबर'); ?></h2>
             <p>संपादक नियंत्रण कक्ष (Admin Login)</p>
         </div>

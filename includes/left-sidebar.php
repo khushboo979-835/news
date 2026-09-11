@@ -23,10 +23,10 @@ $bhaskarCategories = [
 <!-- Sticky Left Sidebar -->
 <aside class="bhaskar-left-nav" id="bhaskarLeftNav">
   <div class="bhaskar-nav-header-mobile">
-    <div class="bhaskar-nav-title">
-      <i class="fa-solid fa-bars-staggered"></i>
-      <span>श्रेणियां (Categories)</span>
-    </div>
+    <a href="<?= BASE_URL ?>/index.php" class="bhaskar-drawer-brand" title="दैनिक खबर">
+      <img src="<?= ASSETS_URL ?>images/logo.png" alt="दैनिक खबर" class="bhaskar-drawer-logo-img">
+      <span class="bhaskar-drawer-title">दैनिक खबर</span>
+    </a>
     <button class="bhaskar-nav-close" id="mobileDrawerClose" aria-label="Close menu">&times;</button>
   </div>
 

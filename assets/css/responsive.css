@@ -59,6 +59,23 @@ html, body {
     display: block !important;
   }
 
+  .bhaskar-top-header {
+    height: 66px;
+  }
+
+  .bhaskar-brand-logo-img {
+    height: 52px;
+    max-height: 52px;
+  }
+
+  .bhaskar-brand-title {
+    font-size: 1.55rem;
+  }
+
+  .bhaskar-brand-tagline {
+    font-size: 0.62rem;
+  }
+
   /* Single Column Stack */
   .bhaskar-grid-3col {
     display: flex !important;
@@ -206,27 +223,57 @@ html, body {
   }
 
   .bhaskar-top-header {
-    height: 56px;
+    height: 62px;
   }
 
   .bhaskar-header-container {
     padding: 0 10px;
   }
 
+  .bhaskar-header-left {
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .bhaskar-brand-logo {
+    gap: 8px;
+  }
+
   .bhaskar-brand-logo-img {
-    height: 38px;
-    max-height: 38px;
+    height: 46px;
+    max-height: 46px;
     width: auto;
+    object-fit: contain;
+  }
+
+  .bhaskar-brand-title {
+    font-size: 1.28rem;
+    font-weight: 900;
+    line-height: 1.05;
+  }
+
+  .bhaskar-brand-tagline {
+    font-size: 0.52rem;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    margin-top: 1px;
+  }
+
+  .footer-logo {
+    gap: 10px;
   }
 
   .footer-brand-logo-img {
-    height: 44px;
-    max-height: 44px;
+    height: 50px;
+    max-height: 50px;
   }
 
-  .bhaskar-sub-domain {
-    font-size: 0.55rem;
-    letter-spacing: 0.5px;
+  .footer-brand-title {
+    font-size: 1.35rem;
+  }
+
+  .footer-brand-tagline {
+    font-size: 0.65rem;
   }
 
   /* Category Swipe Bar */

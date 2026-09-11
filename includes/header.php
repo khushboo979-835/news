@@ -30,11 +30,11 @@ $currentCatSlug = $_GET['cat'] ?? ($_GET['slug'] ?? '');
   <!-- Open Graph -->
   <meta property="og:title" content="<?= isset($pageTitle) ? htmlspecialchars($pageTitle) : htmlspecialchars($siteSettings['site_title']) ?>">
   <meta property="og:description" content="<?= isset($pageDescription) ? htmlspecialchars($pageDescription) : htmlspecialchars($siteSettings['tagline']) ?>">
-  <meta property="og:image" content="<?= isset($pageOgImage) ? htmlspecialchars($pageOgImage) : ASSETS_URL . 'images/logo.svg' ?>">
+  <meta property="og:image" content="<?= isset($pageOgImage) ? htmlspecialchars($pageOgImage) : ASSETS_URL . 'images/logo.png' ?>">
   <meta property="og:type" content="website">
 
   <!-- Favicon -->
-  <link rel="icon" type="image/svg+xml" href="<?= ASSETS_URL ?>images/logo.svg">
+  <link rel="icon" type="image/png" href="<?= ASSETS_URL ?>images/logo.png">
 
   <!-- Google Fonts: Mukta, Noto Sans Devanagari & Poppins -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -65,13 +65,17 @@ $currentCatSlug = $_GET['cat'] ?? ($_GET['slug'] ?? '');
   <header class="bhaskar-top-header">
     <div class="bhaskar-header-container">
       
-      <!-- Left: Brand Logo (User Provided Dainik Khabar Logo) -->
+      <!-- Left: Brand Logo (Prominent 3D Emblem + Dainik Khabar Brand Name) -->
       <div class="bhaskar-header-left">
         <button class="bhaskar-mobile-toggle" id="mobileDrawerOpen" aria-label="Open menu">
           <i class="fa-solid fa-bars"></i>
         </button>
-        <a href="<?= BASE_URL ?>/index.php" class="bhaskar-brand-logo">
+        <a href="<?= BASE_URL ?>/index.php" class="bhaskar-brand-logo" title="<?= htmlspecialchars($siteSettings['site_title'] ?? 'दैनिक खबर') ?>">
           <img src="<?= ASSETS_URL ?>images/logo.png" alt="<?= htmlspecialchars($siteSettings['site_title'] ?? 'दैनिक खबर') ?>" class="bhaskar-brand-logo-img">
+          <div class="bhaskar-brand-text">
+            <span class="bhaskar-brand-title"><?= htmlspecialchars($siteSettings['site_title'] ?? 'दैनिक खबर') ?></span>
+            <span class="bhaskar-brand-tagline">हर खबर सबसे पहले</span>
+          </div>
         </a>
       </div>
 

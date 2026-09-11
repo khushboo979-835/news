@@ -453,9 +453,9 @@ $current_dir = basename(dirname($_SERVER['PHP_SELF']));
     <!-- Admin Sidebar Navigation -->
     <aside class="admin-sidebar" id="adminSidebar">
         <div style="display:flex; align-items:center; justify-content:space-between; padding-right:12px;">
-            <a href="<?php echo SITE_URL; ?>/admin/" class="sidebar-brand" style="flex:1; border-bottom:none; display:flex; align-items:center; gap:10px;">
-                <img src="<?php echo SITE_URL; ?>/assets/images/logo.png" alt="Logo" style="height:38px; width:auto; object-fit:contain; border-radius:6px; background:#fff; padding:2px;">
-                <div class="brand-title" style="font-size:1.15rem; font-weight:800; color:#fff;">संपादक पोर्टल</div>
+            <a href="<?php echo SITE_URL; ?>/admin/" class="sidebar-brand" style="flex:1; border-bottom:none; display:flex; align-items:center; gap:12px;">
+                <img src="<?php echo SITE_URL; ?>/assets/images/logo.png" alt="Logo" style="height:46px; width:auto; object-fit:contain; border-radius:8px; background:#fff; padding:3px 6px; box-shadow:0 2px 6px rgba(0,0,0,0.2);">
+                <div class="brand-title" style="font-size:1.18rem; font-weight:800; color:#fff;">संपादक पोर्टल</div>
             </a>
             <button type="button" id="adminSidebarClose" style="display:none; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; padding:6px 10px;" class="mobile-close-btn">&times;</button>
         </div>
