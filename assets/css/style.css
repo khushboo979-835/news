@@ -95,7 +95,7 @@ ul, ol {
   top: 0;
   z-index: 1000;
   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  height: 72px;
+  height: 76px;
   display: flex;
   align-items: center;
 }
@@ -130,51 +130,23 @@ ul, ol {
 .bhaskar-brand-logo {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   text-decoration: none;
   padding: 2px 0;
 }
 
 .bhaskar-brand-logo-img {
-  height: 60px;
-  max-height: 60px;
+  height: 66px;
+  max-height: 66px;
   width: auto;
   object-fit: contain;
   display: block;
-  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.08));
+  filter: drop-shadow(0 2px 5px rgba(0,0,0,0.08));
   transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .bhaskar-brand-logo:hover .bhaskar-brand-logo-img {
-  transform: scale(1.05);
-}
-
-.bhaskar-brand-text {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  line-height: 1;
-}
-
-.bhaskar-brand-title {
-  font-family: 'Mukta', 'Noto Sans Devanagari', -apple-system, sans-serif;
-  font-size: 1.85rem;
-  font-weight: 900;
-  color: #111827;
-  letter-spacing: -0.5px;
-  line-height: 1.05;
-  white-space: nowrap;
-}
-
-.bhaskar-brand-tagline {
-  font-family: 'Mukta', 'Noto Sans Devanagari', 'Poppins', sans-serif;
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: #dc2626;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  margin-top: 2px;
-  white-space: nowrap;
+  transform: scale(1.04);
 }
 
 .footer-logo {
@@ -185,15 +157,14 @@ ul, ol {
 }
 
 .footer-brand-logo-img {
-  height: 60px;
-  max-height: 60px;
+  height: 68px;
+  max-height: 68px;
   width: auto;
   object-fit: contain;
   display: block;
-  background: #ffffff;
-  padding: 4px 10px;
-  border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
 }
 
 .footer-brand-text {
