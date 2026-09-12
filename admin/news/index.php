@@ -21,6 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
 // Filters
 $category_filter = isset($_GET['category']) ? (int)$_GET['category'] : 0;
+$lang_filter = isset($_GET['lang']) && in_array($_GET['lang'], ['hi', 'en']) ? $_GET['lang'] : '';
 $search_query = isset($_GET['q']) ? trim($_GET['q']) : '';
 
 // Build Query
@@ -33,6 +34,11 @@ $params = [];
 if ($category_filter > 0) {
     $sql .= " AND n.category_id = ? ";
     $params[] = $category_filter;
+}
+
+if (!empty($lang_filter)) {
+    $sql .= " AND n.language = ? ";
+    $params[] = $lang_filter;
 }
 
 if (!empty($search_query)) {
@@ -62,7 +68,7 @@ require_once __DIR__ . '/../includes/header.php';
 <div class="page-header">
     <div>
         <h1><i class="fa-solid fa-list-ul" style="color:var(--admin-theme);"></i> सभी प्रकाशित समाचार (News Articles)</h1>
-        <p style="color:#6b7280; margin-top:4px;">मैन्युअल प्राथमिकता क्रम (1, 2, 3...) और समाचार सूची प्रबंधन</p>
+        <p style="color:#6b7280; margin-top:4px;">मैन्युअल प्राथमिकता क्रम (1, 2, 3...), भाषा (हिंदी/English) और समाचार सूची प्रबंधन</p>
     </div>
     <div>
         <a href="<?php echo SITE_URL; ?>/admin/news/add.php" class="btn btn-primary">
@@ -80,8 +86,15 @@ require_once __DIR__ . '/../includes/header.php';
 <!-- Filter & Search Bar -->
 <div class="card" style="padding: 16px 20px; margin-bottom: 20px;">
     <form method="GET" action="" style="display: flex; gap: 14px; flex-wrap: wrap; align-items: center;">
-        <div style="flex: 1; min-width: 240px;">
+        <div style="flex: 1; min-width: 220px;">
             <input type="text" name="q" value="<?php echo htmlspecialchars($search_query); ?>" placeholder="खबर के शीर्षक से खोजें..." style="width: 100%; padding: 10px 14px; border: 1px solid var(--admin-border); border-radius: 6px; font-family: inherit;">
+        </div>
+        <div>
+            <select name="lang" style="padding: 10px 14px; border: 1px solid var(--admin-border); border-radius: 6px; font-family: inherit; background: #fff; font-weight:600;">
+                <option value="">-- सभी भाषाएँ (All Languages) --</option>
+                <option value="hi" <?php echo $lang_filter === 'hi' ? 'selected' : ''; ?>>🇮🇳 हिंदी (Hindi)</option>
+                <option value="en" <?php echo $lang_filter === 'en' ? 'selected' : ''; ?>>🌐 English (English)</option>
+            </select>
         </div>
         <div>
             <select name="category" style="padding: 10px 14px; border: 1px solid var(--admin-border); border-radius: 6px; font-family: inherit; background: #fff;">
@@ -96,7 +109,7 @@ require_once __DIR__ . '/../includes/header.php';
         <button type="submit" class="btn btn-secondary">
             <i class="fa-solid fa-filter"></i> फ़िल्टर करें
         </button>
-        <?php if ($category_filter > 0 || !empty($search_query)): ?>
+        <?php if ($category_filter > 0 || !empty($lang_filter) || !empty($search_query)): ?>
             <a href="<?php echo SITE_URL; ?>/admin/news/index.php" class="btn" style="background:#f3f4f6; color:#4b5563;">
                 <i class="fa-solid fa-rotate-left"></i> रीसेट
             </a>
@@ -126,6 +139,7 @@ require_once __DIR__ . '/../includes/header.php';
                             <th style="padding: 12px 14px; width: 110px;">क्रम (Rank #)</th>
                             <th style="padding: 12px 14px;">मीडिया</th>
                             <th style="padding: 12px 14px;">मुख्य शीर्षक (Headline)</th>
+                            <th style="padding: 12px 14px;">भाषा</th>
                             <th style="padding: 12px 14px;">श्रेणी</th>
                             <th style="padding: 12px 14px; text-align:center;">व्यूज</th>
                             <th style="padding: 12px 14px;">दिनांक</th>
@@ -141,13 +155,13 @@ require_once __DIR__ . '/../includes/header.php';
                                 <td style="padding: 12px 14px; width: 60px;">
                                     <?php if ($news['media_type'] === 'video_embed' || $news['media_type'] === 'video_upload'): ?>
                                         <div style="width: 48px; height: 32px; background: #fee2e2; color: #dc2626; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">
-                                            <i class="fa-solid fa-circle-play"></i>
+                                             <i class="fa-solid fa-circle-play"></i>
                                         </div>
                                     <?php else: ?>
                                         <img src="<?php echo get_media_url($news['media_url'], $news['media_type']); ?>" alt="" style="width: 48px; height: 32px; object-fit: cover; border-radius: 4px; border: 1px solid #e5e7eb;">
                                     <?php endif; ?>
                                 </td>
-                                <td style="padding: 12px 14px; max-width: 380px;">
+                                <td style="padding: 12px 14px; max-width: 360px;">
                                     <a href="<?php echo SITE_URL; ?>/article.php?slug=<?php echo urlencode($news['slug']); ?>" target="_blank" style="color: #111827; font-weight: 600; text-decoration: none; line-height: 1.4; display: block;">
                                         <?php echo htmlspecialchars($news['headline']); ?>
                                     </a>
@@ -155,6 +169,17 @@ require_once __DIR__ . '/../includes/header.php';
                                         <div style="font-size: 0.8rem; color: #6b7280; margin-top: 3px;">
                                             <?php echo htmlspecialchars(mb_substr($news['subheadline'], 0, 80)) . (mb_strlen($news['subheadline']) > 80 ? '...' : ''); ?>
                                         </div>
+                                    <?php endif; ?>
+                                </td>
+                                <td style="padding: 12px 14px;">
+                                    <?php if (($news['language'] ?? 'hi') === 'en'): ?>
+                                        <span style="display:inline-flex; align-items:center; gap:4px; font-size:0.78rem; padding:3px 8px; background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; border-radius:12px; font-weight:700;">
+                                            🌐 English
+                                        </span>
+                                    <?php else: ?>
+                                        <span style="display:inline-flex; align-items:center; gap:4px; font-size:0.78rem; padding:3px 8px; background:#fef3c7; color:#b45309; border:1px solid #fde68a; border-radius:12px; font-weight:700;">
+                                            🇮🇳 हिंदी
+                                        </span>
                                     <?php endif; ?>
                                 </td>
                                 <td style="padding: 12px 14px; color: #4b5563; font-weight: 500;">

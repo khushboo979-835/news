@@ -84,12 +84,13 @@ try {
         (7, 'अन्य (Anya / Other)', 'anya', 'fa-layer-group', 7, 1);
     ");
 
-    // 4. News Table (Re-create cleanly with manual priority and aspect-ratio media)
+    // 4. News Table (Re-create cleanly with manual priority, language, and aspect-ratio media)
     $pdo->exec("DROP TABLE IF EXISTS `news`");
     $pdo->exec("
         CREATE TABLE `news` (
           `id` INT AUTO_INCREMENT PRIMARY KEY,
           `category_id` INT NOT NULL,
+          `language` VARCHAR(10) NOT NULL DEFAULT 'hi',
           `headline` VARCHAR(500) NOT NULL,
           `subheadline` VARCHAR(500) DEFAULT NULL,
           `slug` VARCHAR(550) NOT NULL UNIQUE,
@@ -128,13 +129,13 @@ try {
 
     // 6. Insert the 6 Real Current News Articles
     $insertNews = $pdo->prepare("
-        INSERT INTO `news` (`id`, `category_id`, `headline`, `subheadline`, `slug`, `content`, `media_type`, `media_url`, `priority_order`, `is_breaking`, `views`, `created_at`)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+        INSERT INTO `news` (`id`, `category_id`, `language`, `headline`, `subheadline`, `slug`, `content`, `media_type`, `media_url`, `priority_order`, `is_breaking`, `views`, `created_at`)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
     ");
 
     $realNews = [
         [
-            1, 2,
+            1, 2, 'hi',
             'बिहार में दारोगा आज अपनी मांगों को लेकर ट्विटर पर आंदोलन करने की तैयारी में',
             'वेतन विसंगति और पदोन्नति को लेकर आक्रोश; BSSC बहाली में सचिवालय सहायक को लेवल-7 पर दारोगा को लेवल-6 दिए जाने का विरोध',
             'bihar-police-daroga-si-twitter-x-andolan-vetan-visangati',
@@ -142,7 +143,7 @@ try {
             'image', 'news_bihar_daroga_protest.jpg', 1, 1, 5420
         ],
         [
-            2, 3,
+            2, 3, 'hi',
             'रिजेंट सिनेमा में फिल्म के बाद दर्शकों को बांटी गई हनुमान चालीसा',
             '‘हनुमान अंश’ के शो के बाद मां ब्लड सेंटर और सिनेमा प्रबंधन की अनूठी पहल; दर्शकों में दिखा उत्साह',
             'regent-cinema-patna-hanuman-chalisa-distribution-movie-show',
@@ -150,7 +151,7 @@ try {
             'image', 'news_regent_cinema.jpg', 2, 1, 4120
         ],
         [
-            3, 2,
+            3, 2, 'hi',
             'पटना में गंगा का जलस्तर खतरे के निशान से ऊपर, कई गांव बाढ़ की चपेट में',
             'दीघा, गांधी घाट, मनेर और हाथीदह में खतरे के निशान से ऊपर बह रही गंगा; गौरीचक के कई गांव जलमग्न',
             'patna-ganga-water-level-above-danger-mark-flood-villages',
@@ -158,7 +159,7 @@ try {
             'image', 'news_patna_flood.jpg', 3, 1, 3890
         ],
         [
-            4, 5,
+            4, 5, 'hi',
             'विधानसभा परिसर से बाइक चोरी का खुलासा, दो गिरफ्तार',
             'सचिवालय थाना पुलिस ने 3 चोरी की बाइक की बरामद; सेंट्रल एसपी ममता कल्याणी के निर्देश पर विशेष टीम बनाई गई',
             'patna-assembly-campus-bike-theft-gang-busted-two-arrested',
@@ -166,7 +167,7 @@ try {
             'image', 'news_bike_theft_police.jpg', 4, 0, 2750
         ],
         [
-            5, 5,
+            5, 5, 'hi',
             'कोतवाली क्षेत्र में गेसिंग अड्डे पर छापेमारी, 10 गिरफ्तार',
             'सेंट्रल रेंज DIU और कोतवाली पुलिस की संयुक्त कार्रवाई; ऑटो पार्क के पास पीपल के पेड़ के नीचे चल रहा था अड्डा',
             'kotwali-patna-guessing-satta-den-raided-10-arrested',
@@ -174,7 +175,7 @@ try {
             'image', 'news_kotwali_guessing_raid.jpg', 5, 0, 2340
         ],
         [
-            6, 3,
+            6, 3, 'hi',
             'मरीन ड्राइव पर खतरनाक स्टंट, युवक-युवती पर केस दर्ज',
             'जेपी गंगा पथ पर बाइक स्टंट का वीडियो वायरल होने के बाद ट्रैफिक पुलिस की सख्त कार्रवाई; BNS की धारा 281 के तहत केस दर्ज',
             'marine-drive-patna-dangerous-bike-stunt-case-registered',

@@ -22,6 +22,20 @@ try {
             PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci"
         ]
     );
+
+    // Auto-schema check for language support
+    try {
+        static $languageChecked = false;
+        if (!$languageChecked) {
+            $languageChecked = true;
+            $checkCol = $pdo->query("SHOW COLUMNS FROM `news` LIKE 'language'");
+            if ($checkCol && $checkCol->rowCount() === 0) {
+                $pdo->exec("ALTER TABLE `news` ADD COLUMN `language` VARCHAR(10) NOT NULL DEFAULT 'hi' AFTER `category_id`");
+            }
+        }
+    } catch (Exception $eCol) {
+        // silent fallback if table not yet created
+    }
 } catch (PDOException $e) {
     // Fallback for local XAMPP / Dev environment
     try {
