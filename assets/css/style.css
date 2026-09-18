@@ -95,7 +95,7 @@ ul, ol {
   top: 0;
   z-index: 1000;
   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  height: 76px;
+  height: 82px;
   display: flex;
   align-items: center;
 }
@@ -136,12 +136,12 @@ ul, ol {
 }
 
 .bhaskar-brand-logo-img {
-  height: 66px;
-  max-height: 66px;
+  height: 72px;
+  max-height: 72px;
   width: auto;
   object-fit: contain;
   display: block;
-  filter: drop-shadow(0 2px 5px rgba(0,0,0,0.08));
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.1));
   transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
@@ -157,8 +157,8 @@ ul, ol {
 }
 
 .footer-brand-logo-img {
-  height: 68px;
-  max-height: 68px;
+  height: 76px;
+  max-height: 76px;
   width: auto;
   object-fit: contain;
   display: block;

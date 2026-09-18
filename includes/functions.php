@@ -233,7 +233,7 @@ function get_ad_image_url($image_url) {
  */
 function get_media_url($url, $media_type = 'image') {
     if (empty($url)) {
-        return ASSETS_URL . 'images/placeholder.svg';
+        return ASSETS_URL . 'images/logo.png';
     }
     if (strpos($url, 'http://') === 0 || strpos($url, 'https://') === 0) {
         if ($media_type === 'video_embed') {
@@ -247,7 +247,10 @@ function get_media_url($url, $media_type = 'image') {
     if (file_exists(__DIR__ . '/../assets/images/' . $url)) {
         return ASSETS_URL . 'images/' . $url;
     }
-    return ASSETS_URL . 'images/placeholder.svg';
+    if (preg_match('/\.(jpg|jpeg|png|webp|gif|svg|avif)$/i', $url) || strpos($url, 'news_') === 0) {
+        return UPLOAD_URL . $url;
+    }
+    return ASSETS_URL . 'images/logo.png';
 }
 
 /**

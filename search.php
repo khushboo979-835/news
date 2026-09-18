@@ -25,6 +25,8 @@ if (!empty($query)) {
 
 $pageTitle = !empty($query) ? 'खोज परिणाम: ' . htmlspecialchars($query) : 'समाचार खोजें';
 $pageDescription = 'दैनिक खबर: ताज़ा एवं प्रमुख समाचार खोजें।';
+$pageOgUrl = BASE_URL . '/search.php' . (!empty($query) ? '?q=' . urlencode($query) : '');
+$pageOgImage = ASSETS_URL . 'images/logo.png';
 
 $sidebarAd = get_ad_by_position($pdo, 'sidebar_banner');
 $trendingArticles = get_trending_news($pdo, 5);

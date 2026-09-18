@@ -60,12 +60,12 @@ html, body {
   }
 
   .bhaskar-top-header {
-    height: 70px;
+    height: 78px;
   }
 
   .bhaskar-brand-logo-img {
-    height: 58px;
-    max-height: 58px;
+    height: 68px;
+    max-height: 68px;
     width: auto;
     object-fit: contain;
   }
@@ -217,7 +217,7 @@ html, body {
   }
 
   .bhaskar-top-header {
-    height: 64px;
+    height: 72px;
   }
 
   .bhaskar-header-container {
@@ -235,8 +235,8 @@ html, body {
   }
 
   .bhaskar-brand-logo-img {
-    height: 52px;
-    max-height: 52px;
+    height: 62px;
+    max-height: 62px;
     width: auto;
     object-fit: contain;
   }
@@ -246,8 +246,8 @@ html, body {
   }
 
   .footer-brand-logo-img {
-    height: 54px;
-    max-height: 54px;
+    height: 64px;
+    max-height: 64px;
     width: auto;
     object-fit: contain;
   }

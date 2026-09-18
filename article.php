@@ -42,9 +42,25 @@ increment_views($pdo, $article['id']);
 $article['views']++;
 
 $pageTitle = $article['headline'];
-$pageDescription = !empty($article['subheadline']) ? $article['subheadline'] : get_excerpt($article['content'], 150);
+$pageDescription = !empty($article['subheadline']) ? $article['subheadline'] : get_excerpt($article['content'], 160);
 
-$currentUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+// Resolve Article Media Image URL for Open Graph & WhatsApp / Facebook Link Sharing
+$articleImage = get_media_url($article['media_url'], $article['media_type']);
+if (!empty($articleImage)) {
+    if (strpos($articleImage, 'http://') !== 0 && strpos($articleImage, 'https://') !== 0) {
+        $articleImage = rtrim(BASE_URL, '/') . '/' . ltrim($articleImage, '/');
+    }
+    $pageOgImage = $articleImage;
+} else {
+    $pageOgImage = ASSETS_URL . 'images/logo.png';
+}
+
+$pageOgUrl = BASE_URL . '/article.php?slug=' . urlencode($article['slug']);
+$pageOgType = 'article';
+$pageArticlePublished = $article['created_at'];
+$pageArticleSection = $article['category_name'];
+
+$currentUrl = $pageOgUrl;
 
 // Related Articles
 $relatedStmt = $pdo->prepare("

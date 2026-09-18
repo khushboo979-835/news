@@ -23,15 +23,49 @@ $currentCatSlug = $_GET['cat'] ?? ($_GET['slug'] ?? '');
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><?= isset($pageTitle) ? htmlspecialchars($pageTitle) . ' | ' . htmlspecialchars($siteSettings['site_title']) : htmlspecialchars($siteSettings['site_title']) . ' - ' . htmlspecialchars($siteSettings['tagline']) ?></title>
   
+<?php
+  $ogSiteTitle = $siteSettings['site_title'] ?? 'दैनिक खबर';
+  $ogTitle = isset($pageTitle) ? $pageTitle : ($ogSiteTitle . ' - ' . ($siteSettings['tagline'] ?? 'सच्ची और निष्पक्ष पत्रकारिता'));
+  $ogDesc = isset($pageDescription) ? $pageDescription : ($siteSettings['tagline'] ?? 'दैनिक खबर: सच्ची और निष्पक्ष पत्रकारिता का सशक्त डिजिटल मंच');
+  $ogUrl = isset($pageOgUrl) ? $pageOgUrl : ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]");
+  $ogType = isset($pageOgType) ? $pageOgType : 'website';
+  $ogImage = isset($pageOgImage) && !empty($pageOgImage) ? $pageOgImage : (ASSETS_URL . 'images/logo.png');
+  if (strpos($ogImage, 'http://') !== 0 && strpos($ogImage, 'https://') !== 0) {
+      $ogImage = rtrim(BASE_URL, '/') . '/' . ltrim($ogImage, '/');
+  }
+?>
   <!-- SEO Meta Tags -->
-  <meta name="description" content="<?= isset($pageDescription) ? htmlspecialchars($pageDescription) : htmlspecialchars($siteSettings['tagline']) ?>">
-  <meta name="keywords" content="Hindi News, Dainik Khabar, Bihar News, Patna News, Hindi Samachar, Breaking News">
+  <meta name="description" content="<?= htmlspecialchars($ogDesc) ?>">
+  <meta name="keywords" content="Hindi News, Dainik Khabar, Bihar News, Patna News, Hindi Samachar, Breaking News, Live News">
   
-  <!-- Open Graph -->
-  <meta property="og:title" content="<?= isset($pageTitle) ? htmlspecialchars($pageTitle) : htmlspecialchars($siteSettings['site_title']) ?>">
-  <meta property="og:description" content="<?= isset($pageDescription) ? htmlspecialchars($pageDescription) : htmlspecialchars($siteSettings['tagline']) ?>">
-  <meta property="og:image" content="<?= isset($pageOgImage) ? htmlspecialchars($pageOgImage) : ASSETS_URL . 'images/logo.png' ?>">
-  <meta property="og:type" content="website">
+  <!-- Canonical Link -->
+  <link rel="canonical" href="<?= htmlspecialchars($ogUrl) ?>">
+  
+  <!-- Open Graph / WhatsApp / Facebook -->
+  <meta property="og:site_name" content="<?= htmlspecialchars($ogSiteTitle) ?>">
+  <meta property="og:title" content="<?= htmlspecialchars($ogTitle) ?>">
+  <meta property="og:description" content="<?= htmlspecialchars($ogDesc) ?>">
+  <meta property="og:image" content="<?= htmlspecialchars($ogImage) ?>">
+  <meta property="og:image:secure_url" content="<?= htmlspecialchars($ogImage) ?>">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="<?= htmlspecialchars($ogTitle) ?>">
+  <meta property="og:url" content="<?= htmlspecialchars($ogUrl) ?>">
+  <meta property="og:type" content="<?= htmlspecialchars($ogType) ?>">
+  <meta property="og:locale" content="hi_IN">
+
+  <?php if (isset($pageArticlePublished)): ?>
+  <meta property="article:published_time" content="<?= date('c', strtotime($pageArticlePublished)) ?>">
+  <meta property="article:section" content="<?= htmlspecialchars($pageArticleSection ?? 'News') ?>">
+  <?php endif; ?>
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="<?= htmlspecialchars($ogTitle) ?>">
+  <meta name="twitter:description" content="<?= htmlspecialchars($ogDesc) ?>">
+  <meta name="twitter:image" content="<?= htmlspecialchars($ogImage) ?>">
+  <meta name="twitter:image:alt" content="<?= htmlspecialchars($ogTitle) ?>">
+  <meta name="twitter:url" content="<?= htmlspecialchars($ogUrl) ?>">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="<?= ASSETS_URL ?>images/logo.png">

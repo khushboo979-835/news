@@ -26,6 +26,13 @@ $pageDescription = 'दैनिक खबर: ' . ($category['name'] ?? 'सम
 // Fetch News for Category
 $categoryNews = get_news_by_category_slug($pdo, $category['slug'], 12);
 
+$pageOgUrl = BASE_URL . '/category.php?cat=' . urlencode($category['slug'] ?? 'top-news');
+if (!empty($categoryNews) && !empty($categoryNews[0]['media_url'])) {
+    $pageOgImage = get_media_url($categoryNews[0]['media_url'], $categoryNews[0]['media_type']);
+} else {
+    $pageOgImage = ASSETS_URL . 'images/logo.png';
+}
+
 // Fetch Sidebar Ad & Trending
 $sidebarAd = get_ad_by_position($pdo, 'sidebar_banner');
 $trendingArticles = get_trending_news($pdo, 5);
