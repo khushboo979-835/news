@@ -258,7 +258,13 @@ function get_media_url($url, $media_type = 'image') {
  */
 function get_youtube_video_id($url) {
     if (empty($url)) return null;
-    $pattern = '%(?:youtube(?:-nocookie)?\.com/(?:[^/]+/.+/|(?:v|e(?:mbed)?)/|.*[?&]v=)|youtu\.be/)([^"&?/ ]{11})%i';
+    $url = trim($url);
+    // If an iframe tag was passed, extract the src URL first
+    if (preg_match('/src=["\']([^"\']+)["\']/i', $url, $m)) {
+        $url = $m[1];
+    }
+    // Match any YouTube URL formats (watch, shorts, embed, live, v, youtu.be)
+    $pattern = '/(?:youtube(?:-nocookie)?\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?|shorts|live)\/|.*[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/i';
     if (preg_match($pattern, $url, $match)) {
         return $match[1];
     }
@@ -267,12 +273,12 @@ function get_youtube_video_id($url) {
 
 function get_youtube_embed_url($url) {
     $id = get_youtube_video_id($url);
-    return $id ? "https://www.youtube.com/embed/{$id}?autoplay=1&rel=0" : $url;
+    return $id ? "https://www.youtube-nocookie.com/embed/{$id}?rel=0" : $url;
 }
 
 function get_youtube_thumbnail($url) {
     $id = get_youtube_video_id($url);
-    return $id ? "https://img.youtube.com/vi/{$id}/hqdefault.jpg" : ASSETS_URL . 'images/placeholder.svg';
+    return $id ? "https://img.youtube.com/vi/{$id}/hqdefault.jpg" : ASSETS_URL . 'images/logo.png';
 }
 
 /**
@@ -294,26 +300,30 @@ function render_media_container($mediaType, $mediaUrl, $headline = '') {
     
     if ($mediaType === 'video_embed') {
         $ytId = get_youtube_video_id($mediaUrl);
-        $thumb = get_youtube_thumbnail($mediaUrl);
-        return '
-        <div class="bhaskar-media-box" data-video-embed="' . htmlspecialchars($mediaUrl, ENT_QUOTES, 'UTF-8') . '">
-            <img src="' . htmlspecialchars($thumb) . '" alt="' . $escapedHeadline . '" class="bhaskar-media-elem" loading="lazy">
-            <button class="bhaskar-play-overlay" title="वीडियो चलाएं" aria-label="Play Video">
-                <i class="fa-solid fa-play"></i>
-            </button>
-        </div>';
+        if ($ytId) {
+            return '
+            <div class="bhaskar-video-wrapper" style="position:relative; width:100%; aspect-ratio:16/9; background:#0f172a; border-radius:10px; overflow:hidden; margin:16px 0; box-shadow:0 4px 15px rgba(0,0,0,0.12);">
+                <iframe src="https://www.youtube-nocookie.com/embed/' . $ytId . '?rel=0" title="' . $escapedHeadline . '" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position:absolute; top:0; left:0; width:100%; height:100%; border:0;"></iframe>
+            </div>';
+        } else {
+            $embedUrl = htmlspecialchars($mediaUrl, ENT_QUOTES, 'UTF-8');
+            return '
+            <div class="bhaskar-video-wrapper" style="position:relative; width:100%; aspect-ratio:16/9; background:#0f172a; border-radius:10px; overflow:hidden; margin:16px 0;">
+                <iframe src="' . $embedUrl . '" title="' . $escapedHeadline . '" allowfullscreen style="position:absolute; top:0; left:0; width:100%; height:100%; border:0;"></iframe>
+            </div>';
+        }
     } elseif ($mediaType === 'video_upload') {
         $videoSrc = (strpos($mediaUrl, 'http') === 0) ? $mediaUrl : (UPLOAD_URL . htmlspecialchars($mediaUrl));
         return '
-        <div class="bhaskar-media-box">
-            <video src="' . $videoSrc . '" class="bhaskar-media-elem" controls preload="metadata"></video>
+        <div class="bhaskar-video-wrapper" style="width:100%; background:#0f172a; border-radius:10px; overflow:hidden; margin:16px 0; text-align:center; box-shadow:0 4px 15px rgba(0,0,0,0.12);">
+            <video src="' . $videoSrc . '" class="bhaskar-media-elem" controls playsinline preload="metadata" style="width:100%; max-height:520px; display:block; margin:0 auto; outline:none;"></video>
         </div>';
     } else {
-        // Image
+        // Image: clean aspect-ratio container with normal sizing for all picture dimensions
         $imgSrc = get_media_url($mediaUrl, 'image');
         return '
-        <div class="bhaskar-media-box">
-            <img src="' . htmlspecialchars($imgSrc) . '" alt="' . $escapedHeadline . '" class="bhaskar-media-elem" loading="lazy">
+        <div class="bhaskar-media-container" style="width:100%; border-radius:10px; overflow:hidden; background:#f8fafc; border:1px solid #f1f5f9; text-align:center; margin:16px 0;">
+            <img src="' . htmlspecialchars($imgSrc) . '" alt="' . $escapedHeadline . '" class="bhaskar-media-elem" loading="lazy" style="max-width:100%; max-height:540px; width:auto; height:auto; object-fit:contain; display:block; margin:0 auto; border-radius:8px;">
         </div>';
     }
 }

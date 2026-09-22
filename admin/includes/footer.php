@@ -56,16 +56,52 @@
                 $('#contentEditor').summernote({
                     placeholder: 'समाचार का पूरा विवरण, अनुच्छेद और हेडिंग यहाँ लिखें...',
                     tabsize: 2,
-                    height: 350,
+                    height: 380,
                     toolbar: [
                         ['style', ['style']],
-                        ['font', ['bold', 'underline', 'clear']],
+                        ['font', ['bold', 'italic', 'underline', 'clear']],
                         ['color', ['color']],
                         ['para', ['ul', 'ol', 'paragraph']],
                         ['table', ['table']],
-                        ['insert', ['link', 'picture', 'video']],
+                        ['insert', ['link', 'picture', 'video', 'hr']],
                         ['view', ['fullscreen', 'codeview', 'help']]
-                    ]
+                    ],
+                    callbacks: {
+                        onImageUpload: function(files) {
+                            for (let i = 0; i < files.length; i++) {
+                                uploadSummernoteImage(files[i], $(this));
+                            }
+                        }
+                    }
+                });
+            }
+
+            function uploadSummernoteImage(file, editor) {
+                const data = new FormData();
+                data.append('file', file);
+                $.ajax({
+                    url: '<?php echo ADMIN_URL; ?>/upload_image.php',
+                    type: 'POST',
+                    data: data,
+                    cache: false,
+                    contentType: false,
+                    processData: false,
+                    success: function(res) {
+                        if (res.status === 'success' && res.url) {
+                            editor.summernote('insertImage', res.url, function($image) {
+                                $image.css('max-width', '100%');
+                                $image.css('height', 'auto');
+                                $image.css('border-radius', '8px');
+                                $image.css('margin', '14px 0');
+                                $image.addClass('img-fluid article-content-img');
+                            });
+                        } else {
+                            alert(res.message || 'फ़ोटो अपलोड करने में त्रुटि हुई!');
+                        }
+                    },
+                    error: function() {
+                        alert('सर्वर से कनेक्ट करने में विफल! कृपया दोबारा प्रयास करें।');
+                    }
                 });
             }
         });

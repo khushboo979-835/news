@@ -23,15 +23,17 @@ try {
         ]
     );
 
-    // Auto-schema check for language support
+    // Auto-schema checks for language & media_url support
     try {
-        static $languageChecked = false;
-        if (!$languageChecked) {
-            $languageChecked = true;
+        static $schemaChecked = false;
+        if (!$schemaChecked) {
+            $schemaChecked = true;
             $checkCol = $pdo->query("SHOW COLUMNS FROM `news` LIKE 'language'");
             if ($checkCol && $checkCol->rowCount() === 0) {
                 $pdo->exec("ALTER TABLE `news` ADD COLUMN `language` VARCHAR(10) NOT NULL DEFAULT 'hi' AFTER `category_id`");
             }
+            // Ensure media_url is at least 500 chars for long video/embed URLs
+            $pdo->exec("ALTER TABLE `news` MODIFY COLUMN `media_url` VARCHAR(500) NOT NULL");
         }
     } catch (Exception $eCol) {
         // silent fallback if table not yet created

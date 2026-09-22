@@ -48,18 +48,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Handle file upload if new file is uploaded
         if ($media_type === 'video_embed') {
             if (!empty($video_embed_url)) {
+                // If iframe tag was pasted, extract src
+                if (preg_match('/src=["\']([^"\']+)["\']/i', $video_embed_url, $m)) {
+                    $video_embed_url = $m[1];
+                }
                 $media_url = $video_embed_url;
             }
         } elseif (isset($_FILES['media_file']) && $_FILES['media_file']['error'] === UPLOAD_ERR_OK) {
             $file = $_FILES['media_file'];
             $file_ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-            $allowed_img = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
-            $allowed_vid = ['mp4', 'webm', 'mov'];
+            $allowed_img = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'avif', 'jfif', 'svg', 'bmp', 'heic', 'heif'];
+            $allowed_vid = ['mp4', 'webm', 'mov', 'mkv', 'avi', '3gp', 'm4v', 'ts', 'ogv'];
 
             if ($media_type === 'image' && !in_array($file_ext, $allowed_img)) {
-                $error = ($language === 'en') ? 'Invalid photo format! Please upload JPG, PNG, or WEBP.' : 'अमान्य फ़ोटो फ़ॉर्मेट! कृपया JPG, PNG, WEBP फ़ाइल अपलोड करें।';
+                $error = ($language === 'en') ? 'Invalid photo format! Please upload JPG, PNG, WEBP, GIF, or AVIF.' : 'अमान्य फ़ोटो फ़ॉर्मेट! कृपया JPG, PNG, WEBP, GIF फ़ाइल अपलोड करें।';
             } elseif ($media_type === 'video_upload' && !in_array($file_ext, $allowed_vid)) {
-                $error = ($language === 'en') ? 'Invalid video format! Please upload MP4 or WEBM.' : 'अमान्य वीडियो फ़ॉर्मेट! कृपया MP4 या WEBM फ़ाइल अपलोड करें।';
+                $error = ($language === 'en') ? 'Invalid video format! Please upload MP4, WEBM, MOV, MKV, or AVI.' : 'अमान्य वीडियो फ़ॉर्मेट! कृपया MP4, WEBM, MOV या MKV फ़ाइल अपलोड करें।';
             } else {
                 if (!is_dir(UPLOAD_DIR)) {
                     mkdir(UPLOAD_DIR, 0777, true);
@@ -70,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (move_uploaded_file($file['tmp_name'], $target_path)) {
                     $media_url = $new_filename;
                 } else {
-                    $error = ($language === 'en') ? 'Failed to upload file. Check folder permissions.' : 'फ़ाइल अपलोड करने में समस्या हुई। कृपया फ़ोल्डर अनुमतियों की जांच करें।';
+                    $error = ($language === 'en') ? 'Failed to upload file. Check folder permissions.' : 'फ़ाइल अपलोड करने में समस्या हुई। कृपया फ़ोल्डर अनुमतियों व फ़ाइल साइज़ की जांच करें।';
                 }
             }
         }
@@ -269,15 +273,15 @@ $current_lang = $_POST['language'] ?? $news['language'] ?? 'hi';
                     <label style="display:block; font-weight:600; margin-bottom:6px; font-size:0.9rem;">
                         नई फ़ाइल बदलें (Replace File)
                     </label>
-                    <input type="file" name="media_file" accept="image/*,video/mp4,video/webm" style="width:100%; font-size:0.88rem;">
+                    <input type="file" name="media_file" accept="image/*,video/*,.mp4,.webm,.mov,.mkv,.avi,.jpg,.jpeg,.png,.webp,.gif" style="width:100%; font-size:0.88rem;">
                 </div>
 
                 <!-- Video Embed Input -->
                 <div id="videoEmbedGroup" style="margin-bottom: 18px; <?php echo ($news['media_type'] !== 'video_embed') ? 'display:none;' : ''; ?>">
                     <label style="display:block; font-weight:600; margin-bottom:6px; font-size:0.9rem;">
-                        यूट्यूब / वीडियो लिंक (Embed URL)
+                        यूट्यूब / वीडियो लिंक (YouTube/Shorts/Embed URL)
                     </label>
-                    <input type="url" name="video_embed_url" value="<?php echo ($news['media_type'] === 'video_embed') ? htmlspecialchars($news['media_url']) : ''; ?>" placeholder="https://www.youtube.com/watch?v=..." style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:6px; font-size:0.9rem;">
+                    <input type="text" name="video_embed_url" value="<?php echo ($news['media_type'] === 'video_embed') ? htmlspecialchars($news['media_url']) : ''; ?>" placeholder="https://www.youtube.com/watch?v=... या https://youtu.be/... या Shorts लिंक" style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:6px; font-size:0.9rem;">
                 </div>
 
                 <hr style="margin: 20px 0; border: none; border-top: 1px solid var(--admin-border);">

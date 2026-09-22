@@ -73,7 +73,7 @@ CREATE TABLE `news` (
   `slug` VARCHAR(550) NOT NULL UNIQUE,
   `content` LONGTEXT NOT NULL,
   `media_type` ENUM('image', 'video_upload', 'video_embed') NOT NULL DEFAULT 'image',
-  `media_url` VARCHAR(255) NOT NULL,
+  `media_url` VARCHAR(500) NOT NULL,
   `priority_order` INT DEFAULT 0,
   `is_breaking` TINYINT(1) DEFAULT 0,
   `views` INT DEFAULT 0,
