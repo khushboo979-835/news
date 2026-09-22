@@ -249,10 +249,10 @@ $current_lang = $_POST['language'] ?? $news['language'] ?? 'hi';
                     <label style="display:block; font-weight:600; margin-bottom:6px; font-size:0.9rem;">
                         मीडिया का प्रकार (Media Type)
                     </label>
-                    <select name="media_type" id="mediaTypeSelect" onchange="handleMediaTypeChange()" style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:6px; font-family:inherit; background:#fff;">
-                        <option value="image" <?php echo ($news['media_type'] === 'image') ? 'selected' : ''; ?>>फ़ोटो (Image File)</option>
-                        <option value="video_embed" <?php echo ($news['media_type'] === 'video_embed') ? 'selected' : ''; ?>>यूट्यूब / वीडियो लिंक (YouTube/Embed URL)</option>
-                        <option value="video_upload" <?php echo ($news['media_type'] === 'video_upload') ? 'selected' : ''; ?>>वीडियो अपलोड (MP4/WebM Video)</option>
+                    <select name="media_type" id="mediaTypeSelect" onchange="handleMediaTypeChange()" style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:6px; font-family:inherit; background:#fff; font-weight:600;">
+                        <option value="image" <?php echo ($news['media_type'] === 'image') ? 'selected' : ''; ?>>📷 फ़ोटो फ़ाइल अपलोड (Choose Photo File)</option>
+                        <option value="video_upload" <?php echo ($news['media_type'] === 'video_upload') ? 'selected' : ''; ?>>🎥 वीडियो फ़ाइल अपलोड (Choose Video File)</option>
+                        <option value="video_embed" <?php echo ($news['media_type'] === 'video_embed') ? 'selected' : ''; ?>>🔗 यूट्यूब वीडियो लिंक (YouTube / Shorts URL)</option>
                     </select>
                 </div>
 
@@ -263,6 +263,10 @@ $current_lang = $_POST['language'] ?? $news['language'] ?? 'hi';
                         <div style="font-size:0.85rem; word-break:break-all; color:#dc2626;">
                             <i class="fa-brands fa-youtube"></i> <?php echo htmlspecialchars($news['media_url']); ?>
                         </div>
+                    <?php elseif ($news['media_type'] === 'video_upload'): ?>
+                        <div style="font-size:0.85rem; color:#2563eb;">
+                            <i class="fa-solid fa-file-video"></i> <?php echo htmlspecialchars($news['media_url']); ?>
+                        </div>
                     <?php else: ?>
                         <img src="<?php echo get_media_url($news['media_url'], $news['media_type']); ?>" alt="" style="width:100%; height:120px; object-fit:contain; background:#0f172a; border-radius:4px;">
                     <?php endif; ?>
@@ -270,10 +274,10 @@ $current_lang = $_POST['language'] ?? $news['language'] ?? 'hi';
 
                 <!-- File Upload Field -->
                 <div id="fileUploadGroup" style="margin-bottom: 18px; <?php echo ($news['media_type'] === 'video_embed') ? 'display:none;' : ''; ?>">
-                    <label style="display:block; font-weight:600; margin-bottom:6px; font-size:0.9rem;">
-                        नई फ़ाइल बदलें (Replace File)
+                    <label id="fileUploadLabel" style="display:block; font-weight:600; margin-bottom:6px; font-size:0.9rem;">
+                        <?php echo ($news['media_type'] === 'video_upload') ? 'नई वीडियो फ़ाइल बदलें (Choose Video File: MP4, WebM, MOV)' : 'नई फ़ोटो बदलें (Choose Photo File: JPG, PNG, WEBP)'; ?>
                     </label>
-                    <input type="file" name="media_file" accept="image/*,video/*,.mp4,.webm,.mov,.mkv,.avi,.jpg,.jpeg,.png,.webp,.gif" style="width:100%; font-size:0.88rem;">
+                    <input type="file" name="media_file" accept="image/*,video/*,.mp4,.webm,.mov,.mkv,.avi,.jpg,.jpeg,.png,.webp,.gif" style="width:100%; font-size:0.88rem; padding:8px; border:1px solid #d1d5db; border-radius:6px; background:#f9fafb;">
                 </div>
 
                 <!-- Video Embed Input -->
@@ -339,13 +343,19 @@ function handleMediaTypeChange() {
     const type = document.getElementById('mediaTypeSelect').value;
     const fileGroup = document.getElementById('fileUploadGroup');
     const embedGroup = document.getElementById('videoEmbedGroup');
+    const label = document.getElementById('fileUploadLabel');
 
     if (type === 'video_embed') {
         fileGroup.style.display = 'none';
         embedGroup.style.display = 'block';
+    } else if (type === 'video_upload') {
+        fileGroup.style.display = 'block';
+        embedGroup.style.display = 'none';
+        if (label) label.innerText = 'नई वीडियो फ़ाइल बदलें (Choose Video File: MP4, WebM, MOV)';
     } else {
         fileGroup.style.display = 'block';
         embedGroup.style.display = 'none';
+        if (label) label.innerText = 'नई फ़ोटो बदलें (Choose Photo File: JPG, PNG, WEBP)';
     }
 }
 </script>
