@@ -232,7 +232,13 @@ function get_ad_image_url($image_url) {
  * Media URL Resolver
  */
 function get_media_url($url, $media_type = 'image') {
-    if (empty($url)) {
+    if (empty($url) || $url === 'news_default.jpg') {
+        if (file_exists(UPLOAD_DIR . 'news_default.jpg')) {
+            return UPLOAD_URL . 'news_default.jpg';
+        }
+        if (file_exists(__DIR__ . '/../assets/images/news_default.jpg')) {
+            return ASSETS_URL . 'images/news_default.jpg';
+        }
         return ASSETS_URL . 'images/logo.png';
     }
     if (strpos($url, 'http://') === 0 || strpos($url, 'https://') === 0) {
@@ -247,7 +253,17 @@ function get_media_url($url, $media_type = 'image') {
     if (file_exists(__DIR__ . '/../assets/images/' . $url)) {
         return ASSETS_URL . 'images/' . $url;
     }
-    if (preg_match('/\.(jpg|jpeg|png|webp|gif|svg|avif)$/i', $url) || strpos($url, 'news_') === 0) {
+    if (strpos($url, 'uploads/') === 0) {
+        $stripped = substr($url, 8);
+        if (file_exists(UPLOAD_DIR . $stripped)) {
+            return UPLOAD_URL . $stripped;
+        }
+        return BASE_URL . '/' . $url;
+    }
+    if (strpos($url, 'assets/') === 0) {
+        return BASE_URL . '/' . $url;
+    }
+    if (preg_match('/\.(jpg|jpeg|png|webp|gif|svg|avif|jfif|bmp)$/i', $url) || strpos($url, 'news_') === 0 || strpos($url, 'content_') === 0) {
         return UPLOAD_URL . $url;
     }
     return ASSETS_URL . 'images/logo.png';
@@ -297,6 +313,7 @@ function get_excerpt($text, $limit = 120) {
  */
 function render_media_container($mediaType, $mediaUrl, $headline = '') {
     $escapedHeadline = htmlspecialchars($headline, ENT_QUOTES, 'UTF-8');
+    $fallbackLogo = ASSETS_URL . 'images/logo.png';
     
     if ($mediaType === 'video_embed') {
         $ytId = get_youtube_video_id($mediaUrl);
@@ -319,11 +336,11 @@ function render_media_container($mediaType, $mediaUrl, $headline = '') {
             <video src="' . $videoSrc . '" class="bhaskar-media-elem" controls playsinline preload="metadata" style="width:100%; max-height:520px; display:block; margin:0 auto; outline:none;"></video>
         </div>';
     } else {
-        // Image: clean aspect-ratio container with normal sizing for all picture dimensions
+        // Image: clean aspect-ratio container with normal sizing for all picture dimensions & onerror fallback
         $imgSrc = get_media_url($mediaUrl, 'image');
         return '
         <div class="bhaskar-media-container" style="width:100%; border-radius:10px; overflow:hidden; background:#f8fafc; border:1px solid #f1f5f9; text-align:center; margin:16px 0;">
-            <img src="' . htmlspecialchars($imgSrc) . '" alt="' . $escapedHeadline . '" class="bhaskar-media-elem" loading="lazy" style="max-width:100%; max-height:540px; width:auto; height:auto; object-fit:contain; display:block; margin:0 auto; border-radius:8px;">
+            <img src="' . htmlspecialchars($imgSrc) . '" alt="' . $escapedHeadline . '" class="bhaskar-media-elem" loading="lazy" onerror="this.onerror=null; this.src=\'' . $fallbackLogo . '\';" style="max-width:100%; max-height:540px; width:auto; height:auto; object-fit:contain; display:block; margin:0 auto; border-radius:8px;">
         </div>';
     }
 }

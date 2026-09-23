@@ -54,27 +54,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 $media_url = $video_embed_url;
             }
-        } elseif (isset($_FILES['media_file']) && $_FILES['media_file']['error'] === UPLOAD_ERR_OK) {
-            $file = $_FILES['media_file'];
-            $file_ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-            $allowed_img = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'avif', 'jfif', 'svg', 'bmp', 'heic', 'heif'];
-            $allowed_vid = ['mp4', 'webm', 'mov', 'mkv', 'avi', '3gp', 'm4v', 'ts', 'ogv'];
-
-            if ($media_type === 'image' && !in_array($file_ext, $allowed_img)) {
-                $error = ($language === 'en') ? 'Invalid photo format! Please upload JPG, PNG, WEBP, GIF, or AVIF.' : 'अमान्य फ़ोटो फ़ॉर्मेट! कृपया JPG, PNG, WEBP, GIF फ़ाइल अपलोड करें।';
-            } elseif ($media_type === 'video_upload' && !in_array($file_ext, $allowed_vid)) {
-                $error = ($language === 'en') ? 'Invalid video format! Please upload MP4, WEBM, MOV, MKV, or AVI.' : 'अमान्य वीडियो फ़ॉर्मेट! कृपया MP4, WEBM, MOV या MKV फ़ाइल अपलोड करें।';
+        } elseif (isset($_FILES['media_file']) && $_FILES['media_file']['error'] !== UPLOAD_ERR_NO_FILE) {
+            if ($_FILES['media_file']['error'] === UPLOAD_ERR_INI_SIZE || $_FILES['media_file']['error'] === UPLOAD_ERR_FORM_SIZE) {
+                $error = ($language === 'en') ? 'Uploaded file size exceeds server limit. Please choose a smaller file or compress it.' : 'अपलोड की गई फ़ाइल का साइज़ सर्वर की सीमा से बड़ा है। कृपया छोटी फ़ाइल चुनें।';
+            } elseif ($_FILES['media_file']['error'] === UPLOAD_ERR_PARTIAL) {
+                $error = ($language === 'en') ? 'File was only partially uploaded. Please try again.' : 'फ़ाइल अधूरी अपलोड हुई। कृपया पुनः प्रयास करें।';
+            } elseif ($_FILES['media_file']['error'] !== UPLOAD_ERR_OK) {
+                $error = ($language === 'en') ? 'File upload failed with error code: ' . $_FILES['media_file']['error'] : 'फ़ाइल अपलोड करने में विफल (त्रुटि कोड: ' . $_FILES['media_file']['error'] . ')';
             } else {
-                if (!is_dir(UPLOAD_DIR)) {
-                    mkdir(UPLOAD_DIR, 0777, true);
-                }
-                $new_filename = 'news_' . time() . '_' . rand(1000, 9999) . '.' . $file_ext;
-                $target_path = UPLOAD_DIR . $new_filename;
+                $file = $_FILES['media_file'];
+                $file_ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+                $allowed_img = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'avif', 'jfif', 'svg', 'bmp', 'heic', 'heif'];
+                $allowed_vid = ['mp4', 'webm', 'mov', 'mkv', 'avi', '3gp', 'm4v', 'ts', 'ogv'];
 
-                if (move_uploaded_file($file['tmp_name'], $target_path)) {
-                    $media_url = $new_filename;
+                if ($media_type === 'image' && !in_array($file_ext, $allowed_img)) {
+                    $error = ($language === 'en') ? 'Invalid photo format! Please upload JPG, PNG, WEBP, GIF, or AVIF.' : 'अमान्य फ़ोटो फ़ॉर्मेट! कृपया JPG, PNG, WEBP, GIF फ़ाइल अपलोड करें।';
+                } elseif ($media_type === 'video_upload' && !in_array($file_ext, $allowed_vid)) {
+                    $error = ($language === 'en') ? 'Invalid video format! Please upload MP4, WEBM, MOV, MKV, or AVI.' : 'अमान्य वीडियो फ़ॉर्मेट! कृपया MP4, WEBM, MOV या MKV फ़ाइल अपलोड करें।';
                 } else {
-                    $error = ($language === 'en') ? 'Failed to upload file. Check folder permissions.' : 'फ़ाइल अपलोड करने में समस्या हुई। कृपया फ़ोल्डर अनुमतियों व फ़ाइल साइज़ की जांच करें।';
+                    if (!is_dir(UPLOAD_DIR)) {
+                        @mkdir(UPLOAD_DIR, 0777, true);
+                    }
+                    $new_filename = 'news_' . time() . '_' . rand(1000, 9999) . '.' . $file_ext;
+                    $target_path = UPLOAD_DIR . $new_filename;
+
+                    if (move_uploaded_file($file['tmp_name'], $target_path)) {
+                        @chmod($target_path, 0644);
+                        $media_url = $new_filename;
+                    } else {
+                        $error = ($language === 'en') ? 'Failed to upload file. Check folder permissions.' : 'फ़ाइल अपलोड करने में समस्या हुई। कृपया फ़ोल्डर अनुमतियों व फ़ाइल साइज़ की जांच करें।';
+                    }
                 }
             }
         }
@@ -268,7 +277,7 @@ $current_lang = $_POST['language'] ?? $news['language'] ?? 'hi';
                             <i class="fa-solid fa-file-video"></i> <?php echo htmlspecialchars($news['media_url']); ?>
                         </div>
                     <?php else: ?>
-                        <img src="<?php echo get_media_url($news['media_url'], $news['media_type']); ?>" alt="" style="width:100%; height:120px; object-fit:contain; background:#0f172a; border-radius:4px;">
+                        <img src="<?php echo get_media_url($news['media_url'], $news['media_type']); ?>" alt="" onerror="this.onerror=null; this.src='<?php echo ASSETS_URL; ?>images/logo.png';" style="width:100%; height:120px; object-fit:contain; background:#0f172a; border-radius:4px;">
                     <?php endif; ?>
                 </div>
 

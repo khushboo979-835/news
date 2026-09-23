@@ -158,7 +158,7 @@ require_once __DIR__ . '/../includes/header.php';
                                              <i class="fa-solid fa-circle-play"></i>
                                         </div>
                                     <?php else: ?>
-                                        <img src="<?php echo get_media_url($news['media_url'], $news['media_type']); ?>" alt="" style="width: 48px; height: 32px; object-fit: cover; border-radius: 4px; border: 1px solid #e5e7eb;">
+                                        <img src="<?php echo get_media_url($news['media_url'], $news['media_type']); ?>" alt="" onerror="this.onerror=null; this.src='<?php echo ASSETS_URL; ?>images/logo.png';" style="width: 48px; height: 32px; object-fit: cover; border-radius: 4px; border: 1px solid #e5e7eb;">
                                     <?php endif; ?>
                                 </td>
                                 <td style="padding: 12px 14px; max-width: 360px;">
