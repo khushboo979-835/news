@@ -242,7 +242,16 @@ $selected_lang = $_POST['language'] ?? 'hi';
                     <label id="fileUploadLabel" style="display:block; font-weight:600; margin-bottom:6px; font-size:0.9rem;">
                         फ़ोटो फ़ाइल चुनें (Choose Photo File)
                     </label>
-                    <input type="file" name="media_file" accept="image/*,video/*,.mp4,.webm,.mov,.mkv,.avi,.jpg,.jpeg,.png,.webp,.gif" style="width:100%; font-size:0.88rem; padding:8px; border:1px solid #d1d5db; border-radius:6px; background:#f9fafb;">
+                    <input type="file" id="mediaFileInput" name="media_file" accept="image/*,video/*,.mp4,.webm,.mov,.mkv,.avi,.jpg,.jpeg,.png,.webp,.gif,.jfif,.avif" onchange="previewSelectedMedia(this)" style="width:100%; font-size:0.88rem; padding:8px; border:1.5px solid #d1d5db; border-radius:6px; background:#f9fafb;">
+
+                    <!-- Live Selected Preview -->
+                    <div id="livePreviewContainer" style="display:none; margin-top:12px; padding:10px; background:#ecfdf5; border:1.5px dashed #10b981; border-radius:8px; text-align:center;">
+                        <div style="font-size:0.85rem; font-weight:700; color:#065f46; margin-bottom:8px; display:flex; align-items:center; justify-content:center; gap:6px;">
+                            <i class="fa-solid fa-circle-check" style="color:#10b981;"></i> <span id="previewTitle">फ़ोटो चुनी गई (Ready to Upload)</span>
+                        </div>
+                        <div id="previewMediaBox" style="max-height:180px; overflow:hidden; border-radius:6px; background:#0f172a; display:flex; align-items:center; justify-content:center;"></div>
+                        <div id="previewFileInfo" style="font-size:0.8rem; color:#047857; margin-top:6px; font-weight:600;"></div>
+                    </div>
                 </div>
 
                 <!-- Video Embed Input -->
@@ -255,7 +264,7 @@ $selected_lang = $_POST['language'] ?? 'hi';
 
                 <hr style="margin: 20px 0; border: none; border-top: 1px solid var(--admin-border);">
 
-                <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 12px; font-size: 1rem;">
+                <button type="submit" id="submitBtn" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 12px; font-size: 1rem; font-weight:700;">
                     <i class="fa-solid fa-paper-plane"></i> समाचार प्रकाशित करें (Publish News)
                 </button>
             </div>
@@ -264,6 +273,35 @@ $selected_lang = $_POST['language'] ?? 'hi';
 </form>
 
 <script>
+function previewSelectedMedia(input) {
+    const container = document.getElementById('livePreviewContainer');
+    const mediaBox = document.getElementById('previewMediaBox');
+    const fileInfo = document.getElementById('previewFileInfo');
+    
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        const fileType = file.type;
+        const fileSizeKB = (file.size / 1024).toFixed(1);
+        const fileSizeStr = (file.size > 1024 * 1024) ? (file.size / (1024 * 1024)).toFixed(2) + ' MB' : fileSizeKB + ' KB';
+        
+        container.style.display = 'block';
+        fileInfo.innerText = `चुनी गई फ़ाइल: ${file.name} (${fileSizeStr})`;
+        
+        if (fileType.startsWith('image/')) {
+            const url = URL.createObjectURL(file);
+            mediaBox.innerHTML = `<img src="${url}" style="max-width:100%; max-height:180px; object-fit:contain; border-radius:6px;" alt="Preview">`;
+        } else if (fileType.startsWith('video/')) {
+            const url = URL.createObjectURL(file);
+            mediaBox.innerHTML = `<video src="${url}" controls autoplay muted style="max-width:100%; max-height:180px; border-radius:6px;"></video>`;
+        } else {
+            mediaBox.innerHTML = `<div style="padding:15px; color:#fff;"><i class="fa-solid fa-file"></i> ${file.name}</div>`;
+        }
+    } else {
+        container.style.display = 'none';
+        mediaBox.innerHTML = '';
+    }
+}
+
 function switchFormLang(lang) {
     const btnHi = document.getElementById('lang-btn-hi');
     const btnEn = document.getElementById('lang-btn-en');
@@ -323,6 +361,15 @@ function handleMediaTypeChange() {
         if (label) label.innerText = 'फ़ोटो फ़ाइल चुनें (Choose Photo File: JPG, PNG, WEBP)';
     }
 }
+
+document.querySelector('form').addEventListener('submit', function(e) {
+    const btn = document.getElementById('submitBtn');
+    if (btn && !btn.disabled) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> समाचार प्रकाशित किया जा रहा है... (Publishing...)';
+        this.submit();
+    }
+});
 </script>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>
