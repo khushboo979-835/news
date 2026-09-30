@@ -56,9 +56,16 @@ if (!empty($articleImage)) {
 }
 
 $pageOgUrl = BASE_URL . '/article.php?slug=' . urlencode($article['slug']);
-$pageOgType = 'article';
+$pageOgType = ($article['media_type'] === 'video_upload' || $article['media_type'] === 'video_embed') ? 'video.other' : 'article';
 $pageArticlePublished = $article['created_at'];
 $pageArticleSection = $article['category_name'];
+
+if ($article['media_type'] === 'video_upload' || $article['media_type'] === 'video_embed') {
+    $pageOgVideo = $article['media_url'];
+    if ($article['media_type'] === 'video_upload' && strpos($pageOgVideo, 'http') !== 0) {
+        $pageOgVideo = rtrim(BASE_URL, '/') . '/' . ltrim(UPLOAD_URL . $pageOgVideo, '/');
+    }
+}
 
 $currentUrl = $pageOgUrl;
 
@@ -117,7 +124,16 @@ require_once __DIR__ . '/includes/header.php';
               </div>
 
               <div class="bhaskar-share-btns">
-                <a href="https://api.whatsapp.com/send?text=<?= urlencode($article['headline'] . ' ' . $currentUrl) ?>" target="_blank" rel="noopener" class="share-icon-btn whatsapp" title="Share on WhatsApp">
+                <a href="https://api.whatsapp.com/send?text=<?= urlencode($article['headline'] . "\n" . $currentUrl) ?>" 
+                   target="_blank" 
+                   rel="noopener" 
+                   class="share-icon-btn whatsapp js-share-trigger" 
+                   data-title="<?= htmlspecialchars($article['headline']) ?>" 
+                   data-text="<?= htmlspecialchars($article['subheadline'] ?? '') ?>" 
+                   data-url="<?= htmlspecialchars($currentUrl) ?>" 
+                   data-image="<?= htmlspecialchars($pageOgImage) ?>" 
+                   data-media-type="<?= htmlspecialchars($article['media_type']) ?>" 
+                   title="शेयर करें (फोटो/वीडियो सहित)">
                   <i class="fa-brands fa-whatsapp"></i>
                 </a>
                 <a href="https://www.facebook.com/sharer/sharer.php?u=<?= urlencode($currentUrl) ?>" target="_blank" rel="noopener" class="share-icon-btn facebook" title="Share on Facebook">

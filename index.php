@@ -60,6 +60,10 @@ require_once __DIR__ . '/includes/header.php';
 
         <?php if ($heroStory): 
           $heroUrl = BASE_URL . '/article.php?slug=' . urlencode($heroStory['slug']);
+          $heroMediaUrl = get_media_url($heroStory['media_url'], $heroStory['media_type']);
+          if (strpos($heroMediaUrl, 'http') !== 0) {
+              $heroMediaUrl = rtrim(BASE_URL, '/') . '/' . ltrim($heroMediaUrl, '/');
+          }
           $shareMsg = urlencode($heroStory['headline'] . "\n" . $heroUrl);
         ?>
           <!-- HERO CARD 1: Big Signature Card (Exact Bhaskar Screenshot 1) -->
@@ -91,7 +95,16 @@ require_once __DIR__ . '/includes/header.php';
                 <?= htmlspecialchars($heroStory['category_name']) ?> &gt;
               </a>
 
-              <a href="https://api.whatsapp.com/send?text=<?= $shareMsg ?>" target="_blank" rel="noopener" class="bhaskar-share-btn">
+              <a href="https://api.whatsapp.com/send?text=<?= $shareMsg ?>" 
+                 target="_blank" 
+                 rel="noopener" 
+                 class="bhaskar-share-btn js-share-trigger"
+                 data-title="<?= htmlspecialchars($heroStory['headline']) ?>"
+                 data-text="<?= htmlspecialchars($heroStory['subheadline'] ?? '') ?>"
+                 data-url="<?= htmlspecialchars($heroUrl) ?>"
+                 data-image="<?= htmlspecialchars($heroMediaUrl) ?>"
+                 data-media-type="<?= htmlspecialchars($heroStory['media_type']) ?>"
+                 title="शेयर करें (फोटो/वीडियो सहित)">
                 <i class="fa-brands fa-whatsapp"></i> <span>शेयर</span>
               </a>
             </div>
@@ -106,6 +119,10 @@ require_once __DIR__ . '/includes/header.php';
           foreach ($feedStories as $story): 
             $cardCounter++;
             $storyUrl = BASE_URL . '/article.php?slug=' . urlencode($story['slug']);
+            $storyMediaUrl = get_media_url($story['media_url'], $story['media_type']);
+            if (strpos($storyMediaUrl, 'http') !== 0) {
+                $storyMediaUrl = rtrim(BASE_URL, '/') . '/' . ltrim($storyMediaUrl, '/');
+            }
             $storyShare = urlencode($story['headline'] . "\n" . $storyUrl);
           ?>
             
@@ -141,7 +158,16 @@ require_once __DIR__ . '/includes/header.php';
                     <?= htmlspecialchars($story['category_name']) ?> &gt;
                   </a>
 
-                  <a href="https://api.whatsapp.com/send?text=<?= $storyShare ?>" target="_blank" rel="noopener" class="bhaskar-share-btn">
+                  <a href="https://api.whatsapp.com/send?text=<?= $storyShare ?>" 
+                     target="_blank" 
+                     rel="noopener" 
+                     class="bhaskar-share-btn js-share-trigger"
+                     data-title="<?= htmlspecialchars($story['headline']) ?>"
+                     data-text="<?= htmlspecialchars($story['subheadline'] ?? '') ?>"
+                     data-url="<?= htmlspecialchars($storyUrl) ?>"
+                     data-image="<?= htmlspecialchars($storyMediaUrl) ?>"
+                     data-media-type="<?= htmlspecialchars($story['media_type']) ?>"
+                     title="शेयर करें (फोटो/वीडियो सहित)">
                     <i class="fa-brands fa-whatsapp"></i> <span>शेयर</span>
                   </a>
                 </div>

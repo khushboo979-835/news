@@ -54,6 +54,12 @@ $currentCatSlug = $_GET['cat'] ?? ($_GET['slug'] ?? '');
   <meta property="og:type" content="<?= htmlspecialchars($ogType) ?>">
   <meta property="og:locale" content="hi_IN">
 
+  <?php if (!empty($pageOgVideo)): ?>
+  <meta property="og:video" content="<?= htmlspecialchars($pageOgVideo) ?>">
+  <meta property="og:video:secure_url" content="<?= htmlspecialchars($pageOgVideo) ?>">
+  <meta property="og:video:type" content="video/mp4">
+  <?php endif; ?>
+
   <?php if (isset($pageArticlePublished)): ?>
   <meta property="article:published_time" content="<?= date('c', strtotime($pageArticlePublished)) ?>">
   <meta property="article:section" content="<?= htmlspecialchars($pageArticleSection ?? 'News') ?>">
@@ -105,7 +111,7 @@ $currentCatSlug = $_GET['cat'] ?? ($_GET['slug'] ?? '');
           <i class="fa-solid fa-bars"></i>
         </button>
         <a href="<?= BASE_URL ?>/index.php" class="bhaskar-brand-logo" title="<?= htmlspecialchars($siteSettings['site_title'] ?? 'दैनिक खबर') ?>">
-          <img src="<?= ASSETS_URL ?>images/logo.png" alt="<?= htmlspecialchars($siteSettings['site_title'] ?? 'दैनिक खबर') ?>" class="bhaskar-brand-logo-img">
+          <img src="<?= ASSETS_URL ?>images/logo.png?v=<?= time() ?>" alt="<?= htmlspecialchars($siteSettings['site_title'] ?? 'दैनिक खबर') ?>" class="bhaskar-brand-logo-img">
         </a>
       </div>
 
@@ -164,13 +170,13 @@ $currentCatSlug = $_GET['cat'] ?? ($_GET['slug'] ?? '');
   <div class="bhaskar-top-ad-wrapper">
     <div class="container">
       <div class="bhaskar-ad-banner-slot">
-        <?php if ($topLeaderboardAd): ?>
-          <a href="<?= htmlspecialchars($topLeaderboardAd['link_url']) ?>" target="_blank" rel="sponsored noopener">
-            <img src="<?= get_ad_image_url($topLeaderboardAd['image_url']) ?>" alt="<?= htmlspecialchars($topLeaderboardAd['title']) ?>" class="bhaskar-running-ad-img">
+        <?php if ($topLeaderboardAd && !empty($topLeaderboardAd['image_url'])): ?>
+          <a href="<?= htmlspecialchars(!empty($topLeaderboardAd['link_url']) ? $topLeaderboardAd['link_url'] : 'mailto:Dainikkhabar@gmail.com') ?>" target="_blank" rel="sponsored noopener">
+            <img src="<?= get_ad_image_url($topLeaderboardAd['image_url']) ?>" alt="<?= htmlspecialchars($topLeaderboardAd['title'] ?? 'दैनिक खबर विज्ञापन') ?>" class="bhaskar-running-ad-img">
           </a>
         <?php else: ?>
-          <a href="https://coralwebtechnology.com" target="_blank" rel="noopener">
-            <img src="<?= ASSETS_URL ?>images/ad_header.svg" alt="Coral Web Technology" class="bhaskar-running-ad-img">
+          <a href="mailto:Dainikkhabar@gmail.com" target="_blank" rel="noopener">
+            <img src="<?= ASSETS_URL ?>images/top_banner_ad.png" alt="दैनिक खबर विज्ञापन" class="bhaskar-running-ad-img">
           </a>
         <?php endif; ?>
       </div>

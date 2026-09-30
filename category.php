@@ -64,6 +64,10 @@ require_once __DIR__ . '/includes/header.php';
           <?php if (!empty($categoryNews)): ?>
             <?php foreach ($categoryNews as $story): 
               $storyUrl = BASE_URL . '/article.php?slug=' . urlencode($story['slug']);
+              $storyMediaUrl = get_media_url($story['media_url'], $story['media_type']);
+              if (strpos($storyMediaUrl, 'http') !== 0) {
+                  $storyMediaUrl = rtrim(BASE_URL, '/') . '/' . ltrim($storyMediaUrl, '/');
+              }
             ?>
               <article class="bhaskar-story-card">
                 
@@ -91,10 +95,19 @@ require_once __DIR__ . '/includes/header.php';
                   </div>
 
                   <div class="bhaskar-share-btns">
-                    <a href="https://api.whatsapp.com/send?text=<?= urlencode($story['headline'] . ' ' . $storyUrl) ?>" target="_blank" rel="noopener" class="share-icon-btn whatsapp">
+                    <a href="https://api.whatsapp.com/send?text=<?= urlencode($story['headline'] . "\n" . $storyUrl) ?>" 
+                       target="_blank" 
+                       rel="noopener" 
+                       class="share-icon-btn whatsapp js-share-trigger"
+                       data-title="<?= htmlspecialchars($story['headline']) ?>"
+                       data-text="<?= htmlspecialchars($story['subheadline'] ?? '') ?>"
+                       data-url="<?= htmlspecialchars($storyUrl) ?>"
+                       data-image="<?= htmlspecialchars($storyMediaUrl) ?>"
+                       data-media-type="<?= htmlspecialchars($story['media_type']) ?>"
+                       title="शेयर करें (फोटो/वीडियो सहित)">
                       <i class="fa-brands fa-whatsapp"></i>
                     </a>
-                    <button type="button" class="share-icon-btn copy js-copy-link" data-url="<?= htmlspecialchars($storyUrl) ?>">
+                    <button type="button" class="share-icon-btn copy js-copy-link" data-url="<?= htmlspecialchars($storyUrl) ?>" title="लिंक कॉपी करें">
                       <i class="fa-solid fa-link"></i>
                     </button>
                   </div>

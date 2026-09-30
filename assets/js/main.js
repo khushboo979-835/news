@@ -20,6 +20,72 @@ function closeSearchModal() {
   }
 }
 
+// Universal Native Share with Photo/Media Attachment
+async function handleRichMediaShare(shareBtn) {
+  const title = shareBtn.getAttribute('data-title') || document.title;
+  const subheadline = shareBtn.getAttribute('data-text') || '';
+  const url = shareBtn.getAttribute('data-url') || window.location.href;
+  const imageUrl = shareBtn.getAttribute('data-image') || '';
+  const shareText = (subheadline ? subheadline + '\n\n' : '') + 'पूरी खबर पढ़ें: ' + url;
+
+  // 1. Try Native Web Share API with Media File attachment
+  if (navigator.share) {
+    let filesToShare = [];
+
+    if (imageUrl && !imageUrl.endsWith('.svg')) {
+      try {
+        const response = await fetch(imageUrl, { mode: 'cors' });
+        if (response.ok) {
+          const blob = await response.blob();
+          const mimeType = blob.type || 'image/jpeg';
+          const ext = mimeType.split('/')[1] ? mimeType.split('/')[1].replace('jpeg', 'jpg') : 'jpg';
+          const fileName = `dainik-khabar-${Date.now()}.${ext}`;
+          const file = new File([blob], fileName, { type: mimeType });
+
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            filesToShare = [file];
+          }
+        }
+      } catch (err) {
+        console.warn('Could not attach image file for share:', err);
+      }
+    }
+
+    if (filesToShare.length > 0) {
+      try {
+        await navigator.share({
+          files: filesToShare,
+          title: title,
+          text: `${title}\n\n${shareText}`,
+          url: url
+        });
+        return;
+      } catch (err) {
+        if (err.name === 'AbortError') return; // User cancelled share drawer
+        console.warn('Native file share rejected, falling back to text share:', err);
+      }
+    }
+
+    // Native Web Share without file (e.g. if file share not supported by current browser)
+    try {
+      await navigator.share({
+        title: title,
+        text: `${title}\n\n${shareText}`,
+        url: url
+      });
+      return;
+    } catch (err) {
+      if (err.name === 'AbortError') return;
+      console.warn('Native text share rejected, falling back to WhatsApp link:', err);
+    }
+  }
+
+  // 2. Fallback to WhatsApp URL (WhatsApp crawler retrieves Open Graph image/video preview from url)
+  const fullWhatsappMsg = encodeURIComponent(`${title}\n\n${shareText}`);
+  const fallbackUrl = `https://api.whatsapp.com/send?text=${fullWhatsappMsg}`;
+  window.open(fallbackUrl, '_blank', 'noopener,noreferrer');
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   // 1. Mobile Drawer Navigation Toggle
   const mobileMenuBtn = document.getElementById('mobileMenuBtn') || document.getElementById('mobileDrawerOpen');
@@ -65,7 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // 3. Notification Trigger (Direct Native Browser Permission, No HTML Box)
+  // 3. Notification Trigger (Direct Native Browser Permission)
   const notifTrigger = document.getElementById('notificationTrigger');
   if (notifTrigger) {
     notifTrigger.addEventListener('click', (e) => {
@@ -87,7 +153,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // 4. One-Click Copy Link
   const copyButtons = document.querySelectorAll('.js-copy-link');
   copyButtons.forEach(btn => {
-    btn.addEventListener('click', function () {
+    btn.addEventListener('click', function (e) {
+      e.preventDefault();
       const url = this.getAttribute('data-url') || window.location.href;
       navigator.clipboard.writeText(url).then(() => {
         const origHtml = this.innerHTML;
@@ -99,7 +166,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // 5. Back To Top Button visibility
+  // 5. Universal Rich Share Trigger (Shares photo/video attachment)
+  document.addEventListener('click', (e) => {
+    const shareBtn = e.target.closest('.js-share-trigger');
+    if (shareBtn) {
+      e.preventDefault();
+      handleRichMediaShare(shareBtn);
+    }
+  });
+
+  // 6. Back To Top Button visibility
   const backToTopBtn = document.getElementById('backToTop');
   if (backToTopBtn) {
     window.addEventListener('scroll', () => {

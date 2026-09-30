@@ -122,7 +122,7 @@ try {
 
     $pdo->exec("
         INSERT INTO `ads` (`title`, `position`, `image_url`, `link_url`, `status`) VALUES
-        ('टॉप हेडर रनिंग बैनर विज्ञापन - 728x90', 'top_header_banner', 'ad_header.jpg', 'https://coralwebtechnology.com', 1),
+        ('टॉप हेडर रनिंग बैनर विज्ञापन - 728x90', 'top_header_banner', 'top_banner_ad.png', 'mailto:Dainikkhabar@gmail.com', 1),
         ('साइडबार विशेष बैनर - 300x250', 'sidebar_banner', 'ad_sidebar.jpg', 'https://coralwebtechnology.com', 1),
         ('इन-फ़ीड बैनर विज्ञापन - 728x90', 'infeed_banner', 'ad_article.jpg', 'https://coralwebtechnology.com', 1);
     ");
