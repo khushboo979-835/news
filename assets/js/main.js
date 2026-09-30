@@ -20,34 +20,14 @@ function closeSearchModal() {
   }
 }
 
-// Universal WhatsApp & Social Share (Dainik Bhaskar Style)
+// Universal WhatsApp & Social Share (Clean Dainik Bhaskar Style)
 function handleRichMediaShare(shareBtn) {
   const title = shareBtn.getAttribute('data-title') || document.title;
-  const subheadline = shareBtn.getAttribute('data-text') || '';
   const url = shareBtn.getAttribute('data-url') || window.location.href;
 
-  // Exact Dainik Bhaskar WhatsApp Message Structure
-  let shareMessage = `*${title.trim()}*`;
-  if (subheadline && subheadline.trim() && subheadline.trim() !== title.trim()) {
-    shareMessage += `\n\n${subheadline.trim()}`;
-  }
-  shareMessage += `\n\n${url}`;
+  // Clean short message format: *Headline* + URL
+  const shareMessage = `*${title.trim()}*\n\n${url}`;
 
-  // Mobile Native Share Check
-  if (navigator.share && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-    navigator.share({
-      title: title,
-      text: subheadline ? `${title}\n\n${subheadline}` : title,
-      url: url
-    }).catch(err => {
-      if (err.name !== 'AbortError') {
-        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareMessage)}`, '_blank');
-      }
-    });
-    return;
-  }
-
-  // Direct WhatsApp Web / App Launch
   const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareMessage)}`;
   window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
 }

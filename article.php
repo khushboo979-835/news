@@ -138,16 +138,13 @@ require_once __DIR__ . '/includes/header.php';
               </div>
 
               <div class="bhaskar-share-btns">
-                <a href="https://api.whatsapp.com/send?text=<?= urlencode($article['headline'] . "\n" . $currentUrl) ?>" 
+                <a href="https://api.whatsapp.com/send?text=<?= urlencode('*' . trim($article['headline']) . "*\n\n" . $currentUrl) ?>" 
                    target="_blank" 
                    rel="noopener" 
                    class="share-icon-btn whatsapp js-share-trigger" 
                    data-title="<?= htmlspecialchars($article['headline']) ?>" 
-                   data-text="<?= htmlspecialchars($article['subheadline'] ?? '') ?>" 
                    data-url="<?= htmlspecialchars($currentUrl) ?>" 
-                   data-image="<?= htmlspecialchars($pageOgImage) ?>" 
-                   data-media-type="<?= htmlspecialchars($article['media_type']) ?>" 
-                   title="शेयर करें (फोटो/वीडियो सहित)">
+                   title="WhatsApp पर शेयर करें">
                   <i class="fa-brands fa-whatsapp"></i>
                 </a>
                 <a href="https://www.facebook.com/sharer/sharer.php?u=<?= urlencode($currentUrl) ?>" target="_blank" rel="noopener" class="share-icon-btn facebook" title="Share on Facebook">

@@ -40,6 +40,14 @@ $bhaskarCategories = [
         <span class="bhaskar-nav-text"><?= htmlspecialchars($bCat['name']) ?></span>
       </a>
     <?php endforeach; ?>
+    
+    <!-- YouTube Official Channel -->
+    <a href="https://youtube.com/@dainikkhabar-9?si=jGcOkLeYtPnrLzNS" target="_blank" rel="noopener" class="bhaskar-nav-item" style="color: #e53935; font-weight: 700;">
+      <span class="bhaskar-nav-icon" style="color: #e53935;">
+        <i class="fa-brands fa-youtube"></i>
+      </span>
+      <span class="bhaskar-nav-text">यूट्यूब चैनल</span>
+    </a>
   </nav>
 
   <!-- Left Sidebar Footer Quick Badges -->

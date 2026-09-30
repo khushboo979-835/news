@@ -152,9 +152,9 @@ $currentCatSlug = $_GET['cat'] ?? ($_GET['slug'] ?? '');
           <i class="fa-regular fa-newspaper"></i>
         </a>
 
-        <!-- Icon 3: Video Watch -->
-        <a href="<?= BASE_URL ?>/category.php?cat=top-news" class="bhaskar-head-icon" title="वीडियो">
-          <i class="fa-brands fa-youtube"></i>
+        <!-- Icon 3: Video Watch / YouTube Channel -->
+        <a href="https://youtube.com/@dainikkhabar-9?si=jGcOkLeYtPnrLzNS" target="_blank" rel="noopener" class="bhaskar-head-icon" title="दैनिक खबर यूट्यूब चैनल">
+          <i class="fa-brands fa-youtube" style="color: #e53935;"></i>
         </a>
 
         <!-- Icon 4: Search Trigger -->

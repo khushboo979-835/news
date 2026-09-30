@@ -96,22 +96,15 @@ require_once __DIR__ . '/includes/header.php';
                   </div>
 
                   <?php
-                  $searchShareText = '*' . trim($story['headline']) . '*';
-                  if (!empty($story['subheadline'])) {
-                      $searchShareText .= "\n\n" . trim($story['subheadline']);
-                  }
-                  $searchShareText .= "\n\n" . $storyUrl;
+                  $searchShareText = '*' . trim($story['headline']) . "*\n\n" . $storyUrl;
                   ?>
                   <div class="bhaskar-share-btns">
                     <a href="https://api.whatsapp.com/send?text=<?= urlencode($searchShareText) ?>" 
                        target="_blank" 
                        rel="noopener" 
-                       class="share-icon-btn whatsapp js-share-trigger"
-                       data-title="<?= htmlspecialchars($story['headline']) ?>"
-                       data-text="<?= htmlspecialchars($story['subheadline'] ?? '') ?>"
-                       data-url="<?= htmlspecialchars($storyUrl) ?>"
-                       data-image="<?= htmlspecialchars($storyMediaUrl) ?>"
-                       data-media-type="<?= htmlspecialchars($story['media_type']) ?>"
+                       class="share-icon-btn whatsapp js-share-trigger" 
+                       data-title="<?= htmlspecialchars($story['headline']) ?>" 
+                       data-url="<?= htmlspecialchars($storyUrl) ?>" 
                        title="WhatsApp पर शेयर करें">
                       <i class="fa-brands fa-whatsapp"></i>
                     </a>

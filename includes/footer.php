@@ -47,7 +47,7 @@ $categories = get_all_categories();
                 <div class="social-links">
                     <a href="https://facebook.com" target="_blank" rel="noopener" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
                     <a href="https://twitter.com" target="_blank" rel="noopener" aria-label="Twitter / X"><i class="fa-brands fa-x-twitter"></i></a>
-                    <a href="https://youtube.com" target="_blank" rel="noopener" aria-label="YouTube"><i class="fa-brands fa-youtube"></i></a>
+                    <a href="https://youtube.com/@dainikkhabar-9?si=jGcOkLeYtPnrLzNS" target="_blank" rel="noopener" aria-label="YouTube"><i class="fa-brands fa-youtube" style="color: #e53935;"></i></a>
                     <a href="https://instagram.com" target="_blank" rel="noopener" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
                     <a href="https://whatsapp.com" target="_blank" rel="noopener" aria-label="WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>
                 </div>
