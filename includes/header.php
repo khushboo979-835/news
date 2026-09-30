@@ -171,12 +171,12 @@ $currentCatSlug = $_GET['cat'] ?? ($_GET['slug'] ?? '');
     <div class="container">
       <div class="bhaskar-ad-banner-slot">
         <?php if ($topLeaderboardAd && !empty($topLeaderboardAd['image_url'])): ?>
-          <a href="<?= htmlspecialchars(!empty($topLeaderboardAd['link_url']) ? $topLeaderboardAd['link_url'] : 'mailto:Dainikkhabar@gmail.com') ?>" target="_blank" rel="sponsored noopener">
-            <img src="<?= get_ad_image_url($topLeaderboardAd['image_url']) ?>" alt="<?= htmlspecialchars($topLeaderboardAd['title'] ?? 'दैनिक खबर विज्ञापन') ?>" class="bhaskar-running-ad-img">
+          <a href="<?= htmlspecialchars(!empty($topLeaderboardAd['link_url']) ? $topLeaderboardAd['link_url'] : 'tel:+919534181011') ?>" target="_blank" rel="sponsored noopener">
+            <img src="<?= get_ad_image_url($topLeaderboardAd['image_url']) ?>?v=<?= time() ?>" alt="<?= htmlspecialchars($topLeaderboardAd['title'] ?? 'दैनिक खबर विज्ञापन') ?>" class="bhaskar-running-ad-img">
           </a>
         <?php else: ?>
-          <a href="mailto:Dainikkhabar@gmail.com" target="_blank" rel="noopener">
-            <img src="<?= ASSETS_URL ?>images/top_banner_ad.png" alt="दैनिक खबर विज्ञापन" class="bhaskar-running-ad-img">
+          <a href="tel:+919534181011" target="_blank" rel="noopener">
+            <img src="<?= ASSETS_URL ?>images/top_banner_ad.png?v=<?= time() ?>" alt="दैनिक खबर विज्ञापन" class="bhaskar-running-ad-img">
           </a>
         <?php endif; ?>
       </div>

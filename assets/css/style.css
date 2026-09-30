@@ -306,7 +306,7 @@ ul, ol {
    ========================================================================== */
 .bhaskar-top-ad-wrapper {
   background: transparent;
-  padding: 14px 0 4px;
+  padding: 14px 0 6px;
   display: flex;
   justify-content: center;
 }
@@ -317,8 +317,6 @@ ul, ol {
   align-items: center;
   width: 100%;
   max-width: 970px;
-  min-height: 120px;
-  max-height: 220px;
   margin: 0 auto;
   background: #ffffff;
   border: 1px solid var(--gray-200);
@@ -327,13 +325,17 @@ ul, ol {
   box-shadow: var(--shadow-sm);
 }
 
+.bhaskar-ad-banner-slot a {
+  display: block;
+  width: 100%;
+}
+
 .bhaskar-running-ad-img {
   width: 100%;
-  max-width: 970px;
+  max-width: 100%;
   height: auto;
-  max-height: 200px;
-  object-fit: contain;
   display: block;
+  object-fit: cover;
 }
 
 /* ==========================================================================

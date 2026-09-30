@@ -265,20 +265,23 @@ html, body {
 
   /* Compact Top Billboard Ad on Mobile */
   .bhaskar-top-ad-wrapper {
-    padding: 6px 0 2px;
+    padding: 6px 0 4px;
+    width: 100%;
+  }
+
+  .bhaskar-ad-banner-slot {
+    min-height: auto;
+    max-height: none;
+    border-radius: var(--radius-sm);
     width: 100%;
     overflow: hidden;
   }
 
-  .bhaskar-ad-banner-slot {
-    min-height: 50px;
-    max-height: 65px;
-    border-radius: var(--radius-sm);
-    width: 100%;
-  }
-
   .bhaskar-running-ad-img {
-    max-height: 60px;
+    width: 100%;
+    height: auto;
+    max-height: none;
+    display: block;
     object-fit: contain;
   }
 
