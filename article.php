@@ -14,15 +14,25 @@ if (empty($slug)) {
 }
 
 // Robust Fetch Article by Slug OR by ID
-$idVal = is_numeric($slug) ? (int)$slug : 0;
-$stmt = $pdo->prepare("
-    SELECT n.*, c.name AS category_name, c.slug AS category_slug 
-    FROM news n 
-    JOIN categories c ON n.category_id = c.id 
-    WHERE n.slug = :slug OR (n.id = :id_val AND :id_val > 0)
-    LIMIT 1
-");
-$stmt->execute([':slug' => $slug, ':id_val' => $idVal]);
+if (is_numeric($slug)) {
+    $stmt = $pdo->prepare("
+        SELECT n.*, c.name AS category_name, c.slug AS category_slug 
+        FROM news n 
+        JOIN categories c ON n.category_id = c.id 
+        WHERE n.slug = :slug OR n.id = :id_val
+        LIMIT 1
+    ");
+    $stmt->execute([':slug' => $slug, ':id_val' => (int)$slug]);
+} else {
+    $stmt = $pdo->prepare("
+        SELECT n.*, c.name AS category_name, c.slug AS category_slug 
+        FROM news n 
+        JOIN categories c ON n.category_id = c.id 
+        WHERE n.slug = :slug 
+        LIMIT 1
+    ");
+    $stmt->execute([':slug' => $slug]);
+}
 $article = $stmt->fetch();
 
 if (!$article) {
