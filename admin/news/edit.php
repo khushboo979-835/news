@@ -38,23 +38,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $media_type = $_POST['media_type'] ?? 'image';
     $priority_order = (int)($_POST['priority_order'] ?? 1);
     $is_breaking = isset($_POST['is_breaking']) ? 1 : 0;
+    $remove_media = isset($_POST['remove_media']) ? 1 : 0;
     $video_embed_url = trim($_POST['video_embed_url'] ?? '');
+    $direct_media_url = trim($_POST['direct_media_url'] ?? '');
     
     $media_url = $news['media_url'];
 
     if (empty($headline) || empty($content)) {
         $error = ($language === 'en') ? 'Please enter headline and news content!' : 'कृपया मुख्य शीर्षक (Headline) और समाचार का पूरा विवरण (Content) दर्ज करें!';
     } else {
-        // Handle file upload if new file is uploaded
-        if ($media_type === 'video_embed') {
+        if ($remove_media) {
+            $media_type = 'image';
+            $media_url = 'news_default.jpg';
+        } elseif ($media_type === 'video_embed') {
             if (!empty($video_embed_url)) {
                 // If iframe tag was pasted, extract src
                 if (preg_match('/src=["\']([^"\']+)["\']/i', $video_embed_url, $m)) {
                     $video_embed_url = $m[1];
                 }
                 $media_url = $video_embed_url;
+            } elseif ($news['media_type'] !== 'video_embed') {
+                $error = ($language === 'en') ? 'Please enter YouTube video link!' : 'कृपया यूट्यूब वीडियो का लिंक दर्ज करें!';
             }
-        } elseif (isset($_FILES['media_file']) && $_FILES['media_file']['error'] !== UPLOAD_ERR_NO_FILE) {
+        } elseif ($media_type === 'video_upload') {
+            if (!empty($direct_media_url)) {
+                $media_url = $direct_media_url;
+            } elseif ($news['media_type'] !== 'video_upload' && (!isset($_FILES['media_file']) || $_FILES['media_file']['error'] === UPLOAD_ERR_NO_FILE)) {
+                $error = ($language === 'en') ? 'Please select a video file or enter video link!' : 'कृपया वीडियो फ़ाइल चुनें या वीडियो लिंक दर्ज करें!';
+            }
+        } elseif ($media_type === 'image') {
+            if (!empty($direct_media_url)) {
+                $media_url = $direct_media_url;
+            } elseif ($news['media_type'] !== 'image' && (!isset($_FILES['media_file']) || $_FILES['media_file']['error'] === UPLOAD_ERR_NO_FILE)) {
+                // Switched from video to image without uploading a new photo -> reset cleanly to default photo
+                $media_url = 'news_default.jpg';
+            }
+        }
+
+        // Handle file upload if new file is uploaded
+        if (empty($error) && !$remove_media && isset($_FILES['media_file']) && $_FILES['media_file']['error'] !== UPLOAD_ERR_NO_FILE) {
             if ($_FILES['media_file']['error'] === UPLOAD_ERR_INI_SIZE || $_FILES['media_file']['error'] === UPLOAD_ERR_FORM_SIZE) {
                 $error = ($language === 'en') ? 'Uploaded file size exceeds server limit. Please choose a smaller file or compress it.' : 'अपलोड की गई फ़ाइल का साइज़ सर्वर की सीमा से बड़ा है। कृपया छोटी फ़ाइल चुनें।';
             } elseif ($_FILES['media_file']['error'] === UPLOAD_ERR_PARTIAL) {
@@ -265,20 +287,27 @@ $current_lang = $_POST['language'] ?? $news['language'] ?? 'hi';
                     </select>
                 </div>
 
-                <!-- Current Media Preview -->
-                <div style="margin-bottom: 18px; padding: 10px; background: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb;">
-                    <label style="display:block; font-weight:600; font-size:0.85rem; color:#4b5563; margin-bottom:6px;">मौजूदा मीडिया (Current):</label>
+                <!-- Current Media Preview & Remove Option -->
+                <div style="margin-bottom: 18px; padding: 12px; background: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb;">
+                    <label style="display:block; font-weight:600; font-size:0.85rem; color:#4b5563; margin-bottom:6px;">मौजूदा मीडिया (Current Media):</label>
                     <?php if ($news['media_type'] === 'video_embed'): ?>
-                        <div style="font-size:0.85rem; word-break:break-all; color:#dc2626;">
+                        <div style="font-size:0.85rem; word-break:break-all; color:#dc2626; margin-bottom:8px;">
                             <i class="fa-brands fa-youtube"></i> <?php echo htmlspecialchars($news['media_url']); ?>
                         </div>
                     <?php elseif ($news['media_type'] === 'video_upload'): ?>
-                        <div style="font-size:0.85rem; color:#2563eb;">
+                        <div style="font-size:0.85rem; color:#2563eb; margin-bottom:8px;">
                             <i class="fa-solid fa-file-video"></i> <?php echo htmlspecialchars($news['media_url']); ?>
                         </div>
                     <?php else: ?>
-                        <img src="<?php echo get_media_url($news['media_url'], $news['media_type']); ?>" alt="" onerror="this.onerror=null; this.src='<?php echo ASSETS_URL; ?>images/logo.png';" style="width:100%; height:120px; object-fit:contain; background:#0f172a; border-radius:4px;">
+                        <div style="margin-bottom:8px;">
+                            <img src="<?php echo get_media_url($news['media_url'], $news['media_type']); ?>" alt="" onerror="this.onerror=null; this.src='<?php echo ASSETS_URL; ?>images/logo.png';" style="width:100%; height:120px; object-fit:contain; background:#0f172a; border-radius:4px;">
+                        </div>
                     <?php endif; ?>
+                    
+                    <label style="display:flex; align-items:center; gap:6px; font-size:0.85rem; color:#dc2626; font-weight:600; cursor:pointer; margin-top:4px;">
+                        <input type="checkbox" name="remove_media" value="1" style="accent-color:#dc2626;">
+                        <span>पुराना मीडिया हटाएं और डिफ़ॉल्ट रखें (Reset to Default Photo)</span>
+                    </label>
                 </div>
 
                 <!-- File Upload Field -->
@@ -296,6 +325,14 @@ $current_lang = $_POST['language'] ?? $news['language'] ?? 'hi';
                         <div id="previewMediaBox" style="max-height:180px; overflow:hidden; border-radius:6px; background:#0f172a; display:flex; align-items:center; justify-content:center;"></div>
                         <div id="previewFileInfo" style="font-size:0.8rem; color:#047857; margin-top:6px; font-weight:600;"></div>
                     </div>
+                </div>
+
+                <!-- Direct Media URL Option -->
+                <div id="directMediaUrlGroup" style="margin-bottom: 18px; <?php echo ($news['media_type'] === 'video_embed') ? 'display:none;' : ''; ?>">
+                    <label id="directMediaUrlLabel" style="display:block; font-weight:600; margin-bottom:6px; font-size:0.85rem; color:#4b5563;">
+                        या डायरेक्ट URL दर्ज करें (Or Enter Direct URL):
+                    </label>
+                    <input type="text" name="direct_media_url" placeholder="https://example.com/media.mp4 या photo.jpg" style="width:100%; padding:9px 12px; border:1px solid #d1d5db; border-radius:6px; font-size:0.88rem;">
                 </div>
 
                 <!-- Video Embed Input -->
@@ -390,17 +427,21 @@ function handleMediaTypeChange() {
     const type = document.getElementById('mediaTypeSelect').value;
     const fileGroup = document.getElementById('fileUploadGroup');
     const embedGroup = document.getElementById('videoEmbedGroup');
+    const directGroup = document.getElementById('directMediaUrlGroup');
     const label = document.getElementById('fileUploadLabel');
 
     if (type === 'video_embed') {
         fileGroup.style.display = 'none';
+        if (directGroup) directGroup.style.display = 'none';
         embedGroup.style.display = 'block';
     } else if (type === 'video_upload') {
         fileGroup.style.display = 'block';
+        if (directGroup) directGroup.style.display = 'block';
         embedGroup.style.display = 'none';
         if (label) label.innerText = 'नई वीडियो फ़ाइल बदलें (Choose Video File: MP4, WebM, MOV)';
     } else {
         fileGroup.style.display = 'block';
+        if (directGroup) directGroup.style.display = 'block';
         embedGroup.style.display = 'none';
         if (label) label.innerText = 'नई फ़ोटो बदलें (Choose Photo File: JPG, PNG, WEBP)';
     }

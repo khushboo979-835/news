@@ -326,13 +326,24 @@ function get_excerpt($text, $limit = 120) {
 function render_media_container($mediaType, $mediaUrl, $headline = '') {
     $escapedHeadline = htmlspecialchars($headline, ENT_QUOTES, 'UTF-8');
     $fallbackLogo = ASSETS_URL . 'images/logo.png';
-    
+    $mediaUrl = trim($mediaUrl ?? '');
+
+    // Check if mediaUrl is a YouTube URL or iframe embed regardless of mediaType
+    $ytId = get_youtube_video_id($mediaUrl);
+    if ($ytId) {
+        return '
+        <div class="bhaskar-video-wrapper" style="position:relative; width:100%; aspect-ratio:16/9; background:#0f172a; border-radius:10px; overflow:hidden; margin:16px 0; box-shadow:0 4px 15px rgba(0,0,0,0.12);">
+            <iframe src="https://www.youtube-nocookie.com/embed/' . $ytId . '?rel=0" title="' . $escapedHeadline . '" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position:absolute; top:0; left:0; width:100%; height:100%; border:0;"></iframe>
+        </div>';
+    }
+
     if ($mediaType === 'video_embed') {
-        $ytId = get_youtube_video_id($mediaUrl);
-        if ($ytId) {
+        if (preg_match('/\.(mp4|webm|mov|m4v|ogv)$/i', $mediaUrl)) {
+            // Direct video URL was supplied as embed
+            $videoSrc = htmlspecialchars($mediaUrl, ENT_QUOTES, 'UTF-8');
             return '
-            <div class="bhaskar-video-wrapper" style="position:relative; width:100%; aspect-ratio:16/9; background:#0f172a; border-radius:10px; overflow:hidden; margin:16px 0; box-shadow:0 4px 15px rgba(0,0,0,0.12);">
-                <iframe src="https://www.youtube-nocookie.com/embed/' . $ytId . '?rel=0" title="' . $escapedHeadline . '" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position:absolute; top:0; left:0; width:100%; height:100%; border:0;"></iframe>
+            <div class="bhaskar-video-wrapper" style="width:100%; background:#0f172a; border-radius:10px; overflow:hidden; margin:16px 0; text-align:center; box-shadow:0 4px 15px rgba(0,0,0,0.12);">
+                <video src="' . $videoSrc . '" class="bhaskar-media-elem" controls playsinline preload="metadata" style="width:100%; max-height:520px; display:block; margin:0 auto; outline:none;" onerror="this.parentElement.innerHTML=\'<div style=\\\'padding:24px 16px;text-align:center;background:#f8fafc;border-radius:10px;border:1px solid #f1f5f9;\\\'><img src=\\\'' . $fallbackLogo . '\\\' style=\\\'max-height:140px;margin:0 auto 12px;display:block;\\\'><span style=\\\'display:inline-block;font-size:12px;font-weight:700;color:#e53935;background:#fee2e2;padding:4px 10px;border-radius:20px;\\\'>दैनिक खबर</span></div>\';"></video>
             </div>';
         } else {
             $embedUrl = htmlspecialchars($mediaUrl, ENT_QUOTES, 'UTF-8');
@@ -341,15 +352,16 @@ function render_media_container($mediaType, $mediaUrl, $headline = '') {
                 <iframe src="' . $embedUrl . '" title="' . $escapedHeadline . '" allowfullscreen style="position:absolute; top:0; left:0; width:100%; height:100%; border:0;"></iframe>
             </div>';
         }
-    } elseif ($mediaType === 'video_upload') {
+    } elseif ($mediaType === 'video_upload' || preg_match('/\.(mp4|webm|mov|mkv|avi|m4v|3gp)$/i', $mediaUrl)) {
         $videoFile = $mediaUrl;
         if (strpos($videoFile, 'uploads/') === 0) {
             $videoFile = substr($videoFile, 8);
         }
-        $exists = (strpos($mediaUrl, 'http://') === 0 || strpos($mediaUrl, 'https://') === 0) || file_exists(UPLOAD_DIR . $videoFile) || file_exists(__DIR__ . '/../uploads/' . $videoFile);
+        $isRemote = (strpos($mediaUrl, 'http://') === 0 || strpos($mediaUrl, 'https://') === 0);
+        $exists = $isRemote || file_exists(UPLOAD_DIR . $videoFile) || file_exists(__DIR__ . '/../uploads/' . $videoFile);
         
         if ($exists) {
-            $videoSrc = (strpos($mediaUrl, 'http') === 0) ? $mediaUrl : (UPLOAD_URL . htmlspecialchars($videoFile));
+            $videoSrc = $isRemote ? $mediaUrl : (UPLOAD_URL . htmlspecialchars($videoFile));
             return '
             <div class="bhaskar-video-wrapper" style="width:100%; background:#0f172a; border-radius:10px; overflow:hidden; margin:16px 0; text-align:center; box-shadow:0 4px 15px rgba(0,0,0,0.12);">
                 <video src="' . $videoSrc . '" class="bhaskar-media-elem" controls playsinline preload="metadata" style="width:100%; max-height:520px; display:block; margin:0 auto; outline:none;" onerror="this.parentElement.innerHTML=\'<div style=\\\'padding:24px 16px;text-align:center;background:#f8fafc;border-radius:10px;border:1px solid #f1f5f9;\\\'><img src=\\\'' . $fallbackLogo . '\\\' style=\\\'max-height:140px;margin:0 auto 12px;display:block;\\\'><span style=\\\'display:inline-block;font-size:12px;font-weight:700;color:#e53935;background:#fee2e2;padding:4px 10px;border-radius:20px;\\\'>दैनिक खबर</span></div>\';"></video>

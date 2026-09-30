@@ -34,6 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         $media_url = 'news_default.jpg';
+        $direct_media_url = trim($_POST['direct_media_url'] ?? '');
 
         if ($media_type === 'video_embed') {
             if (empty($video_embed_url)) {
@@ -45,6 +46,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 $media_url = $video_embed_url;
             }
+        } elseif (!empty($direct_media_url)) {
+            $media_url = $direct_media_url;
         } elseif (isset($_FILES['media_file']) && $_FILES['media_file']['error'] !== UPLOAD_ERR_NO_FILE) {
             if ($_FILES['media_file']['error'] === UPLOAD_ERR_INI_SIZE || $_FILES['media_file']['error'] === UPLOAD_ERR_FORM_SIZE) {
                 $error = ($language === 'en') ? 'Uploaded file size exceeds server limit. Please choose a smaller file or compress it.' : 'अपलोड की गई फ़ाइल का साइज़ सर्वर की सीमा से बड़ा है। कृपया छोटी फ़ाइल चुनें।';
@@ -254,6 +257,14 @@ $selected_lang = $_POST['language'] ?? 'hi';
                     </div>
                 </div>
 
+                <!-- Direct Media URL Option -->
+                <div id="directMediaUrlGroup" style="margin-bottom: 18px;">
+                    <label id="directMediaUrlLabel" style="display:block; font-weight:600; margin-bottom:6px; font-size:0.85rem; color:#4b5563;">
+                        या डायरेक्ट URL दर्ज करें (Or Enter Direct URL):
+                    </label>
+                    <input type="text" name="direct_media_url" value="<?php echo htmlspecialchars($_POST['direct_media_url'] ?? ''); ?>" placeholder="https://example.com/media.mp4 या photo.jpg" style="width:100%; padding:9px 12px; border:1px solid #d1d5db; border-radius:6px; font-size:0.88rem;">
+                </div>
+
                 <!-- Video Embed Input -->
                 <div id="videoEmbedGroup" style="margin-bottom: 18px; display:none;">
                     <label style="display:block; font-weight:600; margin-bottom:6px; font-size:0.9rem;">
@@ -346,17 +357,21 @@ function handleMediaTypeChange() {
     const type = document.getElementById('mediaTypeSelect').value;
     const fileGroup = document.getElementById('fileUploadGroup');
     const embedGroup = document.getElementById('videoEmbedGroup');
+    const directGroup = document.getElementById('directMediaUrlGroup');
     const label = document.getElementById('fileUploadLabel');
 
     if (type === 'video_embed') {
         fileGroup.style.display = 'none';
+        if (directGroup) directGroup.style.display = 'none';
         embedGroup.style.display = 'block';
     } else if (type === 'video_upload') {
         fileGroup.style.display = 'block';
+        if (directGroup) directGroup.style.display = 'block';
         embedGroup.style.display = 'none';
         if (label) label.innerText = 'वीडियो फ़ाइल चुनें (Choose Video File: MP4, WebM, MOV)';
     } else {
         fileGroup.style.display = 'block';
+        if (directGroup) directGroup.style.display = 'block';
         embedGroup.style.display = 'none';
         if (label) label.innerText = 'फ़ोटो फ़ाइल चुनें (Choose Photo File: JPG, PNG, WEBP)';
     }
