@@ -64,7 +64,12 @@ require_once __DIR__ . '/includes/header.php';
           if (strpos($heroMediaUrl, 'http') !== 0) {
               $heroMediaUrl = rtrim(BASE_URL, '/') . '/' . ltrim($heroMediaUrl, '/');
           }
-          $shareMsg = urlencode($heroStory['headline'] . "\n" . $heroUrl);
+          $heroShareText = '*' . trim($heroStory['headline']) . '*';
+          if (!empty($heroStory['subheadline'])) {
+              $heroShareText .= "\n\n" . trim($heroStory['subheadline']);
+          }
+          $heroShareText .= "\n\n" . $heroUrl;
+          $shareMsg = urlencode($heroShareText);
         ?>
           <!-- HERO CARD 1: Big Signature Card (Exact Bhaskar Screenshot 1) -->
           <article class="bhaskar-card-hero">
@@ -123,7 +128,12 @@ require_once __DIR__ . '/includes/header.php';
             if (strpos($storyMediaUrl, 'http') !== 0) {
                 $storyMediaUrl = rtrim(BASE_URL, '/') . '/' . ltrim($storyMediaUrl, '/');
             }
-            $storyShare = urlencode($story['headline'] . "\n" . $storyUrl);
+            $feedShareText = '*' . trim($story['headline']) . '*';
+            if (!empty($story['subheadline'])) {
+                $feedShareText .= "\n\n" . trim($story['subheadline']);
+            }
+            $feedShareText .= "\n\n" . $storyUrl;
+            $storyShare = urlencode($feedShareText);
           ?>
             
             <!-- In-feed Google Follow Banner between cards -->

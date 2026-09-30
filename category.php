@@ -94,8 +94,15 @@ require_once __DIR__ . '/includes/header.php';
                     <span><i class="fa-regular fa-eye"></i> <?= number_format($story['views']) ?> व्यूज</span>
                   </div>
 
+                  <?php
+                  $catShareText = '*' . trim($story['headline']) . '*';
+                  if (!empty($story['subheadline'])) {
+                      $catShareText .= "\n\n" . trim($story['subheadline']);
+                  }
+                  $catShareText .= "\n\n" . $storyUrl;
+                  ?>
                   <div class="bhaskar-share-btns">
-                    <a href="https://api.whatsapp.com/send?text=<?= urlencode($story['headline'] . "\n" . $storyUrl) ?>" 
+                    <a href="https://api.whatsapp.com/send?text=<?= urlencode($catShareText) ?>" 
                        target="_blank" 
                        rel="noopener" 
                        class="share-icon-btn whatsapp js-share-trigger"
@@ -104,7 +111,7 @@ require_once __DIR__ . '/includes/header.php';
                        data-url="<?= htmlspecialchars($storyUrl) ?>"
                        data-image="<?= htmlspecialchars($storyMediaUrl) ?>"
                        data-media-type="<?= htmlspecialchars($story['media_type']) ?>"
-                       title="शेयर करें (फोटो/वीडियो सहित)">
+                       title="WhatsApp पर शेयर करें">
                       <i class="fa-brands fa-whatsapp"></i>
                     </a>
                     <button type="button" class="share-icon-btn copy js-copy-link" data-url="<?= htmlspecialchars($storyUrl) ?>" title="लिंक कॉपी करें">

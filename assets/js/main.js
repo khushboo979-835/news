@@ -20,70 +20,36 @@ function closeSearchModal() {
   }
 }
 
-// Universal Native Share with Photo/Media Attachment
-async function handleRichMediaShare(shareBtn) {
+// Universal WhatsApp & Social Share (Dainik Bhaskar Style)
+function handleRichMediaShare(shareBtn) {
   const title = shareBtn.getAttribute('data-title') || document.title;
   const subheadline = shareBtn.getAttribute('data-text') || '';
   const url = shareBtn.getAttribute('data-url') || window.location.href;
-  const imageUrl = shareBtn.getAttribute('data-image') || '';
-  const shareText = (subheadline ? subheadline + '\n\n' : '') + 'पूरी खबर पढ़ें: ' + url;
 
-  // 1. Try Native Web Share API with Media File attachment
-  if (navigator.share) {
-    let filesToShare = [];
+  // Exact Dainik Bhaskar WhatsApp Message Structure
+  let shareMessage = `*${title.trim()}*`;
+  if (subheadline && subheadline.trim() && subheadline.trim() !== title.trim()) {
+    shareMessage += `\n\n${subheadline.trim()}`;
+  }
+  shareMessage += `\n\n${url}`;
 
-    if (imageUrl && !imageUrl.endsWith('.svg')) {
-      try {
-        const response = await fetch(imageUrl, { mode: 'cors' });
-        if (response.ok) {
-          const blob = await response.blob();
-          const mimeType = blob.type || 'image/jpeg';
-          const ext = mimeType.split('/')[1] ? mimeType.split('/')[1].replace('jpeg', 'jpg') : 'jpg';
-          const fileName = `dainik-khabar-${Date.now()}.${ext}`;
-          const file = new File([blob], fileName, { type: mimeType });
-
-          if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            filesToShare = [file];
-          }
-        }
-      } catch (err) {
-        console.warn('Could not attach image file for share:', err);
+  // Mobile Native Share Check
+  if (navigator.share && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+    navigator.share({
+      title: title,
+      text: subheadline ? `${title}\n\n${subheadline}` : title,
+      url: url
+    }).catch(err => {
+      if (err.name !== 'AbortError') {
+        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareMessage)}`, '_blank');
       }
-    }
-
-    if (filesToShare.length > 0) {
-      try {
-        await navigator.share({
-          files: filesToShare,
-          title: title,
-          text: `${title}\n\n${shareText}`,
-          url: url
-        });
-        return;
-      } catch (err) {
-        if (err.name === 'AbortError') return; // User cancelled share drawer
-        console.warn('Native file share rejected, falling back to text share:', err);
-      }
-    }
-
-    // Native Web Share without file (e.g. if file share not supported by current browser)
-    try {
-      await navigator.share({
-        title: title,
-        text: `${title}\n\n${shareText}`,
-        url: url
-      });
-      return;
-    } catch (err) {
-      if (err.name === 'AbortError') return;
-      console.warn('Native text share rejected, falling back to WhatsApp link:', err);
-    }
+    });
+    return;
   }
 
-  // 2. Fallback to WhatsApp URL (WhatsApp crawler retrieves Open Graph image/video preview from url)
-  const fullWhatsappMsg = encodeURIComponent(`${title}\n\n${shareText}`);
-  const fallbackUrl = `https://api.whatsapp.com/send?text=${fullWhatsappMsg}`;
-  window.open(fallbackUrl, '_blank', 'noopener,noreferrer');
+  // Direct WhatsApp Web / App Launch
+  const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareMessage)}`;
+  window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
 }
 
 document.addEventListener('DOMContentLoaded', () => {

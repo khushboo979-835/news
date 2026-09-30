@@ -6,22 +6,23 @@
 
 require_once __DIR__ . '/includes/functions.php';
 
-$slug = trim($_GET['slug'] ?? '');
+$slug = trim($_GET['slug'] ?? ($_GET['id'] ?? ''));
 
 if (empty($slug)) {
     header("Location: " . BASE_URL . "/index.php");
     exit;
 }
 
-// Fetch Article by Slug
+// Robust Fetch Article by Slug OR by ID
+$idVal = is_numeric($slug) ? (int)$slug : 0;
 $stmt = $pdo->prepare("
     SELECT n.*, c.name AS category_name, c.slug AS category_slug 
     FROM news n 
     JOIN categories c ON n.category_id = c.id 
-    WHERE n.slug = :slug 
+    WHERE n.slug = :slug OR (n.id = :id_val AND :id_val > 0)
     LIMIT 1
 ");
-$stmt->execute([':slug' => $slug]);
+$stmt->execute([':slug' => $slug, ':id_val' => $idVal]);
 $article = $stmt->fetch();
 
 if (!$article) {
@@ -47,12 +48,15 @@ $pageDescription = !empty($article['subheadline']) ? $article['subheadline'] : g
 // Resolve Article Media Image URL for Open Graph & WhatsApp / Facebook Link Sharing
 $articleImage = get_media_url($article['media_url'], $article['media_type']);
 if (!empty($articleImage)) {
-    if (strpos($articleImage, 'http://') !== 0 && strpos($articleImage, 'https://') !== 0) {
+    if (strpos($articleImage, '//') === 0) {
+        $articleImage = 'https:' . $articleImage;
+    } elseif (strpos($articleImage, 'http://') !== 0 && strpos($articleImage, 'https://') !== 0) {
         $articleImage = rtrim(BASE_URL, '/') . '/' . ltrim($articleImage, '/');
     }
+    $articleImage = preg_replace('/^http:\/\/(dainikkhabr\.com)/i', 'https://$1', $articleImage);
     $pageOgImage = $articleImage;
 } else {
-    $pageOgImage = ASSETS_URL . 'images/logo.png';
+    $pageOgImage = rtrim(BASE_URL, '/') . '/assets/images/logo.png';
 }
 
 $pageOgUrl = BASE_URL . '/article.php?slug=' . urlencode($article['slug']);
