@@ -10,8 +10,8 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 // Error reporting
-error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED);
-ini_set('display_errors', '0');
+error_reporting(E_ALL);
+ini_set('display_errors', '1');
 
 // Base URL calculation (Clean root domain & subfolder support)
 if (isset($_SERVER['HTTP_HOST'])) {
