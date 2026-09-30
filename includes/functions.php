@@ -241,10 +241,20 @@ function get_media_url($url, $media_type = 'image') {
         }
         return ASSETS_URL . 'images/logo.png';
     }
-    if (strpos($url, 'http://') === 0 || strpos($url, 'https://') === 0) {
-        if ($media_type === 'video_embed') {
-            return get_youtube_thumbnail($url);
+    
+    if ($media_type === 'video_embed') {
+        return get_youtube_thumbnail($url);
+    }
+    
+    if ($media_type === 'video_upload') {
+        // Video files (.mp4) cannot be rendered directly in <img> tags or og:image
+        // Return default branded logo thumbnail
+        if (file_exists(__DIR__ . '/../assets/images/logo.png')) {
+            return ASSETS_URL . 'images/logo.png';
         }
+    }
+
+    if (strpos($url, 'http://') === 0 || strpos($url, 'https://') === 0) {
         return $url;
     }
     if (file_exists(UPLOAD_DIR . $url)) {
@@ -264,7 +274,9 @@ function get_media_url($url, $media_type = 'image') {
         return BASE_URL . '/' . $url;
     }
     if (preg_match('/\.(jpg|jpeg|png|webp|gif|svg|avif|jfif|bmp)$/i', $url) || strpos($url, 'news_') === 0 || strpos($url, 'content_') === 0) {
-        return UPLOAD_URL . $url;
+        if (file_exists(UPLOAD_DIR . $url)) {
+            return UPLOAD_URL . $url;
+        }
     }
     return ASSETS_URL . 'images/logo.png';
 }
@@ -330,11 +342,26 @@ function render_media_container($mediaType, $mediaUrl, $headline = '') {
             </div>';
         }
     } elseif ($mediaType === 'video_upload') {
-        $videoSrc = (strpos($mediaUrl, 'http') === 0) ? $mediaUrl : (UPLOAD_URL . htmlspecialchars($mediaUrl));
-        return '
-        <div class="bhaskar-video-wrapper" style="width:100%; background:#0f172a; border-radius:10px; overflow:hidden; margin:16px 0; text-align:center; box-shadow:0 4px 15px rgba(0,0,0,0.12);">
-            <video src="' . $videoSrc . '" class="bhaskar-media-elem" controls playsinline preload="metadata" style="width:100%; max-height:520px; display:block; margin:0 auto; outline:none;"></video>
-        </div>';
+        $videoFile = $mediaUrl;
+        if (strpos($videoFile, 'uploads/') === 0) {
+            $videoFile = substr($videoFile, 8);
+        }
+        $exists = (strpos($mediaUrl, 'http://') === 0 || strpos($mediaUrl, 'https://') === 0) || file_exists(UPLOAD_DIR . $videoFile) || file_exists(__DIR__ . '/../uploads/' . $videoFile);
+        
+        if ($exists) {
+            $videoSrc = (strpos($mediaUrl, 'http') === 0) ? $mediaUrl : (UPLOAD_URL . htmlspecialchars($videoFile));
+            return '
+            <div class="bhaskar-video-wrapper" style="width:100%; background:#0f172a; border-radius:10px; overflow:hidden; margin:16px 0; text-align:center; box-shadow:0 4px 15px rgba(0,0,0,0.12);">
+                <video src="' . $videoSrc . '" class="bhaskar-media-elem" controls playsinline preload="metadata" style="width:100%; max-height:520px; display:block; margin:0 auto; outline:none;" onerror="this.parentElement.innerHTML=\'<div style=\\\'padding:24px 16px;text-align:center;background:#f8fafc;border-radius:10px;border:1px solid #f1f5f9;\\\'><img src=\\\'' . $fallbackLogo . '\\\' style=\\\'max-height:140px;margin:0 auto 12px;display:block;\\\'><span style=\\\'display:inline-block;font-size:12px;font-weight:700;color:#e53935;background:#fee2e2;padding:4px 10px;border-radius:20px;\\\'>दैनिक खबर</span></div>\';"></video>
+            </div>';
+        } else {
+            // Video file not on disk: gracefully render branded fallback card instead of broken 404 video player
+            return '
+            <div class="bhaskar-media-container" style="width:100%; border-radius:10px; overflow:hidden; background:#f8fafc; border:1px solid #f1f5f9; text-align:center; margin:16px 0; padding:24px 16px;">
+                <img src="' . $fallbackLogo . '" alt="' . $escapedHeadline . '" class="bhaskar-media-elem" style="max-height:140px; width:auto; object-fit:contain; display:block; margin:0 auto 12px; border-radius:8px;">
+                <span style="display:inline-block; font-size:12px; font-weight:700; color:#e53935; background:#fee2e2; padding:4px 10px; border-radius:20px;">दैनिक खबर विशेष</span>
+            </div>';
+        }
     } else {
         // Image: clean aspect-ratio container with normal sizing for all picture dimensions & onerror fallback
         $imgSrc = get_media_url($mediaUrl, 'image');

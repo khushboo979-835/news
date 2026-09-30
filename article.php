@@ -70,14 +70,22 @@ if (!empty($articleImage)) {
 }
 
 $pageOgUrl = BASE_URL . '/article.php?slug=' . urlencode($article['slug']);
-$pageOgType = ($article['media_type'] === 'video_upload' || $article['media_type'] === 'video_embed') ? 'video.other' : 'article';
+$pageOgType = 'article';
 $pageArticlePublished = $article['created_at'];
 $pageArticleSection = $article['category_name'];
 
-if ($article['media_type'] === 'video_upload' || $article['media_type'] === 'video_embed') {
+if ($article['media_type'] === 'video_embed') {
+    $pageOgType = 'video.other';
     $pageOgVideo = $article['media_url'];
-    if ($article['media_type'] === 'video_upload' && strpos($pageOgVideo, 'http') !== 0) {
-        $pageOgVideo = rtrim(BASE_URL, '/') . '/' . ltrim(UPLOAD_URL . $pageOgVideo, '/');
+} elseif ($article['media_type'] === 'video_upload') {
+    $vFile = $article['media_url'];
+    if (strpos($vFile, 'uploads/') === 0) {
+        $vFile = substr($vFile, 8);
+    }
+    $vExists = (strpos($vFile, 'http://') === 0 || strpos($vFile, 'https://') === 0) || file_exists(UPLOAD_DIR . $vFile) || file_exists(__DIR__ . '/uploads/' . $vFile);
+    if ($vExists) {
+        $pageOgType = 'video.other';
+        $pageOgVideo = (strpos($vFile, 'http') === 0) ? $vFile : (rtrim(BASE_URL, '/') . '/' . ltrim(UPLOAD_URL . $vFile, '/'));
     }
 }
 
