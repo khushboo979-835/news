@@ -56,13 +56,7 @@ $pageTitle = $article['headline'];
 $pageDescription = !empty($article['subheadline']) ? $article['subheadline'] : get_excerpt($article['content'], 160);
 
 // Resolve Article Media Image URL for Open Graph & WhatsApp / Facebook Link Sharing
-$articleImage = get_media_url($article['media_url'], $article['media_type'], $article['content']);
-if (empty($article['media_url']) || $article['media_url'] === 'news_default.jpg' || strpos($articleImage, 'news_default.jpg') !== false) {
-    $firstContentImg = extract_first_image_from_content($article['content']);
-    if ($firstContentImg) {
-        $articleImage = get_media_url($firstContentImg, 'image');
-    }
-}
+$articleImage = get_article_thumbnail_url($article);
 if (!empty($articleImage)) {
     if (strpos($articleImage, '//') === 0) {
         $articleImage = 'https:' . $articleImage;
@@ -72,7 +66,7 @@ if (!empty($articleImage)) {
     $articleImage = preg_replace('/^http:\/\/(dainikkhabr\.com)/i', 'https://$1', $articleImage);
     $pageOgImage = $articleImage;
 } else {
-    $pageOgImage = rtrim(BASE_URL, '/') . '/uploads/news_default.jpg';
+    $pageOgImage = rtrim(BASE_URL, '/') . '/assets/images/news_cover_default.jpg';
 }
 
 $pageOgUrl = BASE_URL . '/article.php?slug=' . urlencode($article['slug']);
@@ -91,7 +85,7 @@ if ($article['media_type'] === 'video_embed') {
     $vExists = (strpos($vFile, 'http://') === 0 || strpos($vFile, 'https://') === 0) || file_exists(UPLOAD_DIR . $vFile) || file_exists(__DIR__ . '/uploads/' . $vFile);
     if ($vExists) {
         $pageOgType = 'video.other';
-        $pageOgVideo = (strpos($vFile, 'http') === 0) ? $vFile : (rtrim(BASE_URL, '/') . '/' . ltrim(UPLOAD_URL . $vFile, '/'));
+        $pageOgVideo = (strpos($vFile, 'http') === 0) ? $vFile : (rtrim(UPLOAD_URL, '/') . '/' . ltrim($vFile, '/'));
     }
 }
 
@@ -175,7 +169,7 @@ require_once __DIR__ . '/includes/header.php';
           </div>
 
           <!-- Aspect Ratio Safe Media -->
-          <?= render_media_container($article['media_type'], $article['media_url'], $article['headline'], $article['content']) ?>
+          <?= render_media_container($article['media_type'], $article['media_url'], $article['headline'], $article['content'], $article['thumbnail_url'] ?? '') ?>
 
           <!-- Rich Text Content -->
           <div class="article-rich-body" style="font-size: 1.15rem; line-height: 1.85; color: var(--gray-800); margin-top: 25px;">
@@ -192,10 +186,15 @@ require_once __DIR__ . '/includes/header.php';
             </h3>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
               <?php foreach ($relatedArticles as $rStory): ?>
-                <div class="bhaskar-story-card" style="padding: 16px;">
-                  <?= render_media_container($rStory['media_type'], $rStory['media_url'], $rStory['headline'], $rStory['content']) ?>
-                  <h4 style="font-size: 1rem; font-weight: 700; margin-top: 10px;">
-                    <a href="<?= BASE_URL ?>/article.php?slug=<?= urlencode($rStory['slug']) ?>">
+                <div class="bhaskar-story-card" style="padding: 14px; background:#fff; border-radius:10px; border:1px solid #e2e8f0;">
+                  <a href="<?= BASE_URL ?>/article.php?slug=<?= urlencode($rStory['slug']) ?>" class="bhaskar-thumb-link" style="display:block; position:relative; border-radius:8px; overflow:hidden;">
+                    <img src="<?= get_article_thumbnail_url($rStory) ?>" alt="<?= htmlspecialchars($rStory['headline']) ?>" loading="lazy" style="width:100%; aspect-ratio:16/9; object-fit:cover; display:block;" onerror="this.onerror=null; this.src='<?= ASSETS_URL ?>images/news_cover_default.jpg';">
+                    <?php if ($rStory['media_type'] === 'video_upload' || $rStory['media_type'] === 'video_embed'): ?>
+                      <span class="bhaskar-thumb-play"><i class="fa-solid fa-play"></i></span>
+                    <?php endif; ?>
+                  </a>
+                  <h4 style="font-size: 0.95rem; font-weight: 700; margin-top: 10px; line-height: 1.4;">
+                    <a href="<?= BASE_URL ?>/article.php?slug=<?= urlencode($rStory['slug']) ?>" style="color:var(--gray-900); text-decoration:none;">
                       <?= htmlspecialchars($rStory['headline']) ?>
                     </a>
                   </h4>

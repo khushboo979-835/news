@@ -85,7 +85,7 @@ require_once __DIR__ . '/includes/header.php';
                   <?php endif; ?>
                 </div>
 
-                <?= render_media_container($story['media_type'], $story['media_url'], $story['headline'], $story['content'] ?? '') ?>
+                <?= render_media_container($story['media_type'], $story['media_url'], $story['headline'], $story['content'] ?? '', $story['thumbnail_url'] ?? '') ?>
 
                 <div class="bhaskar-story-footer">
                   <div class="bhaskar-meta-info">

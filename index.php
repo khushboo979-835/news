@@ -82,7 +82,7 @@ require_once __DIR__ . '/includes/header.php';
             <!-- Media Container with Play Overlay & Time Badge -->
             <div class="bhaskar-hero-media">
               <a href="<?= $heroUrl ?>">
-                <?= render_media_container($heroStory['media_type'], $heroStory['media_url'], $heroStory['headline'], $heroStory['content'] ?? '') ?>
+                <?= render_media_container($heroStory['media_type'], $heroStory['media_url'], $heroStory['headline'], $heroStory['content'] ?? '', $heroStory['thumbnail_url'] ?? '') ?>
               </a>
             </div>
 
@@ -164,7 +164,7 @@ require_once __DIR__ . '/includes/header.php';
               <!-- Right Media Thumbnail Box -->
               <div class="bhaskar-split-right">
                 <a href="<?= $storyUrl ?>" class="bhaskar-thumb-link">
-                  <img src="<?= get_media_url($story['media_url'], $story['media_type'], $story['content'] ?? '') ?>" alt="<?= htmlspecialchars($story['headline']) ?>" loading="lazy" onerror="this.onerror=null; this.src='<?= UPLOAD_URL ?>news_default.jpg';">
+                  <img src="<?= get_article_thumbnail_url($story) ?>" alt="<?= htmlspecialchars($story['headline']) ?>" loading="lazy" onerror="this.onerror=null; this.src='<?= ASSETS_URL ?>images/news_cover_default.jpg';">
                   <?php if ($story['media_type'] === 'video_embed' || $story['media_type'] === 'video_upload'): ?>
                     <span class="bhaskar-thumb-play"><i class="fa-solid fa-play"></i></span>
                   <?php endif; ?>

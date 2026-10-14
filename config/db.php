@@ -23,7 +23,7 @@ try {
         ]
     );
 
-    // Auto-schema checks for language & media_url support
+    // Auto-schema checks for language, thumbnail_url & media_url support
     try {
         static $schemaChecked = false;
         if (!$schemaChecked) {
@@ -35,12 +35,32 @@ try {
             // Ensure media_url is at least 500 chars for long video/embed URLs
             $pdo->exec("ALTER TABLE `news` MODIFY COLUMN `media_url` VARCHAR(500) NOT NULL");
 
-            // Auto-heal news articles whose media_url is news_default.jpg or empty but have images in content
+            // Add thumbnail_url column if not present
+            $checkThumb = $pdo->query("SHOW COLUMNS FROM `news` LIKE 'thumbnail_url'");
+            if ($checkThumb && $checkThumb->rowCount() === 0) {
+                $pdo->exec("ALTER TABLE `news` ADD COLUMN `thumbnail_url` VARCHAR(500) NULL DEFAULT NULL AFTER `media_url`");
+            }
+
+            // Self-repair: Ensure physical default image on server is clean Dainik Khabar card, NOT flood photo
+            $uploadDefault = defined('UPLOAD_DIR') ? UPLOAD_DIR . 'news_default.jpg' : __DIR__ . '/../uploads/news_default.jpg';
+            $cleanDefault = __DIR__ . '/../assets/images/news_cover_default.jpg';
+            if (file_exists($cleanDefault)) {
+                if (!file_exists($uploadDefault) || filesize($uploadDefault) > 50000 || filesize($uploadDefault) != filesize($cleanDefault)) {
+                    @copy($cleanDefault, $uploadDefault);
+                }
+                $uploadCover = defined('UPLOAD_DIR') ? UPLOAD_DIR . 'news_cover_default.jpg' : __DIR__ . '/../uploads/news_cover_default.jpg';
+                if (!file_exists($uploadCover)) {
+                    @copy($cleanDefault, $uploadCover);
+                }
+            }
+
+            // Auto-heal news articles whose media_url is news_default.jpg or empty
             try {
+                // 1. If content has an image, use it!
                 $stmtFix = $pdo->query("SELECT id, content FROM `news` WHERE (media_url = 'news_default.jpg' OR media_url = '' OR media_url IS NULL) AND content LIKE '%<img%' LIMIT 100");
                 $fixRows = $stmtFix ? $stmtFix->fetchAll() : [];
                 if (!empty($fixRows)) {
-                    $updStmt = $pdo->prepare("UPDATE `news` SET `media_type` = 'image', `media_url` = ? WHERE `id` = ?");
+                    $updStmt = $pdo->prepare("UPDATE `news` SET `media_type` = 'image', `media_url` = ?, `thumbnail_url` = ? WHERE `id` = ?");
                     foreach ($fixRows as $fr) {
                         if (preg_match('/<img[^>]+src=["\']([^"\']+)["\']/i', $fr['content'], $mImg)) {
                             $srcImg = trim($mImg[1]);
@@ -52,11 +72,38 @@ try {
                                 $srcImg = $mN[1];
                             }
                             if (!empty($srcImg) && $srcImg !== 'news_default.jpg') {
-                                $updStmt->execute([$srcImg, $fr['id']]);
+                                $updStmt->execute([$srcImg, $srcImg, $fr['id']]);
                             }
                         }
                     }
                 }
+
+                // 2. For video articles without thumbnail_url, if content has an image, set it as thumbnail_url
+                $stmtVidFix = $pdo->query("SELECT id, content FROM `news` WHERE (media_type IN ('video_upload', 'video_embed') OR media_url LIKE '%.mp4%') AND (thumbnail_url IS NULL OR thumbnail_url = '' OR thumbnail_url = 'news_default.jpg') AND content LIKE '%<img%' LIMIT 100");
+                $vidRows = $stmtVidFix ? $stmtVidFix->fetchAll() : [];
+                if (!empty($vidRows)) {
+                    $updVid = $pdo->prepare("UPDATE `news` SET `thumbnail_url` = ? WHERE `id` = ?");
+                    foreach ($vidRows as $vr) {
+                        if (preg_match('/<img[^>]+src=["\']([^"\']+)["\']/i', $vr['content'], $mImg)) {
+                            $srcImg = trim($mImg[1]);
+                            if (preg_match('#/(uploads/[^"\'\s>]+)#i', $srcImg, $mUp)) {
+                                $srcImg = basename($mUp[1]);
+                            } elseif (preg_match('#(content_\d+_\d+\.[a-zA-Z0-9]+)#i', $srcImg, $mC)) {
+                                $srcImg = $mC[1];
+                            } elseif (preg_match('#(news_\d+_\d+\.[a-zA-Z0-9]+)#i', $srcImg, $mN)) {
+                                $srcImg = $mN[1];
+                            }
+                            if (!empty($srcImg) && $srcImg !== 'news_default.jpg') {
+                                $updVid->execute([$srcImg, $vr['id']]);
+                            }
+                        }
+                    }
+                }
+
+                // 3. Update any leftover news_default.jpg or wrong flood image to clean news_cover_default.jpg
+                $pdo->exec("UPDATE `news` SET `media_url` = 'news_cover_default.jpg' WHERE `media_url` = 'news_default.jpg'");
+                $pdo->exec("UPDATE `news` SET `thumbnail_url` = 'news_cover_default.jpg' WHERE `thumbnail_url` = 'news_default.jpg'");
+                $pdo->exec("UPDATE `news` SET `media_url` = 'news_cover_default.jpg' WHERE `media_url` = 'news_patna_flood.jpg' AND `slug` NOT LIKE '%ganga-water-level%'");
             } catch (Exception $eAutoFix) {
                 // silent
             }

@@ -30,15 +30,15 @@ $currentCatSlug = $_GET['cat'] ?? ($_GET['slug'] ?? '');
   $ogUrl = isset($pageOgUrl) ? $pageOgUrl : ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]");
   $ogUrl = preg_replace('/^http:\/\/(dainikkhabr\.com)/i', 'https://$1', $ogUrl);
   $ogType = isset($pageOgType) ? $pageOgType : 'website';
-  $ogImage = isset($pageOgImage) && !empty($pageOgImage) ? $pageOgImage : (rtrim(BASE_URL, '/') . '/uploads/news_default.jpg');
+  $ogImage = isset($pageOgImage) && !empty($pageOgImage) ? $pageOgImage : (rtrim(BASE_URL, '/') . '/assets/images/news_cover_default.jpg');
   if (strpos($ogImage, '//') === 0) {
       $ogImage = 'https:' . $ogImage;
   } elseif (strpos($ogImage, 'http://') !== 0 && strpos($ogImage, 'https://') !== 0) {
       $ogImage = rtrim(BASE_URL, '/') . '/' . ltrim($ogImage, '/');
   }
   $ogImage = preg_replace('/^http:\/\/(dainikkhabr\.com)/i', 'https://$1', $ogImage);
-  if (strpos($ogImage, 'news_default.jpg') !== false && strpos($ogImage, '?') === false) {
-      $ogImage .= '?v=' . (file_exists(__DIR__ . '/../uploads/news_default.jpg') ? filemtime(__DIR__ . '/../uploads/news_default.jpg') : time());
+  if ((strpos($ogImage, 'news_default.jpg') !== false || strpos($ogImage, 'news_cover_default.jpg') !== false) && strpos($ogImage, '?') === false) {
+      $ogImage .= '?v=' . time();
   }
   $ogImageType = preg_match('/\.png(\?.*)?$/i', $ogImage) ? 'image/png' : 'image/jpeg';
 ?>

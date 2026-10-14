@@ -498,6 +498,11 @@ $current_dir = basename(dirname($_SERVER['PHP_SELF']));
                     <i class="fa-solid fa-palette"></i> थीम व सेटिंग्स (Theme Settings)
                 </a>
             </li>
+            <li class="menu-item">
+                <a href="<?php echo SITE_URL; ?>/admin/sync.php" class="menu-link <?php echo ($current_page == 'sync.php') ? 'active' : ''; ?>">
+                    <i class="fa-solid fa-rotate"></i> सर्वर सिंक (Server Sync)
+                </a>
+            </li>
         </ul>
 
         <div class="sidebar-footer">

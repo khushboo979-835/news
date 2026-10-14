@@ -33,8 +33,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-        $media_url = 'news_default.jpg';
+        $media_url = 'news_cover_default.jpg';
+        $thumbnail_url = null;
         $direct_media_url = trim($_POST['direct_media_url'] ?? '');
+
+        if (!is_dir(UPLOAD_DIR)) {
+            @mkdir(UPLOAD_DIR, 0777, true);
+        }
+
+        // Process dedicated video thumbnail file if uploaded
+        if (isset($_FILES['thumbnail_file']) && $_FILES['thumbnail_file']['error'] !== UPLOAD_ERR_NO_FILE) {
+            if ($_FILES['thumbnail_file']['error'] === UPLOAD_ERR_OK) {
+                $tFile = $_FILES['thumbnail_file'];
+                $tExt = strtolower(pathinfo($tFile['name'], PATHINFO_EXTENSION));
+                $allowed_img = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'avif', 'jfif'];
+                if (in_array($tExt, $allowed_img)) {
+                    $tFilename = 'thumb_' . time() . '_' . rand(1000, 9999) . '.' . $tExt;
+                    if (move_uploaded_file($tFile['tmp_name'], UPLOAD_DIR . $tFilename)) {
+                        @chmod(UPLOAD_DIR . $tFilename, 0644);
+                        $thumbnail_url = $tFilename;
+                    }
+                }
+            }
+        }
 
         // 1. If file uploaded, auto-detect type and save
         if (isset($_FILES['media_file']) && $_FILES['media_file']['error'] !== UPLOAD_ERR_NO_FILE) {
@@ -59,15 +80,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
 
                 if (empty($error)) {
-                    if (!is_dir(UPLOAD_DIR)) {
-                        @mkdir(UPLOAD_DIR, 0777, true);
-                    }
                     $new_filename = 'news_' . time() . '_' . rand(1000, 9999) . '.' . $file_ext;
                     $target_path = UPLOAD_DIR . $new_filename;
 
                     if (move_uploaded_file($file['tmp_name'], $target_path)) {
                         @chmod($target_path, 0644);
                         $media_url = $new_filename;
+                        if ($media_type === 'image') {
+                            $thumbnail_url = $new_filename;
+                        }
                     } else {
                         $error = ($language === 'en') ? 'Failed to upload media file. Check folder permissions.' : 'फ़ाइल अपलोड करने में समस्या हुई। कृपया फ़ाइल का साइज़ चेक करें।';
                     }
@@ -80,6 +101,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 $media_url = $video_embed_url;
                 $media_type = 'video_embed';
+                $ytId = get_youtube_video_id($video_embed_url);
+                if ($ytId && empty($thumbnail_url)) {
+                    $thumbnail_url = "https://img.youtube.com/vi/{$ytId}/hqdefault.jpg";
+                }
             } else {
                 $error = ($language === 'en') ? 'Please enter YouTube video link!' : 'कृपया यूट्यूब वीडियो का लिंक दर्ज करें!';
             }
@@ -89,23 +114,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $media_type = 'video_upload';
             } else {
                 $media_type = 'image';
+                if (empty($thumbnail_url)) {
+                    $thumbnail_url = $direct_media_url;
+                }
             }
         } else {
             // No file uploaded: Auto-extract first image from content
             $firstImg = extract_first_image_from_content($content);
             if ($firstImg) {
                 $media_url = $firstImg;
+                $thumbnail_url = $firstImg;
                 $media_type = 'image';
             } else {
-                $media_url = 'news_default.jpg';
+                $media_url = 'news_cover_default.jpg';
+                $thumbnail_url = 'news_cover_default.jpg';
                 $media_type = 'image';
+            }
+        }
+
+        // Final fallback for thumbnail_url
+        if (empty($thumbnail_url)) {
+            if ($media_type === 'image' && !empty($media_url) && $media_url !== 'news_cover_default.jpg') {
+                $thumbnail_url = $media_url;
+            } else {
+                $firstImg = extract_first_image_from_content($content);
+                $thumbnail_url = $firstImg ?: 'news_cover_default.jpg';
             }
         }
 
         if (empty($error) && $pdo) {
             try {
-                $stmt = $pdo->prepare("INSERT INTO news (category_id, language, headline, subheadline, slug, content, media_type, media_url, priority_order, is_breaking, views) 
-                                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)");
+                $stmt = $pdo->prepare("INSERT INTO news (category_id, language, headline, subheadline, slug, content, media_type, media_url, thumbnail_url, priority_order, is_breaking, views) 
+                                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)");
                 $stmt->execute([
                     $category_id,
                     $language,
@@ -115,6 +155,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $content,
                     $media_type,
                     $media_url,
+                    $thumbnail_url,
                     $priority_order,
                     $is_breaking
                 ]);
@@ -277,6 +318,17 @@ $selected_lang = $_POST['language'] ?? 'hi';
                     </div>
                 </div>
 
+                <!-- Dedicated Video Thumbnail Upload Field -->
+                <div id="videoThumbnailGroup" style="margin-bottom: 18px; display:none; background:#f0fdf4; padding:12px; border-radius:8px; border:1px solid #bbf7d0;">
+                    <label style="display:block; font-weight:700; margin-bottom:6px; font-size:0.88rem; color:#166534;">
+                        <i class="fa-solid fa-image"></i> वीडियो कवर / पोस्टर फ़ोटो (Video Cover for WhatsApp)
+                    </label>
+                    <input type="file" name="thumbnail_file" accept="image/*,.jpg,.jpeg,.png,.webp" style="width:100%; font-size:0.85rem; padding:6px; background:#fff; border:1px solid #86efac; border-radius:6px;">
+                    <small style="color:#15803d; display:block; margin-top:4px; font-size:0.78rem;">
+                        व्हाट्सएप पर शेयर करने और होमपेज कार्ड पर यही फ़ोटो दिखेगी। (JPG, PNG, WEBP)
+                    </small>
+                </div>
+
                 <!-- Direct Media URL Option -->
                 <div id="directMediaUrlGroup" style="margin-bottom: 18px;">
                     <label id="directMediaUrlLabel" style="display:block; font-weight:600; margin-bottom:6px; font-size:0.85rem; color:#4b5563;">
@@ -382,21 +434,25 @@ function handleMediaTypeChange() {
     const fileGroup = document.getElementById('fileUploadGroup');
     const embedGroup = document.getElementById('videoEmbedGroup');
     const directGroup = document.getElementById('directMediaUrlGroup');
+    const thumbGroup = document.getElementById('videoThumbnailGroup');
     const label = document.getElementById('fileUploadLabel');
 
     if (type === 'video_embed') {
         fileGroup.style.display = 'none';
         if (directGroup) directGroup.style.display = 'none';
         embedGroup.style.display = 'block';
+        if (thumbGroup) thumbGroup.style.display = 'block';
     } else if (type === 'video_upload') {
         fileGroup.style.display = 'block';
         if (directGroup) directGroup.style.display = 'block';
         embedGroup.style.display = 'none';
+        if (thumbGroup) thumbGroup.style.display = 'block';
         if (label) label.innerText = 'वीडियो फ़ाइल चुनें (Choose Video File: MP4, WebM, MOV)';
     } else {
         fileGroup.style.display = 'block';
         if (directGroup) directGroup.style.display = 'block';
         embedGroup.style.display = 'none';
+        if (thumbGroup) thumbGroup.style.display = 'none';
         if (label) label.innerText = 'फ़ोटो फ़ाइल चुनें (Choose Photo File: JPG, PNG, WEBP)';
     }
 }
