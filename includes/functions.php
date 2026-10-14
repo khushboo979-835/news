@@ -554,6 +554,8 @@ function render_media_container($mediaType, $mediaUrl, $headline = '', $content 
         // Image: clean aspect-ratio container with normal sizing for all picture dimensions & onerror fallback
         $imgSrc = get_media_url($mediaUrl, 'image', $content, $thumbnailUrl);
         return '
+        <div class="bhaskar-media-container" style="width:100%; border-radius:10px; overflow:hidden; background:#f8fafc; border:1px solid #f1f5f9; text-align:center; margin:16px 0;">
+            <img src="' . htmlspecialchars($imgSrc) . '" alt="' . $escapedHeadline . '" class="bhaskar-media-elem" loading="lazy" onerror="this.onerror=null; this.src=\'' . $fallbackLogo . '\';" style="max-width:100%; max-height:540px; width:auto; height:auto; object-fit:contain; display:block; margin:0 auto; border-radius:8px;">
         </div>';
     }
 }

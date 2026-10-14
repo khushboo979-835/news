@@ -123,35 +123,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $media_url = 'news_cover_default.jpg';
                     $thumbnail_url = 'news_cover_default.jpg';
                 }
-            } elseif (!empty($video_embed_url) || ($media_type === 'video_embed' && !empty($video_embed_url))) {
-                if (preg_match('/src=["\']([^"\']+)["\']/i', $video_embed_url, $m)) {
-                    $video_embed_url = $m[1];
-                }
-                $media_url = $video_embed_url;
-                $media_type = 'video_embed';
-                $ytId = get_youtube_video_id($video_embed_url);
-                if ($ytId && empty($thumbnail_url)) {
-                    $thumbnail_url = "https://img.youtube.com/vi/{$ytId}/hqdefault.jpg";
-                }
-            } elseif (!empty($direct_media_url)) {
-                $media_url = $direct_media_url;
-                if (preg_match('/\.(mp4|webm|mov|mkv|avi|3gp|m4v)$/i', $direct_media_url)) {
-                    $media_type = 'video_upload';
+            } elseif ($media_type === 'video_embed') {
+                if (!empty($video_embed_url)) {
+                    if (preg_match('/src=["\']([^"\']+)["\']/i', $video_embed_url, $m)) {
+                        $video_embed_url = $m[1];
+                    }
+                    $media_url = $video_embed_url;
+                    $ytId = get_youtube_video_id($video_embed_url);
+                    if ($ytId && empty($thumbnail_url)) {
+                        $thumbnail_url = "https://img.youtube.com/vi/{$ytId}/hqdefault.jpg";
+                    }
                 } else {
-                    $media_type = 'image';
+                    $error = ($language === 'en') ? 'Please enter YouTube video link!' : 'कृपया यूट्यूब वीडियो का लिंक दर्ज करें!';
+                }
+            } elseif ($media_type === 'video_upload') {
+                if (!empty($direct_media_url)) {
+                    $media_url = $direct_media_url;
+                }
+                // If it was already video_upload, keep existing $media_url
+            } else {
+                // $media_type === 'image'
+                if (!empty($direct_media_url)) {
+                    $media_url = $direct_media_url;
                     if (empty($thumbnail_url)) {
                         $thumbnail_url = $direct_media_url;
                     }
-                }
-            } else {
-                // Keeping existing media
-                if ($media_type === 'image') {
-                    if ($media_url === 'news_default.jpg' || empty($media_url)) {
+                } else {
+                    // Keeping existing media or extracting from content
+                    if ($news['media_type'] !== 'image' || empty($media_url) || $media_url === 'news_default.jpg' || $media_url === 'news_patna_flood.jpg') {
                         $firstImg = extract_first_image_from_content($content);
                         $media_url = $firstImg ?: 'news_cover_default.jpg';
-                    }
-                    if (empty($thumbnail_url) || $thumbnail_url === 'news_default.jpg') {
                         $thumbnail_url = $media_url;
+                    } else {
+                        if (empty($thumbnail_url) || $thumbnail_url === 'news_default.jpg' || $thumbnail_url === 'news_patna_flood.jpg') {
+                            $thumbnail_url = $media_url;
+                        }
                     }
                 }
             }
@@ -465,6 +471,57 @@ $current_lang = $_POST['language'] ?? $news['language'] ?? 'hi';
 </form>
 
 <script>
+function compressImageIfNeeded(file, callback) {
+    if (!file || !file.type.startsWith('image/') || file.type === 'image/svg+xml' || file.type === 'image/gif') {
+        callback(file, false);
+        return;
+    }
+    if (file.size <= 1.2 * 1024 * 1024) {
+        callback(file, false);
+        return;
+    }
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+            let width = img.width;
+            let height = img.height;
+            const maxDimension = 1920;
+            if (width > maxDimension || height > maxDimension) {
+                if (width > height) {
+                    height = Math.round((height * maxDimension) / width);
+                    width = maxDimension;
+                } else {
+                    width = Math.round((width * maxDimension) / height);
+                    height = maxDimension;
+                }
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            canvas.toBlob(function(blob) {
+                if (blob && blob.size < file.size) {
+                    try {
+                        const compressedFile = new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), {
+                            type: 'image/jpeg',
+                            lastModified: Date.now()
+                        });
+                        callback(compressedFile, true);
+                    } catch(err) {
+                        callback(file, false);
+                    }
+                } else {
+                    callback(file, false);
+                }
+            }, 'image/jpeg', 0.85);
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
 function previewSelectedMedia(input) {
     const container = document.getElementById('livePreviewContainer');
     const mediaBox = document.getElementById('previewMediaBox');
@@ -478,18 +535,30 @@ function previewSelectedMedia(input) {
     if (input.files && input.files[0]) {
         const file = input.files[0];
         const fileType = file.type;
-        const fileSizeKB = (file.size / 1024).toFixed(1);
-        const fileSizeStr = (file.size > 1024 * 1024) ? (file.size / (1024 * 1024)).toFixed(2) + ' MB' : fileSizeKB + ' KB';
-        
-        container.style.display = 'block';
-        fileInfo.innerText = `चुनी गई फ़ाइल: ${file.name} (${fileSizeStr})`;
         
         if (fileType.startsWith('image/')) {
-            const url = URL.createObjectURL(file);
-            mediaBox.innerHTML = `<img src="${url}" style="max-width:100%; max-height:180px; object-fit:contain; border-radius:6px;" alt="Preview">`;
-            const sel = document.getElementById('mediaTypeSelect');
-            if (sel) { sel.value = 'image'; handleMediaTypeChange(); }
+            compressImageIfNeeded(file, function(processedFile, wasCompressed) {
+                if (wasCompressed && window.DataTransfer) {
+                    try {
+                        const dt = new DataTransfer();
+                        dt.items.add(processedFile);
+                        input.files = dt.files;
+                    } catch(e) {}
+                }
+                const finalSizeKB = (processedFile.size / 1024).toFixed(1);
+                const finalSizeStr = (processedFile.size > 1024 * 1024) ? (processedFile.size / (1024 * 1024)).toFixed(2) + ' MB' : finalSizeKB + ' KB';
+                container.style.display = 'block';
+                fileInfo.innerText = `चुनी गई फ़ाइल: ${processedFile.name} (${finalSizeStr}${wasCompressed ? ' - ऑटो कंप्रेस्ड' : ''})`;
+                const url = URL.createObjectURL(processedFile);
+                mediaBox.innerHTML = `<img src="${url}" style="max-width:100%; max-height:180px; object-fit:contain; border-radius:6px;" alt="Preview">`;
+                const sel = document.getElementById('mediaTypeSelect');
+                if (sel) { sel.value = 'image'; handleMediaTypeChange(); }
+            });
         } else if (fileType.startsWith('video/')) {
+            const fileSizeKB = (file.size / 1024).toFixed(1);
+            const fileSizeStr = (file.size > 1024 * 1024) ? (file.size / (1024 * 1024)).toFixed(2) + ' MB' : fileSizeKB + ' KB';
+            container.style.display = 'block';
+            fileInfo.innerText = `चुनी गई फ़ाइल: ${file.name} (${fileSizeStr})`;
             const url = URL.createObjectURL(file);
             mediaBox.innerHTML = `<video src="${url}" controls autoplay muted style="max-width:100%; max-height:180px; border-radius:6px;"></video>`;
             const sel = document.getElementById('mediaTypeSelect');
@@ -510,6 +579,7 @@ function handleMediaTypeChange() {
     const directGroup = document.getElementById('directMediaUrlGroup');
     const thumbGroup = document.getElementById('videoThumbnailGroup');
     const label = document.getElementById('fileUploadLabel');
+    const veInput = document.querySelector('input[name="video_embed_url"]');
 
     if (type === 'video_embed') {
         fileGroup.style.display = 'none';
@@ -522,12 +592,14 @@ function handleMediaTypeChange() {
         embedGroup.style.display = 'none';
         if (thumbGroup) thumbGroup.style.display = 'block';
         if (label) label.innerText = 'नई वीडियो फ़ाइल बदलें (Choose Video File: MP4, WebM, MOV)';
+        if (veInput) veInput.value = '';
     } else {
         fileGroup.style.display = 'block';
         if (directGroup) directGroup.style.display = 'block';
         embedGroup.style.display = 'none';
         if (thumbGroup) thumbGroup.style.display = 'none';
         if (label) label.innerText = 'नई फ़ोटो बदलें (Choose Photo File: JPG, PNG, WEBP)';
+        if (veInput) veInput.value = '';
     }
 }
 

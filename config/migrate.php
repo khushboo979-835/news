@@ -59,10 +59,9 @@ try {
         ");
     }
 
-    // 3. Categories Table (Re-create cleanly with all required columns)
-    $pdo->exec("DROP TABLE IF EXISTS `categories`");
+    // 3. Categories Table
     $pdo->exec("
-        CREATE TABLE `categories` (
+        CREATE TABLE IF NOT EXISTS `categories` (
           `id` INT AUTO_INCREMENT PRIMARY KEY,
           `name` VARCHAR(100) NOT NULL,
           `slug` VARCHAR(120) NOT NULL UNIQUE,
@@ -74,7 +73,7 @@ try {
     ");
 
     $pdo->exec("
-        INSERT INTO `categories` (`id`, `name`, `slug`, `icon`, `display_order`, `status`) VALUES
+        INSERT IGNORE INTO `categories` (`id`, `name`, `slug`, `icon`, `display_order`, `status`) VALUES
         (1, 'टॉप न्यूज़ (Top News)', 'top-news', 'fa-fire-flame-curved', 1, 1),
         (2, 'बिहार (Bihar)', 'bihar', 'fa-location-dot', 2, 1),
         (3, 'पटना (Patna)', 'patna', 'fa-city', 3, 1),
@@ -84,10 +83,9 @@ try {
         (7, 'अन्य (Anya / Other)', 'anya', 'fa-layer-group', 7, 1);
     ");
 
-    // 4. News Table (Re-create cleanly with manual priority, language, and aspect-ratio media)
-    $pdo->exec("DROP TABLE IF EXISTS `news`");
+    // 4. News Table
     $pdo->exec("
-        CREATE TABLE `news` (
+        CREATE TABLE IF NOT EXISTS `news` (
           `id` INT AUTO_INCREMENT PRIMARY KEY,
           `category_id` INT NOT NULL,
           `language` VARCHAR(10) NOT NULL DEFAULT 'hi',
@@ -107,10 +105,22 @@ try {
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     ");
 
+    // Ensure columns exist on already created tables
+    try {
+        $checkCol = $pdo->query("SHOW COLUMNS FROM `news` LIKE 'language'");
+        if ($checkCol && $checkCol->rowCount() === 0) {
+            $pdo->exec("ALTER TABLE `news` ADD COLUMN `language` VARCHAR(10) NOT NULL DEFAULT 'hi' AFTER `category_id`");
+        }
+        $pdo->exec("ALTER TABLE `news` MODIFY COLUMN `media_url` VARCHAR(500) NOT NULL");
+        $checkThumb = $pdo->query("SHOW COLUMNS FROM `news` LIKE 'thumbnail_url'");
+        if ($checkThumb && $checkThumb->rowCount() === 0) {
+            $pdo->exec("ALTER TABLE `news` ADD COLUMN `thumbnail_url` VARCHAR(500) NULL DEFAULT NULL AFTER `media_url`");
+        }
+    } catch (Exception $eCol) {}
+
     // 5. Ads Table
-    $pdo->exec("DROP TABLE IF EXISTS `ads`");
     $pdo->exec("
-        CREATE TABLE `ads` (
+        CREATE TABLE IF NOT EXISTS `ads` (
           `id` INT AUTO_INCREMENT PRIMARY KEY,
           `title` VARCHAR(150) NOT NULL,
           `position` ENUM('top_header_banner', 'sidebar_banner', 'infeed_banner') NOT NULL DEFAULT 'top_header_banner',
@@ -122,15 +132,15 @@ try {
     ");
 
     $pdo->exec("
-        INSERT INTO `ads` (`title`, `position`, `image_url`, `link_url`, `status`) VALUES
+        INSERT IGNORE INTO `ads` (`title`, `position`, `image_url`, `link_url`, `status`) VALUES
         ('टॉप हेडर रनिंग बैनर विज्ञापन - 728x90', 'top_header_banner', 'top_banner_ad.png', 'mailto:Dainikkhabar@gmail.com', 1),
         ('साइडबार विशेष बैनर - 300x250', 'sidebar_banner', 'ad_sidebar.jpg', 'https://coralwebtechnology.com', 1),
         ('इन-फ़ीड बैनर विज्ञापन - 728x90', 'infeed_banner', 'ad_article.jpg', 'https://coralwebtechnology.com', 1);
     ");
 
-    // 6. Insert the 6 Real Current News Articles
+    // 6. Insert Default Stories Only If Empty
     $insertNews = $pdo->prepare("
-        INSERT INTO `news` (`id`, `category_id`, `language`, `headline`, `subheadline`, `slug`, `content`, `media_type`, `media_url`, `priority_order`, `is_breaking`, `views`, `created_at`)
+        INSERT IGNORE INTO `news` (`id`, `category_id`, `language`, `headline`, `subheadline`, `slug`, `content`, `media_type`, `media_url`, `priority_order`, `is_breaking`, `views`, `created_at`)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
     ");
 
