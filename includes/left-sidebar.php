@@ -23,7 +23,7 @@ $bhaskarCategories = [
 <!-- Sticky Left Sidebar -->
 <aside class="bhaskar-left-nav" id="bhaskarLeftNav">
   <div class="bhaskar-nav-header-mobile">
-    <a href="<?= BASE_URL ?>/index.php" class="bhaskar-drawer-brand" title="दैनिक खबर">
+    <a href="<?= BASE_URL ?>/" class="bhaskar-drawer-brand" title="दैनिक खबर">
       <img src="<?= ASSETS_URL ?>images/logo.png?v=<?= time() ?>" alt="दैनिक खबर" class="bhaskar-drawer-logo-img">
     </a>
     <button class="bhaskar-nav-close" id="mobileDrawerClose" aria-label="Close menu">&times;</button>
@@ -33,7 +33,7 @@ $bhaskarCategories = [
     <?php foreach ($bhaskarCategories as $bCat): 
       $isActive = ($activeCatSlug === $bCat['slug']) || ($isHome && $bCat['slug'] === 'top-news');
     ?>
-      <a href="<?= BASE_URL ?>/category.php?cat=<?= urlencode($bCat['slug']) ?>" class="bhaskar-nav-item <?= $isActive ? 'active' : '' ?>">
+      <a href="<?= get_category_url($bCat['slug']) ?>" class="bhaskar-nav-item <?= $isActive ? 'active' : '' ?>">
         <span class="bhaskar-nav-icon" style="color: <?= htmlspecialchars($bCat['color']) ?>;">
           <i class="fa-solid <?= htmlspecialchars($bCat['icon']) ?>"></i>
         </span>

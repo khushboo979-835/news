@@ -1,7 +1,37 @@
-# Dainik Khabar - Apache Configuration
+# Dainik Khabar - Professional Apache Configuration
 <IfModule mod_rewrite.c>
     RewriteEngine On
     RewriteBase /
+
+    # Allow Existing Files and Directories to load directly without rewrite
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # 1. Clean Short News Link by ID: /n/123 -> article.php?id=123
+    RewriteRule ^n/([0-9]+)/?$ article.php?id=$1 [L,QSA]
+
+    # 2. Clean News Link by ID: /news/123 -> article.php?id=123
+    RewriteRule ^news/([0-9]+)/?$ article.php?id=$1 [L,QSA]
+
+    # 3. Clean News Link by Slug: /news/my-news-slug -> article.php?slug=my-news-slug
+    RewriteRule ^news/([^/]+)/?$ article.php?slug=$1 [L,QSA]
+
+    # 4. Clean Category Link: /category/my-cat-slug -> category.php?cat=$1
+    RewriteRule ^category/([^/]+)/?$ category.php?cat=$1 [L,QSA]
+
+    # 5. Clean Search Link: /search -> search.php
+    RewriteRule ^search/?$ search.php [L,QSA]
+
+    # 6. Clean E-Paper Link: /epaper -> epaper.php
+    RewriteRule ^epaper/?$ epaper.php [L,QSA]
+</IfModule>
+
+# Media Headers for WhatsApp, Facebook and Social Scrapers
+<IfModule mod_headers.c>
+    <FilesMatch "\.(jpg|jpeg|png|gif|webp|svg|mp4)$">
+        Header set Access-Control-Allow-Origin "*"
+    </FilesMatch>
 </IfModule>
 
 # Increase upload size limit for media uploads

@@ -61,7 +61,7 @@ require_once __DIR__ . '/includes/header.php';
             </div>
 
             <?php foreach ($searchResults as $story): 
-              $storyUrl = BASE_URL . '/article.php?slug=' . urlencode($story['slug']);
+              $storyUrl = get_article_url($story);
               $storyMediaUrl = get_media_url($story['media_url'], $story['media_type'], $story['content'] ?? '');
               if (strpos($storyMediaUrl, 'http') !== 0) {
                   $storyMediaUrl = rtrim(BASE_URL, '/') . '/' . ltrim($storyMediaUrl, '/');
@@ -69,7 +69,7 @@ require_once __DIR__ . '/includes/header.php';
             ?>
               <article class="bhaskar-story-card">
                 <div class="bhaskar-story-header">
-                  <a href="<?= BASE_URL ?>/category.php?cat=<?= urlencode($story['category_slug']) ?>" class="bhaskar-category-pill">
+                  <a href="<?= get_category_url($story['category_slug']) ?>" class="bhaskar-category-pill">
                     <?= htmlspecialchars($story['category_name']) ?>
                   </a>
 
@@ -150,7 +150,7 @@ require_once __DIR__ . '/includes/header.php';
             <?php foreach ($trendingArticles as $idx => $tArt): ?>
               <div class="bhaskar-rank-item">
                 <span class="bhaskar-rank-num"><?= $idx + 1 ?></span>
-                <a href="<?= BASE_URL ?>/article.php?slug=<?= urlencode($tArt['slug']) ?>" class="bhaskar-rank-title">
+                <a href="<?= get_article_url($tArt) ?>" class="bhaskar-rank-title">
                   <?= htmlspecialchars($tArt['headline']) ?>
                 </a>
               </div>

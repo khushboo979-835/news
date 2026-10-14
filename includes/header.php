@@ -20,10 +20,12 @@ $currentCatSlug = $_GET['cat'] ?? ($_GET['slug'] ?? '');
 <html lang="hi" dir="ltr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><?= isset($pageTitle) ? htmlspecialchars($pageTitle) . ' | ' . htmlspecialchars($siteSettings['site_title']) : htmlspecialchars($siteSettings['site_title']) . ' - ' . htmlspecialchars($siteSettings['tagline']) ?></title>
-  
 <?php
+  if (!headers_sent()) {
+      header("Cache-Control: public, max-age=300, must-revalidate");
+      header("Pragma: public");
+  }
+
   $ogSiteTitle = $siteSettings['site_title'] ?? 'दैनिक खबर';
   $ogTitle = isset($pageTitle) ? $pageTitle : ($ogSiteTitle . ' - ' . ($siteSettings['tagline'] ?? 'सच्ची और निष्पक्ष पत्रकारिता'));
   $ogDesc = isset($pageDescription) ? $pageDescription : ($siteSettings['tagline'] ?? 'दैनिक खबर: सच्ची और निष्पक्ष पत्रकारिता का सशक्त डिजिटल मंच');
@@ -40,7 +42,25 @@ $currentCatSlug = $_GET['cat'] ?? ($_GET['slug'] ?? '');
   if ((strpos($ogImage, 'news_default.jpg') !== false || strpos($ogImage, 'news_cover_default.jpg') !== false) && strpos($ogImage, '?') === false) {
       $ogImage .= '?v=' . time();
   }
-  $ogImageType = preg_match('/\.png(\?.*)?$/i', $ogImage) ? 'image/png' : 'image/jpeg';
+  $ogImageType = preg_match('/\.png(\?.*)?$/i', $ogImage) ? 'image/png' : (preg_match('/\.webp(\?.*)?$/i', $ogImage) ? 'image/webp' : 'image/jpeg');
+
+  // Detect accurate dimensions for WhatsApp / Facebook crawler
+  $ogImgWidth = 1200;
+  $ogImgHeight = 630;
+  $localImgPath = null;
+  $parsedImgPath = parse_url($ogImage, PHP_URL_PATH);
+  if ($parsedImgPath) {
+      $imgBase = basename($parsedImgPath);
+      if (file_exists(UPLOAD_DIR . $imgBase)) {
+          $localImgPath = UPLOAD_DIR . $imgBase;
+      } elseif (file_exists(__DIR__ . '/../assets/images/' . $imgBase)) {
+          $localImgPath = __DIR__ . '/../assets/images/' . $imgBase;
+      }
+  }
+  if ($localImgPath && ($dims = @getimagesize($localImgPath))) {
+      $ogImgWidth = $dims[0];
+      $ogImgHeight = $dims[1];
+  }
 ?>
   <!-- Primary Meta Tags -->
   <title><?= isset($pageTitle) ? htmlspecialchars($pageTitle) . ' | ' . htmlspecialchars($siteSettings['site_title']) : htmlspecialchars($siteSettings['site_title']) . ' - ' . htmlspecialchars($siteSettings['tagline']) ?></title>
@@ -61,8 +81,8 @@ $currentCatSlug = $_GET['cat'] ?? ($_GET['slug'] ?? '');
   <meta property="og:image" content="<?= htmlspecialchars($ogImage) ?>">
   <meta property="og:image:secure_url" content="<?= htmlspecialchars($ogImage) ?>">
   <meta property="og:image:type" content="<?= $ogImageType ?>">
-  <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630">
+  <meta property="og:image:width" content="<?= $ogImgWidth ?>">
+  <meta property="og:image:height" content="<?= $ogImgHeight ?>">
   <meta property="og:image:alt" content="<?= htmlspecialchars($ogTitle) ?>">
   <meta property="og:locale" content="hi_IN">
 
@@ -122,17 +142,17 @@ $currentCatSlug = $_GET['cat'] ?? ($_GET['slug'] ?? '');
         <button class="bhaskar-mobile-toggle" id="mobileDrawerOpen" aria-label="Open menu">
           <i class="fa-solid fa-bars"></i>
         </button>
-        <a href="<?= BASE_URL ?>/index.php" class="bhaskar-brand-logo" title="<?= htmlspecialchars($siteSettings['site_title'] ?? 'दैनिक खबर') ?>">
+        <a href="<?= BASE_URL ?>/" class="bhaskar-brand-logo" title="<?= htmlspecialchars($siteSettings['site_title'] ?? 'दैनिक खबर') ?>">
           <img src="<?= ASSETS_URL ?>images/logo.png?v=<?= time() ?>" alt="<?= htmlspecialchars($siteSettings['site_title'] ?? 'दैनिक खबर') ?>" class="bhaskar-brand-logo-img">
         </a>
       </div>
 
       <!-- Desktop Navigation Menu (Desktop Only - Exact Bhaskar) -->
       <nav class="bhaskar-desktop-nav desktop-only">
-        <a href="<?= BASE_URL ?>/index.php" class="bhaskar-nav-link <?= ($currentScript === 'index.php') ? 'active' : '' ?>">
+        <a href="<?= BASE_URL ?>/" class="bhaskar-nav-link <?= ($currentScript === 'index.php') ? 'active' : '' ?>">
           <i class="fa-solid fa-house"></i> <span>होम</span>
         </a>
-        <a href="<?= BASE_URL ?>/category.php?cat=top-news" class="bhaskar-nav-link <?= ($currentCatSlug === 'top-news') ? 'active' : '' ?>">
+        <a href="<?= get_category_url('top-news') ?>" class="bhaskar-nav-link <?= ($currentCatSlug === 'top-news') ? 'active' : '' ?>">
           <i class="fa-regular fa-circle-play"></i> <span>वीडियो</span>
         </a>
         <button type="button" class="bhaskar-nav-link js-search-trigger" id="desktopSearchBtn">
@@ -147,12 +167,12 @@ $currentCatSlug = $_GET['cat'] ?? ($_GET['slug'] ?? '');
       <div class="bhaskar-header-icons mobile-only">
         
         <!-- Icon 1: Stories -->
-        <a href="<?= BASE_URL ?>/index.php" class="bhaskar-head-icon" title="वेब स्टोरीज">
+        <a href="<?= BASE_URL ?>/" class="bhaskar-head-icon" title="वेब स्टोरीज">
           <i class="fa-regular fa-clone"></i>
         </a>
 
         <!-- Icon 2: News Feed -->
-        <a href="<?= BASE_URL ?>/index.php" class="bhaskar-head-icon" title="समाचार फ़ीड">
+        <a href="<?= BASE_URL ?>/" class="bhaskar-head-icon" title="समाचार फ़ीड">
           <i class="fa-regular fa-newspaper"></i>
         </a>
 
@@ -213,7 +233,7 @@ $currentCatSlug = $_GET['cat'] ?? ($_GET['slug'] ?? '');
       foreach ($bhaskarCategories as $bCat): 
         $isActive = ($currentCatSlug === $bCat['slug']) || ($currentScript === 'index.php' && empty($currentCatSlug) && $bCat['slug'] === 'top-news');
       ?>
-        <a href="<?= BASE_URL ?>/category.php?cat=<?= urlencode($bCat['slug']) ?>" class="bhaskar-cat-item <?= $isActive ? 'active' : '' ?>">
+        <a href="<?= get_category_url($bCat['slug']) ?>" class="bhaskar-cat-item <?= $isActive ? 'active' : '' ?>">
           <i class="fa-solid <?= $bCat['icon'] ?>" style="color: <?= htmlspecialchars($bCat['color']) ?>;"></i>
           <span><?= htmlspecialchars($bCat['name']) ?></span>
         </a>

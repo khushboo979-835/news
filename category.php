@@ -6,7 +6,7 @@
 
 require_once __DIR__ . '/includes/functions.php';
 
-$catSlug = trim($_GET['cat'] ?? 'top-news');
+$catSlug = trim($_GET['cat'] ?? ($_GET['slug'] ?? 'top-news'));
 
 // Fetch Category by Slug
 $stmt = $pdo->prepare("SELECT * FROM categories WHERE slug = :slug AND status = 1 LIMIT 1");
@@ -26,7 +26,7 @@ $pageDescription = 'दैनिक खबर: ' . ($category['name'] ?? 'सम
 // Fetch News for Category
 $categoryNews = get_news_by_category_slug($pdo, $category['slug'], 12);
 
-$pageOgUrl = BASE_URL . '/category.php?cat=' . urlencode($category['slug'] ?? 'top-news');
+$pageOgUrl = get_category_url($category['slug'] ?? 'top-news');
 if (!empty($categoryNews) && !empty($categoryNews[0]['media_url'])) {
     $pageOgImage = get_media_url($categoryNews[0]['media_url'], $categoryNews[0]['media_type']);
 } else {
@@ -63,7 +63,7 @@ require_once __DIR__ . '/includes/header.php';
         <div class="bhaskar-news-feed-list">
           <?php if (!empty($categoryNews)): ?>
             <?php foreach ($categoryNews as $story): 
-              $storyUrl = BASE_URL . '/article.php?slug=' . urlencode($story['slug']);
+              $storyUrl = get_article_url($story);
               $storyMediaUrl = get_media_url($story['media_url'], $story['media_type'], $story['content'] ?? '');
               if (strpos($storyMediaUrl, 'http') !== 0) {
                   $storyMediaUrl = rtrim(BASE_URL, '/') . '/' . ltrim($storyMediaUrl, '/');
@@ -149,7 +149,7 @@ require_once __DIR__ . '/includes/header.php';
             <?php foreach ($trendingArticles as $idx => $tArt): ?>
               <div class="bhaskar-rank-item">
                 <span class="bhaskar-rank-num"><?= $idx + 1 ?></span>
-                <a href="<?= BASE_URL ?>/article.php?slug=<?= urlencode($tArt['slug']) ?>" class="bhaskar-rank-title">
+                <a href="<?= get_article_url($tArt) ?>" class="bhaskar-rank-title">
                   <?= htmlspecialchars($tArt['headline']) ?>
                 </a>
               </div>

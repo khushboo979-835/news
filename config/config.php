@@ -4,8 +4,9 @@
  * Hindi News Portal
  */
 
-// Start session if not already started
+// Set cache limiter to public so Open Graph & WhatsApp crawlers can cache meta tags
 if (session_status() === PHP_SESSION_NONE) {
+    session_cache_limiter('public');
     session_start();
 }
 
@@ -15,7 +16,11 @@ ini_set('display_errors', '1');
 
 // Base URL calculation (Clean root domain & subfolder support)
 if (isset($_SERVER['HTTP_HOST'])) {
-    $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443);
+    $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        || (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443)
+        || (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')
+        || (!empty($_SERVER['HTTP_CF_VISITOR']) && strpos($_SERVER['HTTP_CF_VISITOR'], 'https') !== false)
+        || (strpos($_SERVER['HTTP_HOST'], 'dainikkhabr.com') !== false);
     $protocol = $isHttps ? "https://" : "http://";
     $host = $_SERVER['HTTP_HOST'];
     $dir = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? ''));

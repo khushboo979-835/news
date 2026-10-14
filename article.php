@@ -69,7 +69,7 @@ if (!empty($articleImage)) {
     $pageOgImage = rtrim(BASE_URL, '/') . '/assets/images/news_cover_default.jpg';
 }
 
-$pageOgUrl = BASE_URL . '/article.php?slug=' . urlencode($article['slug']);
+$pageOgUrl = get_article_url($article);
 $pageOgType = 'article';
 $pageArticlePublished = $article['created_at'];
 $pageArticleSection = $article['category_name'];
@@ -122,7 +122,7 @@ require_once __DIR__ . '/includes/header.php';
         <article class="bhaskar-story-card" style="padding: 28px;">
           
           <div class="bhaskar-story-header">
-            <a href="<?= BASE_URL ?>/category.php?cat=<?= urlencode($article['category_slug']) ?>" class="bhaskar-category-pill">
+            <a href="<?= get_category_url($article['category_slug']) ?>" class="bhaskar-category-pill">
               <?= htmlspecialchars($article['category_name']) ?>
             </a>
 
@@ -187,14 +187,14 @@ require_once __DIR__ . '/includes/header.php';
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
               <?php foreach ($relatedArticles as $rStory): ?>
                 <div class="bhaskar-story-card" style="padding: 14px; background:#fff; border-radius:10px; border:1px solid #e2e8f0;">
-                  <a href="<?= BASE_URL ?>/article.php?slug=<?= urlencode($rStory['slug']) ?>" class="bhaskar-thumb-link" style="display:block; position:relative; border-radius:8px; overflow:hidden;">
+                  <a href="<?= get_article_url($rStory) ?>" class="bhaskar-thumb-link" style="display:block; position:relative; border-radius:8px; overflow:hidden;">
                     <img src="<?= get_article_thumbnail_url($rStory) ?>" alt="<?= htmlspecialchars($rStory['headline']) ?>" loading="lazy" style="width:100%; aspect-ratio:16/9; object-fit:cover; display:block;" onerror="this.onerror=null; this.src='<?= ASSETS_URL ?>images/news_cover_default.jpg';">
                     <?php if ($rStory['media_type'] === 'video_upload' || $rStory['media_type'] === 'video_embed'): ?>
                       <span class="bhaskar-thumb-play"><i class="fa-solid fa-play"></i></span>
                     <?php endif; ?>
                   </a>
                   <h4 style="font-size: 0.95rem; font-weight: 700; margin-top: 10px; line-height: 1.4;">
-                    <a href="<?= BASE_URL ?>/article.php?slug=<?= urlencode($rStory['slug']) ?>" style="color:var(--gray-900); text-decoration:none;">
+                    <a href="<?= get_article_url($rStory) ?>" style="color:var(--gray-900); text-decoration:none;">
                       <?= htmlspecialchars($rStory['headline']) ?>
                     </a>
                   </h4>
@@ -230,7 +230,7 @@ require_once __DIR__ . '/includes/header.php';
             <?php foreach ($trendingArticles as $idx => $tArt): ?>
               <div class="bhaskar-rank-item">
                 <span class="bhaskar-rank-num"><?= $idx + 1 ?></span>
-                <a href="<?= BASE_URL ?>/article.php?slug=<?= urlencode($tArt['slug']) ?>" class="bhaskar-rank-title">
+                <a href="<?= get_article_url($tArt) ?>" class="bhaskar-rank-title">
                   <?= htmlspecialchars($tArt['headline']) ?>
                 </a>
               </div>

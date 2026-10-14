@@ -49,17 +49,17 @@ require_once __DIR__ . '/includes/header.php';
               <i class="fa-solid fa-arrow-trend-up"></i> ट्रेंडिंग
             </span>
             <div class="bhaskar-trend-pills">
-              <a href="<?= BASE_URL ?>/category.php?cat=bihar" class="bhaskar-trend-pill">दारोगा ट्विटर आंदोलन &gt;</a>
-              <a href="<?= BASE_URL ?>/category.php?cat=patna" class="bhaskar-trend-pill">पटना गंगा जलस्तर &gt;</a>
-              <a href="<?= BASE_URL ?>/category.php?cat=patna" class="bhaskar-trend-pill">हनुमान चालीसा &gt;</a>
-              <a href="<?= BASE_URL ?>/category.php?cat=crime" class="bhaskar-trend-pill">सचिवालय बाइक चोरी &gt;</a>
-              <a href="<?= BASE_URL ?>/category.php?cat=crime" class="bhaskar-trend-pill">कोतवाली सट्टा रेड &gt;</a>
+              <a href="<?= get_category_url('bihar') ?>" class="bhaskar-trend-pill">दारोगा ट्विटर आंदोलन &gt;</a>
+              <a href="<?= get_category_url('patna') ?>" class="bhaskar-trend-pill">पटना गंगा जलस्तर &gt;</a>
+              <a href="<?= get_category_url('patna') ?>" class="bhaskar-trend-pill">हनुमान चालीसा &gt;</a>
+              <a href="<?= get_category_url('crime') ?>" class="bhaskar-trend-pill">सचिवालय बाइक चोरी &gt;</a>
+              <a href="<?= get_category_url('crime') ?>" class="bhaskar-trend-pill">कोतवाली सट्टा रेड &gt;</a>
             </div>
           </div>
         </div>
 
         <?php if ($heroStory): 
-          $heroUrl = BASE_URL . '/article.php?slug=' . urlencode($heroStory['slug']);
+          $heroUrl = get_article_url($heroStory);
           $heroShareText = '*' . trim($heroStory['headline']) . "*\n\n" . $heroUrl;
           $shareMsg = urlencode($heroShareText);
         ?>
@@ -88,7 +88,7 @@ require_once __DIR__ . '/includes/header.php';
 
             <!-- Card Bottom: Category Tag on Left, Share on Right -->
             <div class="bhaskar-card-bottom-bar">
-              <a href="<?= BASE_URL ?>/category.php?cat=<?= urlencode($heroStory['category_slug']) ?>" class="bhaskar-tag-pill">
+              <a href="<?= get_category_url($heroStory['category_slug']) ?>" class="bhaskar-tag-pill">
                 <?= htmlspecialchars($heroStory['category_name']) ?> &gt;
               </a>
 
@@ -112,7 +112,7 @@ require_once __DIR__ . '/includes/header.php';
           $cardCounter = 0;
           foreach ($feedStories as $story): 
             $cardCounter++;
-            $storyUrl = BASE_URL . '/article.php?slug=' . urlencode($story['slug']);
+            $storyUrl = get_article_url($story);
             $feedShareText = '*' . trim($story['headline']) . "*\n\n" . $storyUrl;
             $storyShare = urlencode($feedShareText);
           ?>
@@ -145,7 +145,7 @@ require_once __DIR__ . '/includes/header.php';
                 <?php endif; ?>
 
                 <div class="bhaskar-card-bottom-bar">
-                  <a href="<?= BASE_URL ?>/category.php?cat=<?= urlencode($story['category_slug']) ?>" class="bhaskar-tag-pill">
+                  <a href="<?= get_category_url($story['category_slug']) ?>" class="bhaskar-tag-pill">
                     <?= htmlspecialchars($story['category_name']) ?> &gt;
                   </a>
 
@@ -214,7 +214,7 @@ require_once __DIR__ . '/includes/header.php';
               <?php foreach ($trendingArticles as $rank => $tArticle): ?>
                 <div class="bhaskar-rank-item">
                   <span class="bhaskar-rank-num"><?= $rank + 1 ?></span>
-                  <a href="<?= BASE_URL ?>/article.php?slug=<?= urlencode($tArticle['slug']) ?>" class="bhaskar-rank-title">
+                  <a href="<?= get_article_url($tArticle) ?>" class="bhaskar-rank-title">
                     <?= htmlspecialchars($tArticle['headline']) ?>
                   </a>
                 </div>

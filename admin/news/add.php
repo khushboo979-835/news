@@ -24,7 +24,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($headline) || empty($content)) {
         $error = ($language === 'en') ? 'Please enter headline and news content!' : 'कृपया मुख्य शीर्षक (Headline) और समाचार का पूरा विवरण (Content) दर्ज करें!';
     } else {
-        $slug = slugify($headline);
+        $customSlug = trim($_POST['slug'] ?? '');
+        $slug = !empty($customSlug) ? slugify($customSlug) : slugify($headline);
         if ($pdo) {
             $stmt = $pdo->prepare("SELECT COUNT(*) FROM news WHERE slug = ?");
             $stmt->execute([$slug]);
@@ -279,6 +280,18 @@ $selected_lang = $_POST['language'] ?? 'hi';
                     </label>
                     <input type="number" name="priority_order" value="<?php echo htmlspecialchars($_POST['priority_order'] ?? '1'); ?>" min="1" max="9999" style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:6px; font-weight:700; color:var(--admin-theme);">
                     <small style="color:#6b7280; display:block; margin-top:4px;">क्रम 1 सबसे पहले ऊपर होमपेज पर दिखेगा।</small>
+                </div>
+
+                <!-- Custom Clean Slug / Short URL -->
+                <div style="margin-bottom: 18px;">
+                    <label style="display:block; font-weight:600; margin-bottom:6px; font-size:0.9rem;">
+                        कस्टम यूआरएल / स्लग (Custom Short URL - Optional)
+                    </label>
+                    <div style="display:flex; align-items:center; background:#f9fafb; border:1px solid #d1d5db; border-radius:6px; overflow:hidden;">
+                        <span style="padding:10px 12px; background:#f3f4f6; color:#6b7280; font-size:0.85rem; border-right:1px solid #d1d5db; white-space:nowrap;">/news/</span>
+                        <input type="text" name="slug" value="<?php echo htmlspecialchars($_POST['slug'] ?? ''); ?>" placeholder="उदा. patna-ganga-alert" style="width:100%; padding:10px; border:none; outline:none; background:transparent; font-family:inherit; font-size:0.9rem;">
+                    </div>
+                    <small style="color:#6b7280; display:block; margin-top:4px;">खाली छोड़ने पर शीर्षक से स्वतः सुंदर लिंक बन जाएगा।</small>
                 </div>
 
                 <!-- Breaking News Checkbox -->

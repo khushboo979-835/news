@@ -162,7 +162,7 @@ require_once __DIR__ . '/../includes/header.php';
                                     <?php endif; ?>
                                 </td>
                                 <td style="padding: 12px 14px; max-width: 360px;">
-                                    <a href="<?php echo SITE_URL; ?>/article.php?slug=<?php echo urlencode($news['slug']); ?>" target="_blank" style="color: #111827; font-weight: 600; text-decoration: none; line-height: 1.4; display: block;">
+                                    <a href="<?php echo get_article_url($news); ?>" target="_blank" style="color: #111827; font-weight: 600; text-decoration: none; line-height: 1.4; display: block;">
                                         <?php echo htmlspecialchars($news['headline']); ?>
                                     </a>
                                     <?php if (!empty($news['subheadline'])): ?>

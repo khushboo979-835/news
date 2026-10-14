@@ -97,7 +97,58 @@ function slugify($text) {
     if (empty($text)) {
         return 'news-' . time() . '-' . rand(100, 999);
     }
+
+    // Limit slug to ~60 characters at whole word boundary for clean professional URLs
+    if (strlen($text) > 60) {
+        $text = substr($text, 0, 60);
+        $lastHyphen = strrpos($text, '-');
+        if ($lastHyphen > 20) {
+            $text = substr($text, 0, $lastHyphen);
+        }
+    }
+
     return $text;
+}
+
+/**
+ * Professional News URL Generator
+ * Produces clean SEO & sharing URLs like: https://dainikkhabr.com/news/slug-name
+ */
+function get_article_url($article) {
+    if (is_array($article)) {
+        if (!empty($article['slug'])) {
+            return rtrim(BASE_URL, '/') . '/news/' . urlencode($article['slug']);
+        } elseif (!empty($article['id'])) {
+            return rtrim(BASE_URL, '/') . '/news/' . (int)$article['id'];
+        }
+    } elseif (is_numeric($article)) {
+        return rtrim(BASE_URL, '/') . '/news/' . (int)$article;
+    } elseif (is_string($article) && !empty($article)) {
+        return rtrim(BASE_URL, '/') . '/news/' . urlencode($article);
+    }
+    return rtrim(BASE_URL, '/') . '/';
+}
+
+/**
+ * Short Article URL (Compact for WhatsApp / SMS / Social)
+ * Produces: https://dainikkhabr.com/n/123
+ */
+function get_article_short_url($article) {
+    if (is_array($article) && !empty($article['id'])) {
+        return rtrim(BASE_URL, '/') . '/n/' . (int)$article['id'];
+    } elseif (is_numeric($article)) {
+        return rtrim(BASE_URL, '/') . '/n/' . (int)$article;
+    }
+    return get_article_url($article);
+}
+
+/**
+ * Clean Category URL Generator
+ * Produces: https://dainikkhabr.com/category/slug
+ */
+function get_category_url($catSlug) {
+    $slug = is_array($catSlug) ? ($catSlug['slug'] ?? 'top-news') : $catSlug;
+    return rtrim(BASE_URL, '/') . '/category/' . urlencode($slug ?: 'top-news');
 }
 
 /**
