@@ -30,13 +30,17 @@ $currentCatSlug = $_GET['cat'] ?? ($_GET['slug'] ?? '');
   $ogUrl = isset($pageOgUrl) ? $pageOgUrl : ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]");
   $ogUrl = preg_replace('/^http:\/\/(dainikkhabr\.com)/i', 'https://$1', $ogUrl);
   $ogType = isset($pageOgType) ? $pageOgType : 'website';
-  $ogImage = isset($pageOgImage) && !empty($pageOgImage) ? $pageOgImage : (rtrim(BASE_URL, '/') . '/assets/images/logo.png');
+  $ogImage = isset($pageOgImage) && !empty($pageOgImage) ? $pageOgImage : (rtrim(BASE_URL, '/') . '/uploads/news_default.jpg');
   if (strpos($ogImage, '//') === 0) {
       $ogImage = 'https:' . $ogImage;
   } elseif (strpos($ogImage, 'http://') !== 0 && strpos($ogImage, 'https://') !== 0) {
       $ogImage = rtrim(BASE_URL, '/') . '/' . ltrim($ogImage, '/');
   }
   $ogImage = preg_replace('/^http:\/\/(dainikkhabr\.com)/i', 'https://$1', $ogImage);
+  if (strpos($ogImage, 'news_default.jpg') !== false && strpos($ogImage, '?') === false) {
+      $ogImage .= '?v=' . (file_exists(__DIR__ . '/../uploads/news_default.jpg') ? filemtime(__DIR__ . '/../uploads/news_default.jpg') : time());
+  }
+  $ogImageType = preg_match('/\.png(\?.*)?$/i', $ogImage) ? 'image/png' : 'image/jpeg';
 ?>
   <!-- Primary Meta Tags -->
   <title><?= isset($pageTitle) ? htmlspecialchars($pageTitle) . ' | ' . htmlspecialchars($siteSettings['site_title']) : htmlspecialchars($siteSettings['site_title']) . ' - ' . htmlspecialchars($siteSettings['tagline']) ?></title>
@@ -56,7 +60,7 @@ $currentCatSlug = $_GET['cat'] ?? ($_GET['slug'] ?? '');
   <meta property="og:description" content="<?= htmlspecialchars($ogDesc) ?>">
   <meta property="og:image" content="<?= htmlspecialchars($ogImage) ?>">
   <meta property="og:image:secure_url" content="<?= htmlspecialchars($ogImage) ?>">
-  <meta property="og:image:type" content="image/jpeg">
+  <meta property="og:image:type" content="<?= $ogImageType ?>">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="<?= htmlspecialchars($ogTitle) ?>">

@@ -47,36 +47,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($headline) || empty($content)) {
         $error = ($language === 'en') ? 'Please enter headline and news content!' : 'कृपया मुख्य शीर्षक (Headline) और समाचार का पूरा विवरण (Content) दर्ज करें!';
     } else {
+        // 1. If remove_media is requested
         if ($remove_media) {
-            $media_type = 'image';
-            $media_url = 'news_default.jpg';
-        } elseif ($media_type === 'video_embed') {
-            if (!empty($video_embed_url)) {
-                // If iframe tag was pasted, extract src
-                if (preg_match('/src=["\']([^"\']+)["\']/i', $video_embed_url, $m)) {
-                    $video_embed_url = $m[1];
-                }
-                $media_url = $video_embed_url;
-            } elseif ($news['media_type'] !== 'video_embed') {
-                $error = ($language === 'en') ? 'Please enter YouTube video link!' : 'कृपया यूट्यूब वीडियो का लिंक दर्ज करें!';
-            }
-        } elseif ($media_type === 'video_upload') {
-            if (!empty($direct_media_url)) {
-                $media_url = $direct_media_url;
-            } elseif ($news['media_type'] !== 'video_upload' && (!isset($_FILES['media_file']) || $_FILES['media_file']['error'] === UPLOAD_ERR_NO_FILE)) {
-                $error = ($language === 'en') ? 'Please select a video file or enter video link!' : 'कृपया वीडियो फ़ाइल चुनें या वीडियो लिंक दर्ज करें!';
-            }
-        } elseif ($media_type === 'image') {
-            if (!empty($direct_media_url)) {
-                $media_url = $direct_media_url;
-            } elseif ($news['media_type'] !== 'image' && (!isset($_FILES['media_file']) || $_FILES['media_file']['error'] === UPLOAD_ERR_NO_FILE)) {
-                // Switched from video to image without uploading a new photo -> reset cleanly to default photo
+            $firstImg = extract_first_image_from_content($content);
+            if ($firstImg) {
+                $media_url = $firstImg;
+                $media_type = 'image';
+            } else {
+                $media_type = 'image';
                 $media_url = 'news_default.jpg';
             }
         }
-
-        // Handle file upload if new file is uploaded
-        if (empty($error) && !$remove_media && isset($_FILES['media_file']) && $_FILES['media_file']['error'] !== UPLOAD_ERR_NO_FILE) {
+        // 2. If a new file is uploaded, auto-detect type and save
+        elseif (isset($_FILES['media_file']) && $_FILES['media_file']['error'] !== UPLOAD_ERR_NO_FILE) {
             if ($_FILES['media_file']['error'] === UPLOAD_ERR_INI_SIZE || $_FILES['media_file']['error'] === UPLOAD_ERR_FORM_SIZE) {
                 $error = ($language === 'en') ? 'Uploaded file size exceeds server limit. Please choose a smaller file or compress it.' : 'अपलोड की गई फ़ाइल का साइज़ सर्वर की सीमा से बड़ा है। कृपया छोटी फ़ाइल चुनें।';
             } elseif ($_FILES['media_file']['error'] === UPLOAD_ERR_PARTIAL) {
@@ -89,11 +72,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $allowed_img = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'avif', 'jfif', 'svg', 'bmp', 'heic', 'heif'];
                 $allowed_vid = ['mp4', 'webm', 'mov', 'mkv', 'avi', '3gp', 'm4v', 'ts', 'ogv'];
 
-                if ($media_type === 'image' && !in_array($file_ext, $allowed_img)) {
-                    $error = ($language === 'en') ? 'Invalid photo format! Please upload JPG, PNG, WEBP, GIF, or AVIF.' : 'अमान्य फ़ोटो फ़ॉर्मेट! कृपया JPG, PNG, WEBP, GIF फ़ाइल अपलोड करें।';
-                } elseif ($media_type === 'video_upload' && !in_array($file_ext, $allowed_vid)) {
-                    $error = ($language === 'en') ? 'Invalid video format! Please upload MP4, WEBM, MOV, MKV, or AVI.' : 'अमान्य वीडियो फ़ॉर्मेट! कृपया MP4, WEBM, MOV या MKV फ़ाइल अपलोड करें।';
+                if (in_array($file_ext, $allowed_img)) {
+                    $media_type = 'image';
+                } elseif (in_array($file_ext, $allowed_vid)) {
+                    $media_type = 'video_upload';
                 } else {
+                    $error = ($language === 'en') ? 'Invalid file format! Please upload an image or video.' : 'अमान्य फ़ाइल फ़ॉर्मेट! कृपया फ़ोटो (JPG, PNG, WEBP) या वीडियो (MP4, MOV) फ़ाइल चुनें।';
+                }
+
+                if (empty($error)) {
                     if (!is_dir(UPLOAD_DIR)) {
                         @mkdir(UPLOAD_DIR, 0777, true);
                     }
@@ -106,6 +93,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     } else {
                         $error = ($language === 'en') ? 'Failed to upload file. Check folder permissions.' : 'फ़ाइल अपलोड करने में समस्या हुई। कृपया फ़ोल्डर अनुमतियों व फ़ाइल साइज़ की जांच करें।';
                     }
+                }
+            }
+        }
+        // 3. If YouTube URL or embed
+        elseif (!empty($video_embed_url) || $media_type === 'video_embed') {
+            if (!empty($video_embed_url)) {
+                if (preg_match('/src=["\']([^"\']+)["\']/i', $video_embed_url, $m)) {
+                    $video_embed_url = $m[1];
+                }
+                $media_url = $video_embed_url;
+                $media_type = 'video_embed';
+            } elseif ($news['media_type'] !== 'video_embed') {
+                $error = ($language === 'en') ? 'Please enter YouTube video link!' : 'कृपया यूट्यूब वीडियो का लिंक दर्ज करें!';
+            }
+        }
+        // 4. If direct URL
+        elseif (!empty($direct_media_url)) {
+            $media_url = $direct_media_url;
+            if (preg_match('/\.(mp4|webm|mov|mkv|avi|3gp|m4v)$/i', $direct_media_url)) {
+                $media_type = 'video_upload';
+            } else {
+                $media_type = 'image';
+            }
+        }
+        // 5. No new file uploaded
+        else {
+            if ($media_type === 'image' && ($media_url === 'news_default.jpg' || empty($media_url) || $news['media_type'] !== 'image')) {
+                $firstImg = extract_first_image_from_content($content);
+                if ($firstImg) {
+                    $media_url = $firstImg;
+                } elseif ($news['media_type'] === 'image' && !empty($news['media_url']) && $news['media_url'] !== 'news_default.jpg') {
+                    $media_url = $news['media_url'];
+                } else {
+                    $media_url = 'news_default.jpg';
                 }
             }
         }
@@ -371,9 +392,13 @@ function previewSelectedMedia(input) {
         if (fileType.startsWith('image/')) {
             const url = URL.createObjectURL(file);
             mediaBox.innerHTML = `<img src="${url}" style="max-width:100%; max-height:180px; object-fit:contain; border-radius:6px;" alt="Preview">`;
+            const sel = document.getElementById('mediaTypeSelect');
+            if (sel) { sel.value = 'image'; }
         } else if (fileType.startsWith('video/')) {
             const url = URL.createObjectURL(file);
             mediaBox.innerHTML = `<video src="${url}" controls autoplay muted style="max-width:100%; max-height:180px; border-radius:6px;"></video>`;
+            const sel = document.getElementById('mediaTypeSelect');
+            if (sel) { sel.value = 'video_upload'; }
         } else {
             mediaBox.innerHTML = `<div style="padding:15px; color:#fff;"><i class="fa-solid fa-file"></i> ${file.name}</div>`;
         }

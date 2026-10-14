@@ -229,10 +229,43 @@ function get_ad_image_url($image_url) {
 }
 
 /**
+ * Extract first image from HTML content if available
+ */
+function extract_first_image_from_content($html) {
+    if (empty($html)) return null;
+    if (preg_match('/<img[^>]+src=["\']([^"\']+)["\']/i', $html, $matches)) {
+        $src = trim($matches[1]);
+        if (!empty($src)) {
+            if (preg_match('#(?:https?://[^/]+)?/?(?:uploads/)?(content_[a-zA-Z0-9_\-\.]+|news_[a-zA-Z0-9_\-\.]+)#i', $src, $mFile)) {
+                return $mFile[1];
+            }
+            if (preg_match('#/(uploads/[^"\'\s>]+)#i', $src, $mUpload)) {
+                $file = $mUpload[1];
+                if (strpos($file, 'uploads/') === 0) {
+                    $file = substr($file, 8);
+                }
+                return $file;
+            }
+            return $src;
+        }
+    }
+    return null;
+}
+
+/**
  * Media URL Resolver
  */
-function get_media_url($url, $media_type = 'image') {
+function get_media_url($url, $media_type = 'image', $content = '') {
+    $url = trim($url ?? '');
+
+    // If media_url is empty or default, attempt to extract image from content
     if (empty($url) || $url === 'news_default.jpg') {
+        if (!empty($content)) {
+            $extracted = extract_first_image_from_content($content);
+            if ($extracted && $extracted !== 'news_default.jpg') {
+                return get_media_url($extracted, 'image');
+            }
+        }
         if (file_exists(UPLOAD_DIR . 'news_default.jpg')) {
             return UPLOAD_URL . 'news_default.jpg';
         }
@@ -242,16 +275,30 @@ function get_media_url($url, $media_type = 'image') {
         return ASSETS_URL . 'images/logo.png';
     }
     
+    // Auto-detect if media_type is mismatched with actual file extension
+    if (preg_match('/\.(jpg|jpeg|png|webp|gif|avif|jfif|svg|bmp)$/i', $url)) {
+        $media_type = 'image';
+    } elseif (preg_match('/\.(mp4|webm|mov|mkv|avi|3gp|m4v)$/i', $url)) {
+        $media_type = 'video_upload';
+    }
+
     if ($media_type === 'video_embed') {
         return get_youtube_thumbnail($url);
     }
     
     if ($media_type === 'video_upload') {
         // Video files (.mp4) cannot be rendered directly in <img> tags or og:image
-        // Return default branded logo thumbnail
-        if (file_exists(__DIR__ . '/../assets/images/logo.png')) {
-            return ASSETS_URL . 'images/logo.png';
+        // If content has an image, use it as thumbnail
+        if (!empty($content)) {
+            $extracted = extract_first_image_from_content($content);
+            if ($extracted && $extracted !== 'news_default.jpg') {
+                return get_media_url($extracted, 'image');
+            }
         }
+        if (file_exists(UPLOAD_DIR . 'news_default.jpg')) {
+            return UPLOAD_URL . 'news_default.jpg';
+        }
+        return ASSETS_URL . 'images/logo.png';
     }
 
     if (strpos($url, 'http://') === 0 || strpos($url, 'https://') === 0) {
@@ -277,6 +324,7 @@ function get_media_url($url, $media_type = 'image') {
         if (file_exists(UPLOAD_DIR . $url)) {
             return UPLOAD_URL . $url;
         }
+        return UPLOAD_URL . $url;
     }
     return ASSETS_URL . 'images/logo.png';
 }
@@ -323,10 +371,17 @@ function get_excerpt($text, $limit = 120) {
 /**
  * Render Aspect-Ratio-Safe Media Container (Zero Distortion / Zero Cropping)
  */
-function render_media_container($mediaType, $mediaUrl, $headline = '') {
+function render_media_container($mediaType, $mediaUrl, $headline = '', $content = '') {
     $escapedHeadline = htmlspecialchars($headline, ENT_QUOTES, 'UTF-8');
     $fallbackLogo = ASSETS_URL . 'images/logo.png';
     $mediaUrl = trim($mediaUrl ?? '');
+
+    // Auto-detect format mismatch
+    if (preg_match('/\.(jpg|jpeg|png|webp|gif|avif|jfif|svg|bmp)$/i', $mediaUrl)) {
+        $mediaType = 'image';
+    } elseif (preg_match('/\.(mp4|webm|mov|mkv|avi|3gp|m4v)$/i', $mediaUrl)) {
+        $mediaType = 'video_upload';
+    }
 
     // Check if mediaUrl is a YouTube URL or iframe embed regardless of mediaType
     $ytId = get_youtube_video_id($mediaUrl);
@@ -367,7 +422,17 @@ function render_media_container($mediaType, $mediaUrl, $headline = '') {
                 <video src="' . $videoSrc . '" class="bhaskar-media-elem" controls playsinline preload="metadata" style="width:100%; max-height:520px; display:block; margin:0 auto; outline:none;" onerror="this.parentElement.innerHTML=\'<div style=\\\'padding:24px 16px;text-align:center;background:#f8fafc;border-radius:10px;border:1px solid #f1f5f9;\\\'><img src=\\\'' . $fallbackLogo . '\\\' style=\\\'max-height:140px;margin:0 auto 12px;display:block;\\\'><span style=\\\'display:inline-block;font-size:12px;font-weight:700;color:#e53935;background:#fee2e2;padding:4px 10px;border-radius:20px;\\\'>दैनिक खबर</span></div>\';"></video>
             </div>';
         } else {
-            // Video file not on disk: gracefully render branded fallback card instead of broken 404 video player
+            // Video file not on disk: check if content has an image to display
+            if (!empty($content)) {
+                $contentImg = extract_first_image_from_content($content);
+                if ($contentImg) {
+                    $imgSrc = get_media_url($contentImg, 'image');
+                    return '
+                    <div class="bhaskar-media-container" style="width:100%; border-radius:10px; overflow:hidden; background:#f8fafc; border:1px solid #f1f5f9; text-align:center; margin:16px 0;">
+                        <img src="' . htmlspecialchars($imgSrc) . '" alt="' . $escapedHeadline . '" class="bhaskar-media-elem" loading="lazy" onerror="this.onerror=null; this.src=\'' . $fallbackLogo . '\';" style="max-width:100%; max-height:540px; width:auto; height:auto; object-fit:contain; display:block; margin:0 auto; border-radius:8px;">
+                    </div>';
+                }
+            }
             return '
             <div class="bhaskar-media-container" style="width:100%; border-radius:10px; overflow:hidden; background:#f8fafc; border:1px solid #f1f5f9; text-align:center; margin:16px 0; padding:24px 16px;">
                 <img src="' . $fallbackLogo . '" alt="' . $escapedHeadline . '" class="bhaskar-media-elem" style="max-height:140px; width:auto; object-fit:contain; display:block; margin:0 auto 12px; border-radius:8px;">
@@ -376,7 +441,7 @@ function render_media_container($mediaType, $mediaUrl, $headline = '') {
         }
     } else {
         // Image: clean aspect-ratio container with normal sizing for all picture dimensions & onerror fallback
-        $imgSrc = get_media_url($mediaUrl, 'image');
+        $imgSrc = get_media_url($mediaUrl, 'image', $content);
         return '
         <div class="bhaskar-media-container" style="width:100%; border-radius:10px; overflow:hidden; background:#f8fafc; border:1px solid #f1f5f9; text-align:center; margin:16px 0;">
             <img src="' . htmlspecialchars($imgSrc) . '" alt="' . $escapedHeadline . '" class="bhaskar-media-elem" loading="lazy" onerror="this.onerror=null; this.src=\'' . $fallbackLogo . '\';" style="max-width:100%; max-height:540px; width:auto; height:auto; object-fit:contain; display:block; margin:0 auto; border-radius:8px;">

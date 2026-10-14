@@ -34,6 +34,32 @@ try {
             }
             // Ensure media_url is at least 500 chars for long video/embed URLs
             $pdo->exec("ALTER TABLE `news` MODIFY COLUMN `media_url` VARCHAR(500) NOT NULL");
+
+            // Auto-heal news articles whose media_url is news_default.jpg or empty but have images in content
+            try {
+                $stmtFix = $pdo->query("SELECT id, content FROM `news` WHERE (media_url = 'news_default.jpg' OR media_url = '' OR media_url IS NULL) AND content LIKE '%<img%' LIMIT 100");
+                $fixRows = $stmtFix ? $stmtFix->fetchAll() : [];
+                if (!empty($fixRows)) {
+                    $updStmt = $pdo->prepare("UPDATE `news` SET `media_type` = 'image', `media_url` = ? WHERE `id` = ?");
+                    foreach ($fixRows as $fr) {
+                        if (preg_match('/<img[^>]+src=["\']([^"\']+)["\']/i', $fr['content'], $mImg)) {
+                            $srcImg = trim($mImg[1]);
+                            if (preg_match('#/(uploads/[^"\'\s>]+)#i', $srcImg, $mUp)) {
+                                $srcImg = basename($mUp[1]);
+                            } elseif (preg_match('#(content_\d+_\d+\.[a-zA-Z0-9]+)#i', $srcImg, $mC)) {
+                                $srcImg = $mC[1];
+                            } elseif (preg_match('#(news_\d+_\d+\.[a-zA-Z0-9]+)#i', $srcImg, $mN)) {
+                                $srcImg = $mN[1];
+                            }
+                            if (!empty($srcImg) && $srcImg !== 'news_default.jpg') {
+                                $updStmt->execute([$srcImg, $fr['id']]);
+                            }
+                        }
+                    }
+                }
+            } catch (Exception $eAutoFix) {
+                // silent
+            }
         }
     } catch (Exception $eCol) {
         // silent fallback if table not yet created

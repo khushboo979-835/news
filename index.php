@@ -20,9 +20,9 @@ $feedStories = !empty($allStories) ? array_slice($allStories, 1) : [];
 
 $pageOgUrl = BASE_URL . '/index.php';
 if ($heroStory && !empty($heroStory['media_url'])) {
-    $pageOgImage = get_media_url($heroStory['media_url'], $heroStory['media_type']);
+    $pageOgImage = get_media_url($heroStory['media_url'], $heroStory['media_type'], $heroStory['content'] ?? '');
 } else {
-    $pageOgImage = ASSETS_URL . 'images/logo.png';
+    $pageOgImage = rtrim(BASE_URL, '/') . '/uploads/news_default.jpg';
 }
 
 // Fetch Sidebar Ad & Trending Stories
@@ -82,7 +82,7 @@ require_once __DIR__ . '/includes/header.php';
             <!-- Media Container with Play Overlay & Time Badge -->
             <div class="bhaskar-hero-media">
               <a href="<?= $heroUrl ?>">
-                <?= render_media_container($heroStory['media_type'], $heroStory['media_url'], $heroStory['headline']) ?>
+                <?= render_media_container($heroStory['media_type'], $heroStory['media_url'], $heroStory['headline'], $heroStory['content'] ?? '') ?>
               </a>
             </div>
 
@@ -164,7 +164,7 @@ require_once __DIR__ . '/includes/header.php';
               <!-- Right Media Thumbnail Box -->
               <div class="bhaskar-split-right">
                 <a href="<?= $storyUrl ?>" class="bhaskar-thumb-link">
-                  <img src="<?= get_media_url($story['media_url'], $story['media_type']) ?>" alt="<?= htmlspecialchars($story['headline']) ?>" loading="lazy" onerror="this.onerror=null; this.src='<?= ASSETS_URL ?>images/logo.png';">
+                  <img src="<?= get_media_url($story['media_url'], $story['media_type'], $story['content'] ?? '') ?>" alt="<?= htmlspecialchars($story['headline']) ?>" loading="lazy" onerror="this.onerror=null; this.src='<?= UPLOAD_URL ?>news_default.jpg';">
                   <?php if ($story['media_type'] === 'video_embed' || $story['media_type'] === 'video_upload'): ?>
                     <span class="bhaskar-thumb-play"><i class="fa-solid fa-play"></i></span>
                   <?php endif; ?>

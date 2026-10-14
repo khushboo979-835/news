@@ -64,7 +64,7 @@ require_once __DIR__ . '/includes/header.php';
           <?php if (!empty($categoryNews)): ?>
             <?php foreach ($categoryNews as $story): 
               $storyUrl = BASE_URL . '/article.php?slug=' . urlencode($story['slug']);
-              $storyMediaUrl = get_media_url($story['media_url'], $story['media_type']);
+              $storyMediaUrl = get_media_url($story['media_url'], $story['media_type'], $story['content'] ?? '');
               if (strpos($storyMediaUrl, 'http') !== 0) {
                   $storyMediaUrl = rtrim(BASE_URL, '/') . '/' . ltrim($storyMediaUrl, '/');
               }
@@ -85,7 +85,7 @@ require_once __DIR__ . '/includes/header.php';
                   <?php endif; ?>
                 </div>
 
-                <?= render_media_container($story['media_type'], $story['media_url'], $story['headline']) ?>
+                <?= render_media_container($story['media_type'], $story['media_url'], $story['headline'], $story['content'] ?? '') ?>
 
                 <div class="bhaskar-story-footer">
                   <div class="bhaskar-meta-info">
