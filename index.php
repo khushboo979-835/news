@@ -81,9 +81,19 @@ require_once __DIR__ . '/includes/header.php';
 
             <!-- Media Container with Play Overlay & Time Badge -->
             <div class="bhaskar-hero-media">
-              <a href="<?= $heroUrl ?>">
+              <?php 
+              $isHeroVideo = in_array($heroStory['media_type'] ?? '', ['video_upload', 'video_embed']);
+              if (!$isHeroVideo && !empty($heroStory['media_url']) && preg_match('/\.(mp4|webm|mov|mkv|avi|3gp)$/i', $heroStory['media_url'])) {
+                  $isHeroVideo = true;
+              }
+              ?>
+              <?php if ($isHeroVideo): ?>
                 <?= render_media_container($heroStory['media_type'], $heroStory['media_url'], $heroStory['headline'], $heroStory['content'] ?? '', $heroStory['thumbnail_url'] ?? '') ?>
-              </a>
+              <?php else: ?>
+                <a href="<?= $heroUrl ?>">
+                  <?= render_media_container($heroStory['media_type'], $heroStory['media_url'], $heroStory['headline'], $heroStory['content'] ?? '', $heroStory['thumbnail_url'] ?? '') ?>
+                </a>
+              <?php endif; ?>
             </div>
 
             <!-- Card Bottom: Category Tag on Left, Share on Right -->

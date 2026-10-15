@@ -21,6 +21,11 @@ $current_dir = basename(dirname($_SERVER['PHP_SELF']));
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo isset($page_title) ? htmlspecialchars($page_title) . ' - ' : ''; ?>एडमिन पैनल | <?php echo htmlspecialchars($site_settings['site_title'] ?? 'दैनिक खबर'); ?></title>
     
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="<?php echo BASE_URL; ?>/favicon.ico">
+    <link rel="shortcut icon" href="<?php echo BASE_URL; ?>/favicon.ico">
+    <link rel="icon" type="image/png" href="<?php echo ASSETS_URL; ?>images/logo.png">
+    
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

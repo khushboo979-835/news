@@ -137,7 +137,10 @@ $currentCatSlug = $_GET['cat'] ?? ($_GET['slug'] ?? '');
   <meta name="twitter:image:alt" content="<?= htmlspecialchars($ogTitle) ?>">
 
   <!-- Favicon -->
+  <link rel="icon" type="image/x-icon" href="<?= BASE_URL ?>/favicon.ico">
+  <link rel="shortcut icon" href="<?= BASE_URL ?>/favicon.ico">
   <link rel="icon" type="image/png" href="<?= ASSETS_URL ?>images/logo.png">
+  <link rel="apple-touch-icon" href="<?= ASSETS_URL ?>images/logo.png">
 
   <!-- Google Fonts: Mukta, Noto Sans Devanagari & Poppins -->
   <link rel="preconnect" href="https://fonts.googleapis.com">

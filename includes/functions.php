@@ -439,6 +439,19 @@ function get_media_url($url, $media_type = 'image', $content = '', $thumbnail_ur
 }
 
 /**
+ * Resolves the absolute URL for a video file (MP4/WebM/etc.)
+ */
+function get_video_file_url($videoFile) {
+    $videoFile = trim($videoFile ?? '');
+    if (empty($videoFile)) return '';
+    if (strpos($videoFile, 'http://') === 0 || strpos($videoFile, 'https://') === 0) {
+        return $videoFile;
+    }
+    $clean = str_replace(['uploads/', '../uploads/'], '', $videoFile);
+    return UPLOAD_URL . $clean;
+}
+
+/**
  * Smart Topic-Aware Editorial Fallback Image Resolver
  * Ensures every article has a distinct, beautiful, relevant news cover image
  * instead of the plain logo card when physical uploaded files are missing.
@@ -702,47 +715,20 @@ function render_media_container($mediaType, $mediaUrl, $headline = '', $content 
         if (strpos($videoFile, 'uploads/') === 0) {
             $videoFile = substr($videoFile, 8);
         }
-        $isRemote = (strpos($mediaUrl, 'http://') === 0 || strpos($mediaUrl, 'https://') === 0);
-        $exists = $isRemote || file_exists(UPLOAD_DIR . $videoFile) || file_exists(__DIR__ . '/../uploads/' . $videoFile);
+        $videoSrc = get_video_file_url($videoFile);
         
-        if ($exists) {
-            $videoSrc = $isRemote ? $mediaUrl : (UPLOAD_URL . htmlspecialchars($videoFile));
-            return '
-            <div class="bhaskar-video-wrapper" style="width:100%; background:#0f172a; border-radius:10px; overflow:hidden; margin:16px 0; text-align:center; box-shadow:0 4px 15px rgba(0,0,0,0.12);">
-                <video src="' . $videoSrc . '"' . $posterAttr . ' class="bhaskar-media-elem" controls playsinline preload="metadata" style="width:100%; max-height:520px; display:block; margin:0 auto; outline:none;" onerror="this.parentElement.innerHTML=\'<div style=\\\'padding:24px 16px;text-align:center;background:#f8fafc;border-radius:10px;border:1px solid #f1f5f9;\\\'><img src=\\\'' . $fallbackLogo . '\\\' style=\\\'max-height:140px;margin:0 auto 12px;display:block;\\\'><span style=\\\'display:inline-block;font-size:12px;font-weight:700;color:#e53935;background:#fee2e2;padding:4px 10px;border-radius:20px;\\\'>दैनिक खबर</span></div>\';"></video>
-            </div>';
-        } else {
-            // Video file not on disk: check if thumbnail or content image exists
-            $fallbackImg = '';
-            if (!empty($thumbnailUrl) && $thumbnailUrl !== 'news_cover_default.jpg' && $thumbnailUrl !== 'news_default.jpg') {
-                $resolvedThumb = get_media_url($thumbnailUrl, 'image');
-                if ($resolvedThumb && strpos($resolvedThumb, 'news_cover_default.jpg') === false) {
-                    $fallbackImg = $resolvedThumb;
-                }
-            }
-            if (!$fallbackImg && !empty($content)) {
-                $contentImg = extract_first_image_from_content($content);
-                if ($contentImg) {
-                    $fallbackImg = get_media_url($contentImg, 'image');
-                }
-            }
-            if ($fallbackImg) {
-                return '
-                <div class="bhaskar-video-wrapper" style="position:relative; width:100%; aspect-ratio:16/9; background:#0f172a; border-radius:10px; overflow:hidden; margin:16px 0; box-shadow:0 4px 15px rgba(0,0,0,0.12);">
-                    <img src="' . htmlspecialchars($fallbackImg) . '" alt="' . $escapedHeadline . '" style="width:100%; height:100%; object-fit:cover; display:block;">
-                    <div style="position:absolute; inset:0; background:rgba(0,0,0,0.35); display:flex; align-items:center; justify-content:center;">
-                        <div style="width:58px; height:58px; border-radius:50%; background:rgba(229,57,53,0.92); display:flex; align-items:center; justify-content:center; box-shadow:0 4px 14px rgba(0,0,0,0.5);">
-                            <i class="fa-solid fa-play" style="color:#fff; font-size:1.4rem; margin-left:3px;"></i>
-                        </div>
-                    </div>
-                </div>';
-            }
-            return '
-            <div class="bhaskar-media-container" style="width:100%; border-radius:10px; overflow:hidden; background:#f8fafc; border:1px solid #f1f5f9; text-align:center; margin:16px 0; padding:24px 16px;">
-                <img src="' . $fallbackLogo . '" alt="' . $escapedHeadline . '" class="bhaskar-media-elem" style="max-height:140px; width:auto; object-fit:contain; display:block; margin:0 auto 12px; border-radius:8px;">
-                <span style="display:inline-block; font-size:12px; font-weight:700; color:#e53935; background:#fee2e2; padding:4px 10px; border-radius:20px;">दैनिक खबर विशेष</span>
-            </div>';
-        }
+        return '
+        <div class="bhaskar-video-container js-video-player-wrap" style="position:relative; width:100%; border-radius:10px; overflow:hidden; background:#000000; margin:16px 0; box-shadow:0 4px 16px rgba(0,0,0,0.15); text-align:center;">
+            <video src="' . htmlspecialchars($videoSrc) . '"' . $posterAttr . ' class="bhaskar-media-elem bhaskar-video-elem" controls playsinline preload="metadata" style="width:100%; max-height:520px; display:block; margin:0 auto; outline:none; background:#000000;" onerror="this.parentElement.innerHTML=\'<div style=\\\'padding:24px 16px;text-align:center;background:#f8fafc;border-radius:10px;border:1px solid #f1f5f9;\\\'><img src=\\\'' . $fallbackLogo . '\\\' style=\\\'max-height:140px;margin:0 auto 12px;display:block;\\\'><span style=\\\'display:inline-block;font-size:12px;font-weight:700;color:#e53935;background:#fee2e2;padding:4px 10px;border-radius:20px;\\\'>दैनिक खबर</span></div>\';"></video>
+            <div class="bhaskar-video-play-overlay js-video-play-btn" style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; background:rgba(0,0,0,0.28); cursor:pointer; z-index:3; transition:all 0.25s ease;" title="वीडियो देखने के लिए टच करें">
+                <div style="width:68px; height:68px; border-radius:50%; background:rgba(229,57,53,0.94); border:3px solid #ffffff; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 24px rgba(0,0,0,0.6); transition:transform 0.2s;">
+                    <i class="fa-solid fa-play" style="color:#ffffff; font-size:1.7rem; margin-left:4px;"></i>
+                </div>
+                <span style="margin-top:10px; color:#ffffff; font-size:0.85rem; font-weight:800; text-shadow:0 2px 6px rgba(0,0,0,0.9); background:rgba(0,0,0,0.65); padding:4px 14px; border-radius:20px; letter-spacing:0.3px;">
+                    <i class="fa-solid fa-circle-play" style="color:#f87171;"></i> वीडियो प्ले करें (Tap to Play)
+                </span>
+            </div>
+        </div>';
     } else {
         // Image: Dainik Bhaskar modern news photography presentation
         $imgSrc = get_media_url($mediaUrl, 'image', $content, $thumbnailUrl);

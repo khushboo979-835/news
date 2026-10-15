@@ -15,9 +15,9 @@ if (empty($slug)) {
 
 // 1. Try exact slug match
 $stmt = $pdo->prepare("
-    SELECT n.*, c.name AS category_name, c.slug AS category_slug 
+    SELECT n.*, COALESCE(c.name, 'ताज़ा ख़बर') AS category_name, COALESCE(c.slug, 'general') AS category_slug 
     FROM news n 
-    JOIN categories c ON n.category_id = c.id 
+    LEFT JOIN categories c ON n.category_id = c.id 
     WHERE n.slug = :slug 
     LIMIT 1
 ");
@@ -27,9 +27,9 @@ $article = $stmt->fetch();
 // 2. If not found by slug, check numeric ID
 if (!$article && is_numeric($slug)) {
     $stmt = $pdo->prepare("
-        SELECT n.*, c.name AS category_name, c.slug AS category_slug 
+        SELECT n.*, COALESCE(c.name, 'ताज़ा ख़बर') AS category_name, COALESCE(c.slug, 'general') AS category_slug 
         FROM news n 
-        JOIN categories c ON n.category_id = c.id 
+        LEFT JOIN categories c ON n.category_id = c.id 
         WHERE n.id = :id_val
         LIMIT 1
     ");
@@ -41,9 +41,9 @@ if (!$article && is_numeric($slug)) {
 if (!$article) {
     try {
         $stmt = $pdo->prepare("
-            SELECT n.*, c.name AS category_name, c.slug AS category_slug 
+            SELECT n.*, COALESCE(c.name, 'ताज़ा ख़बर') AS category_name, COALESCE(c.slug, 'general') AS category_slug 
             FROM news n 
-            JOIN categories c ON n.category_id = c.id 
+            LEFT JOIN categories c ON n.category_id = c.id 
             WHERE FIND_IN_SET(:old_slug, REPLACE(n.old_slugs, ' ', ''))
                OR n.old_slugs LIKE :like_slug
             LIMIT 1

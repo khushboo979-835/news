@@ -426,13 +426,23 @@ $current_lang = $_POST['language'] ?? $news['language'] ?? 'hi';
                     <label style="display:block; font-weight:700; font-size:0.85rem; color:#334155; margin-bottom:8px;">
                         <i class="fa-solid fa-eye"></i> मौजूदा मीडिया (Current Media):
                     </label>
-                    <?php if ($news['media_type'] === 'video_embed'): ?>
-                        <div style="font-size:0.85rem; word-break:break-all; color:#dc2626; margin-bottom:8px; background:#fff; padding:8px; border-radius:6px; border:1px solid #fee2e2;">
+                    <?php if ($news['media_type'] === 'video_embed'): 
+                        $ytId = get_youtube_video_id($news['media_url']);
+                    ?>
+                        <?php if ($ytId): ?>
+                            <div style="margin-bottom:8px; border-radius:6px; overflow:hidden;">
+                                <iframe width="100%" height="180" src="https://www.youtube-nocookie.com/embed/<?php echo htmlspecialchars($ytId); ?>" frameborder="0" allowfullscreen style="border-radius:6px; border:none; display:block;"></iframe>
+                            </div>
+                        <?php endif; ?>
+                        <div style="font-size:0.82rem; word-break:break-all; color:#dc2626; margin-bottom:8px; background:#fff; padding:6px 10px; border-radius:6px; border:1px solid #fee2e2;">
                             <i class="fa-brands fa-youtube"></i> <?php echo htmlspecialchars($news['media_url']); ?>
                         </div>
                     <?php elseif ($news['media_type'] === 'video_upload'): ?>
-                        <div style="font-size:0.85rem; color:#2563eb; margin-bottom:8px; background:#fff; padding:8px; border-radius:6px; border:1px solid #dbeafe;">
-                            <i class="fa-solid fa-file-video"></i> <strong>वीडियो:</strong> <?php echo htmlspecialchars($news['media_url']); ?>
+                        <div style="margin-bottom:8px; background:#000000; border-radius:6px; overflow:hidden; text-align:center;">
+                            <video src="<?php echo get_video_file_url($news['media_url']); ?>" controls playsinline style="width:100%; max-height:220px; display:block; margin:0 auto; outline:none; background:#000000;"></video>
+                        </div>
+                        <div style="font-size:0.82rem; color:#2563eb; margin-bottom:8px; background:#fff; padding:6px 10px; border-radius:6px; border:1px solid #dbeafe; display:flex; align-items:center; gap:6px;">
+                            <i class="fa-solid fa-circle-check" style="color:#16a34a;"></i> <span><strong>सक्रिय वीडियो:</strong> <?php echo htmlspecialchars($news['media_url']); ?></span>
                         </div>
                     <?php else: ?>
                         <div style="margin-bottom:8px;">
@@ -498,6 +508,12 @@ $current_lang = $_POST['language'] ?? $news['language'] ?? 'hi';
                         <i class="fa-solid fa-file-video"></i> नई वीडियो फ़ाइल चुनें (Choose MP4 Video):
                     </label>
                     <input type="file" id="videoFileInput" name="video_file" accept="video/*,.mp4,.webm,.mov,.mkv,.avi" onchange="previewSelectedVideo(this)" style="width:100%; font-size:0.88rem; padding:9px; border:1.5px solid #93c5fd; border-radius:6px; background:#eff6ff;">
+                    <div id="selectedVideoLivePreview" style="display:none; margin-top:10px; background:#000; border-radius:6px; overflow:hidden;">
+                        <video id="selectedVideoPlayer" controls playsinline style="width:100%; max-height:200px; display:block; margin:0 auto;"></video>
+                        <div style="background:#1e293b; color:#38bdf8; font-size:0.8rem; font-weight:700; padding:6px 10px; text-align:center;">
+                            <i class="fa-solid fa-play"></i> चुनी गई नई वीडियो का प्रीव्यू
+                        </div>
+                    </div>
                     <small style="color:#64748b; font-size:0.78rem; display:block; margin-top:4px;">सपोर्टेड: MP4, WebM, MOV</small>
 
                     <!-- Dedicated Video Thumbnail / Cover Upload Field for WhatsApp -->
@@ -653,9 +669,12 @@ function previewSelectedPhoto(input) {
 function previewSelectedVideo(input) {
     if (input.files && input.files[0]) {
         const file = input.files[0];
-        const fileSizeKB = (file.size / 1024).toFixed(1);
-        const fileSizeStr = (file.size > 1024 * 1024) ? (file.size / (1024 * 1024)).toFixed(2) + ' MB' : fileSizeKB + ' KB';
-        alert(`वीडियो फ़ाइल चुनी गई: ${file.name} (${fileSizeStr})\nअब "परिवर्तन सहेजें" पर क्लिक करें।`);
+        const previewBox = document.getElementById('selectedVideoLivePreview');
+        const videoEl = document.getElementById('selectedVideoPlayer');
+        if (previewBox && videoEl) {
+            videoEl.src = URL.createObjectURL(file);
+            previewBox.style.display = 'block';
+        }
     }
 }
 

@@ -405,6 +405,12 @@ $selected_lang = $_POST['language'] ?? 'hi';
                         <i class="fa-solid fa-file-video"></i> वीडियो फ़ाइल चुनें (Choose MP4 Video):
                     </label>
                     <input type="file" id="videoFileInput" name="video_file" accept="video/*,.mp4,.webm,.mov,.mkv,.avi" onchange="previewSelectedVideo(this)" style="width:100%; font-size:0.88rem; padding:9px; border:1.5px solid #93c5fd; border-radius:6px; background:#eff6ff;">
+                    <div id="selectedVideoLivePreview" style="display:none; margin-top:10px; background:#000; border-radius:6px; overflow:hidden;">
+                        <video id="selectedVideoPlayer" controls playsinline style="width:100%; max-height:200px; display:block; margin:0 auto;"></video>
+                        <div style="background:#1e293b; color:#38bdf8; font-size:0.8rem; font-weight:700; padding:6px 10px; text-align:center;">
+                            <i class="fa-solid fa-play"></i> चुनी गई वीडियो का लाइव प्रीव्यू
+                        </div>
+                    </div>
                     <small style="color:#64748b; font-size:0.78rem; display:block; margin-top:4px;">सपोर्टेड: MP4, WebM, MOV</small>
 
                     <!-- Dedicated Video Thumbnail / Cover Upload Field for WhatsApp -->
@@ -558,9 +564,12 @@ function previewSelectedPhoto(input) {
 function previewSelectedVideo(input) {
     if (input.files && input.files[0]) {
         const file = input.files[0];
-        const fileSizeKB = (file.size / 1024).toFixed(1);
-        const fileSizeStr = (file.size > 1024 * 1024) ? (file.size / (1024 * 1024)).toFixed(2) + ' MB' : fileSizeKB + ' KB';
-        alert(`वीडियो फ़ाइल चुनी गई: ${file.name} (${fileSizeStr})\nअब "समाचार प्रकाशित करें" पर क्लिक करें।`);
+        const previewBox = document.getElementById('selectedVideoLivePreview');
+        const videoEl = document.getElementById('selectedVideoPlayer');
+        if (previewBox && videoEl) {
+            videoEl.src = URL.createObjectURL(file);
+            previewBox.style.display = 'block';
+        }
     }
 }
 

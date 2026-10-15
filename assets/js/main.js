@@ -146,4 +146,49 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
+
+  // 7. Video Player Overlay & Controls Handling
+  document.addEventListener('click', function(e) {
+    const playBtn = e.target.closest('.js-video-play-btn');
+    if (playBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      const wrap = playBtn.closest('.js-video-player-wrap');
+      if (wrap) {
+        const video = wrap.querySelector('video');
+        if (video) {
+          playBtn.style.display = 'none';
+          video.play().catch(function(err) {
+            console.log('Video play interrupted or muted required:', err);
+          });
+        }
+      }
+    }
+  });
+
+  // Re-show play button if user pauses the video
+  document.addEventListener('pause', function(e) {
+    if (e.target && e.target.tagName === 'VIDEO') {
+      const wrap = e.target.closest('.js-video-player-wrap');
+      if (wrap) {
+        const playBtn = wrap.querySelector('.js-video-play-btn');
+        if (playBtn) {
+          playBtn.style.display = 'flex';
+        }
+      }
+    }
+  }, true);
+
+  // Hide play button when video starts playing
+  document.addEventListener('play', function(e) {
+    if (e.target && e.target.tagName === 'VIDEO') {
+      const wrap = e.target.closest('.js-video-player-wrap');
+      if (wrap) {
+        const playBtn = wrap.querySelector('.js-video-play-btn');
+        if (playBtn) {
+          playBtn.style.display = 'none';
+        }
+      }
+    }
+  }, true);
 });
