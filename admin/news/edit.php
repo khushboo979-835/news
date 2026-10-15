@@ -263,7 +263,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $success = ($language === 'en') ? 'News updated successfully!' : 'समाचार सफलतापूर्वक अपडेट कर दिया गया!';
                 
-                @array_map('unlink', glob(UPLOAD_DIR . 'cards/card_' . $id . '_*'));
+                @unlink(UPLOAD_DIR . 'cards/card_' . (int)$id . '.jpg');
+                @array_map('unlink', glob(UPLOAD_DIR . 'cards/card_' . (int)$id . '*'));
                 @unlink(UPLOAD_DIR . 'cards/card_default.jpg');
 
                 // Refresh data

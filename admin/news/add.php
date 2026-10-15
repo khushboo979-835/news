@@ -212,7 +212,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $new_news_id = $pdo->lastInsertId();
                 if ($new_news_id) {
-                    @array_map('unlink', glob(UPLOAD_DIR . 'cards/card_' . $new_news_id . '_*'));
+                    @unlink(UPLOAD_DIR . 'cards/card_' . (int)$new_news_id . '.jpg');
+                    @array_map('unlink', glob(UPLOAD_DIR . 'cards/card_' . (int)$new_news_id . '*'));
                 }
                 @unlink(UPLOAD_DIR . 'cards/card_default.jpg');
 
