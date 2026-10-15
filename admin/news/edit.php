@@ -52,9 +52,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             @mkdir(UPLOAD_DIR, 0777, true);
         }
 
-        // 1. Process dedicated video thumbnail file if uploaded
+        // 1. Process auto-captured video frame or dedicated thumbnail
         $thumbUploaded = false;
-        if (isset($_FILES['thumbnail_file']) && $_FILES['thumbnail_file']['error'] !== UPLOAD_ERR_NO_FILE) {
+        $autoVideoThumb = $_POST['auto_video_thumb'] ?? '';
+        if ($media_type === 'video_upload' && !empty($autoVideoThumb) && strpos($autoVideoThumb, 'data:image/') === 0) {
+            $parts = explode(',', $autoVideoThumb);
+            if (count($parts) === 2) {
+                $decoded = base64_decode($parts[1]);
+                if ($decoded !== false && strlen($decoded) > 500) {
+                    $tFilename = 'thumb_video_' . $news_id . '_' . time() . '.jpg';
+                    if (file_put_contents(UPLOAD_DIR . $tFilename, $decoded)) {
+                        @chmod(UPLOAD_DIR . $tFilename, 0644);
+                        $thumbnail_url = $tFilename;
+                        $thumbUploaded = true;
+                    }
+                }
+            }
+        }
+        if (!$thumbUploaded && isset($_FILES['thumbnail_file']) && $_FILES['thumbnail_file']['error'] !== UPLOAD_ERR_NO_FILE) {
             if ($_FILES['thumbnail_file']['error'] === UPLOAD_ERR_OK) {
                 $tFile = $_FILES['thumbnail_file'];
                 $tExt = strtolower(pathinfo($tFile['name'], PATHINFO_EXTENSION));
@@ -152,9 +167,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (!empty($direct_media_url)) {
                     $media_url = $direct_media_url;
                 }
-                if (empty($thumbnail_url) || $thumbnail_url === 'news_cover_default.jpg' || $thumbnail_url === 'news_default.jpg') {
-                    $firstImg = extract_first_image_from_content($content);
-                    $thumbnail_url = $firstImg ?: 'news_cover_default.jpg';
+                // Clear old non-video images so they never appear on WhatsApp
+                if (empty($thumbnail_url) || $thumbnail_url === 'news_cover_default.jpg' || $thumbnail_url === 'news_default.jpg' || strpos($thumbnail_url, 'thumb_video_') === false) {
+                    if (!$thumbUploaded) {
+                        $thumbnail_url = '';
+                    }
                 }
             } else {
                 // $media_type === 'image'
@@ -439,24 +456,36 @@ $current_lang = $_POST['language'] ?? $news['language'] ?? 'hi';
                         </div>
                     <?php elseif ($news['media_type'] === 'video_upload'): ?>
                         <div style="margin-bottom:8px; background:#000000; border-radius:6px; overflow:hidden; text-align:center;">
-                            <video src="<?php echo get_video_file_url($news['media_url']); ?>" controls playsinline style="width:100%; max-height:220px; display:block; margin:0 auto; outline:none; background:#000000;"></video>
+                            <video id="currentNewsVideoPlayer" src="<?php echo get_video_file_url($news['media_url']); ?>" controls playsinline crossorigin="anonymous" style="width:100%; max-height:220px; display:block; margin:0 auto; outline:none; background:#000000;"></video>
                         </div>
                         <div style="font-size:0.82rem; color:#2563eb; margin-bottom:8px; background:#fff; padding:6px 10px; border-radius:6px; border:1px solid #dbeafe; display:flex; align-items:center; gap:6px;">
                             <i class="fa-solid fa-circle-check" style="color:#16a34a;"></i> <span><strong>सक्रिय वीडियो:</strong> <?php echo htmlspecialchars($news['media_url']); ?></span>
+                        </div>
+                        <?php 
+                        $hasVideoThumb = !empty($news['thumbnail_url']) && strpos($news['thumbnail_url'], 'thumb_video_') !== false;
+                        $posterImgSrc = $hasVideoThumb ? get_media_url($news['thumbnail_url'], 'image') : '';
+                        ?>
+                        <div id="videoAutoPosterBox" style="margin-top:10px; padding-top:8px; border-top:1px dashed #cbd5e1;">
+                            <span style="font-size:0.8rem; font-weight:700; color:#166534; display:block; margin-bottom:4px;">
+                                <i class="fa-solid fa-circle-play"></i> वीडियो का सक्रिय पोस्टर (WhatsApp शेयर फ्रेम):
+                            </span>
+                            <img id="currentVideoPosterImg" src="<?php echo htmlspecialchars($posterImgSrc); ?>" alt="Video Poster" style="max-height:100px; border-radius:6px; border:1.5px solid #86efac; display:<?php echo $hasVideoThumb ? 'block' : 'none'; ?>;">
+                            <div id="posterGeneratingNotice" style="font-size:0.8rem; color:#0284c7; padding:4px 0; display:<?php echo $hasVideoThumb ? 'none' : 'block'; ?>;">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> वीडियो से पोस्टर तैयार किया जा रहा है...
+                            </div>
                         </div>
                     <?php else: ?>
                         <div style="margin-bottom:8px;">
                             <img src="<?php echo get_media_url($news['media_url'], $news['media_type']); ?>" alt="" onerror="this.onerror=null; this.src='<?php echo ASSETS_URL; ?>images/news_cover_default.jpg';" style="width:100%; height:130px; object-fit:contain; background:#0f172a; border-radius:6px;">
                         </div>
-                    <?php endif; ?>
-
-                    <?php if (!empty($news['thumbnail_url'])): ?>
-                        <div style="margin-top:10px; padding-top:8px; border-top:1px dashed #cbd5e1;">
-                            <span style="font-size:0.8rem; font-weight:700; color:#475569; display:block; margin-bottom:4px;">
-                                <i class="fa-solid fa-image"></i> मौजूदा थंबनेल / पोस्टर (WhatsApp व कार्ड्स):
-                            </span>
-                            <img src="<?php echo get_media_url($news['thumbnail_url'], 'image'); ?>" alt="Thumbnail" onerror="this.onerror=null; this.src='<?php echo ASSETS_URL; ?>images/news_cover_default.jpg';" style="height:70px; border-radius:6px; border:1px solid #cbd5e1; object-fit:cover; display:block;">
-                        </div>
+                        <?php if (!empty($news['thumbnail_url'])): ?>
+                            <div style="margin-top:10px; padding-top:8px; border-top:1px dashed #cbd5e1;">
+                                <span style="font-size:0.8rem; font-weight:700; color:#475569; display:block; margin-bottom:4px;">
+                                    <i class="fa-solid fa-image"></i> मौजूदा थंबनेल / पोस्टर (WhatsApp व कार्ड्स):
+                                </span>
+                                <img src="<?php echo get_media_url($news['thumbnail_url'], 'image'); ?>" alt="Thumbnail" onerror="this.onerror=null; this.src='<?php echo ASSETS_URL; ?>images/news_cover_default.jpg';" style="height:70px; border-radius:6px; border:1px solid #cbd5e1; object-fit:cover; display:block;">
+                            </div>
+                        <?php endif; ?>
                     <?php endif; ?>
                     
                     <label style="display:flex; align-items:center; gap:6px; font-size:0.82rem; color:#64748b; font-weight:600; cursor:pointer; margin-top:10px; border-top:1px dashed #e2e8f0; padding-top:8px;">
@@ -514,17 +543,15 @@ $current_lang = $_POST['language'] ?? $news['language'] ?? 'hi';
                             <i class="fa-solid fa-play"></i> चुनी गई नई वीडियो का प्रीव्यू
                         </div>
                     </div>
-                    <small style="color:#64748b; font-size:0.78rem; display:block; margin-top:4px;">सपोर्टेड: MP4, WebM, MOV</small>
+                    <input type="hidden" name="auto_video_thumb" id="autoVideoThumb" value="">
+                    <small style="color:#64748b; font-size:0.78rem; display:block; margin-top:4px;">सपोर्टेड: MP4, WebM, MOV (वीडियो चुनते ही उसका असली पोस्टर स्वतः तैयार हो जाएगा)</small>
 
-                    <!-- Dedicated Video Thumbnail / Cover Upload Field for WhatsApp -->
-                    <div style="margin-top: 14px; background:#f0fdf4; padding:12px; border-radius:8px; border:1px solid #bbf7d0;">
-                        <label style="display:block; font-weight:700; margin-bottom:6px; font-size:0.88rem; color:#166534;">
-                            <i class="fa-solid fa-image"></i> वीडियो कवर / पोस्टर फ़ोटो (WhatsApp शेयर व कार्ड्स के लिए)
-                        </label>
-                        <input type="file" name="thumbnail_file" accept="image/*,.jpg,.jpeg,.png,.webp" style="width:100%; font-size:0.85rem; padding:6px; background:#fff; border:1px solid #86efac; border-radius:6px;">
-                        <small style="color:#15803d; display:block; margin-top:4px; font-size:0.78rem;">
-                            💡 व्हाट्सएप पर वीडियो सीधे पोस्टर नहीं बनती, इसलिए यहाँ फ़ोटो अपलोड करें ताकि WhatsApp शेयर करने पर फ़ोटो दिखे।
-                        </small>
+                    <!-- Auto Video Poster Live Preview for WhatsApp -->
+                    <div id="autoVideoThumbContainer" style="display:none; margin-top:14px; background:#f0fdf4; padding:12px; border-radius:8px; border:1.5px solid #86efac; text-align:center;">
+                        <div style="font-size:0.85rem; font-weight:700; color:#166534; margin-bottom:8px; display:flex; align-items:center; justify-content:center; gap:6px;">
+                            <i class="fa-solid fa-circle-check" style="color:#16a34a;"></i> <span>नई वीडियो का पोस्टर स्वतः तैयार (WhatsApp शेयर पर यही दिखेगा)</span>
+                        </div>
+                        <img id="autoVideoThumbImg" src="" alt="Auto Video Poster" style="max-height:160px; max-width:100%; border-radius:6px; border:1.5px solid #bbf7d0; box-shadow:0 2px 8px rgba(0,0,0,0.1); display:inline-block; margin:0 auto;">
                     </div>
                 </div>
 
@@ -666,6 +693,68 @@ function previewSelectedPhoto(input) {
     }
 }
 
+function captureVideoPoster(file, callback) {
+    if (!file) return;
+    const video = document.createElement('video');
+    video.preload = 'metadata';
+    video.muted = true;
+    video.playsInline = true;
+    const url = URL.createObjectURL(file);
+    video.src = url;
+
+    video.onloadedmetadata = function() {
+        const seekTime = Math.min(1.0, video.duration > 0.5 ? video.duration / 2 : 0.1);
+        video.currentTime = seekTime;
+    };
+
+    video.onseeked = function() {
+        try {
+            const canvas = document.createElement('canvas');
+            const targetWidth = Math.min(video.videoWidth || 640, 1280);
+            const targetHeight = Math.round(targetWidth * ((video.videoHeight || 360) / (video.videoWidth || 640)));
+            canvas.width = targetWidth;
+            canvas.height = targetHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, targetWidth, targetHeight);
+
+            // Add sleek YouTube-style play badge overlay in the center
+            const cx = targetWidth / 2;
+            const cy = targetHeight / 2;
+            const r = Math.min(targetWidth, targetHeight) * 0.13;
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(229, 57, 53, 0.92)';
+            ctx.fill();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = Math.max(2, Math.round(r * 0.08));
+            ctx.stroke();
+
+            // White triangle
+            ctx.beginPath();
+            const triSize = r * 0.5;
+            ctx.moveTo(cx - triSize * 0.35, cy - triSize * 0.55);
+            ctx.lineTo(cx + triSize * 0.65, cy);
+            ctx.lineTo(cx - triSize * 0.35, cy + triSize * 0.55);
+            ctx.closePath();
+            ctx.fillStyle = '#ffffff';
+            ctx.fill();
+
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.88);
+            URL.revokeObjectURL(url);
+            callback(dataUrl);
+        } catch (e) {
+            console.warn('Canvas capture failed:', e);
+            URL.revokeObjectURL(url);
+            callback(null);
+        }
+    };
+
+    video.onerror = function() {
+        URL.revokeObjectURL(url);
+        callback(null);
+    };
+}
+
 function previewSelectedVideo(input) {
     if (input.files && input.files[0]) {
         const file = input.files[0];
@@ -675,6 +764,16 @@ function previewSelectedVideo(input) {
             videoEl.src = URL.createObjectURL(file);
             previewBox.style.display = 'block';
         }
+        captureVideoPoster(file, function(posterDataUrl) {
+            if (posterDataUrl) {
+                const hiddenInput = document.getElementById('autoVideoThumb');
+                const container = document.getElementById('autoVideoThumbContainer');
+                const img = document.getElementById('autoVideoThumbImg');
+                if (hiddenInput) hiddenInput.value = posterDataUrl;
+                if (img) img.src = posterDataUrl;
+                if (container) container.style.display = 'block';
+            }
+        });
     }
 }
 
@@ -702,13 +801,82 @@ function updateYouTubePreview(url) {
     }
 }
 
-// Initialize active tab and YouTube preview on load
+// Initialize active tab, YouTube preview, and auto-capture existing video frame if missing
 document.addEventListener('DOMContentLoaded', function() {
     const currentType = document.getElementById('mediaTypeSelect') ? document.getElementById('mediaTypeSelect').value : 'image';
     selectMediaTab(currentType || 'image');
     const veInput = document.getElementById('videoEmbedInput');
     if (veInput && veInput.value) {
         updateYouTubePreview(veInput.value);
+    }
+
+    // Auto-capture frame for existing uploaded video if it doesn't have a valid thumb_video_ poster
+    const currentVideo = document.getElementById('currentNewsVideoPlayer');
+    const posterImg = document.getElementById('currentVideoPosterImg');
+    const notice = document.getElementById('posterGeneratingNotice');
+    const hasPoster = posterImg && posterImg.getAttribute('src') && posterImg.getAttribute('src').length > 5;
+
+    if (currentVideo && !hasPoster) {
+        function captureFromCurrentVideo() {
+            try {
+                const canvas = document.createElement('canvas');
+                const targetWidth = Math.min(currentVideo.videoWidth || 640, 1280);
+                const targetHeight = Math.round(targetWidth * ((currentVideo.videoHeight || 360) / (currentVideo.videoWidth || 640)));
+                canvas.width = targetWidth;
+                canvas.height = targetHeight;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(currentVideo, 0, 0, targetWidth, targetHeight);
+
+                // Play badge
+                const cx = targetWidth / 2;
+                const cy = targetHeight / 2;
+                const r = Math.min(targetWidth, targetHeight) * 0.13;
+                ctx.beginPath();
+                ctx.arc(cx, cy, r, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(229, 57, 53, 0.92)';
+                ctx.fill();
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = Math.max(2, Math.round(r * 0.08));
+                ctx.stroke();
+
+                ctx.beginPath();
+                const triSize = r * 0.5;
+                ctx.moveTo(cx - triSize * 0.35, cy - triSize * 0.55);
+                ctx.lineTo(cx + triSize * 0.65, cy);
+                ctx.lineTo(cx - triSize * 0.35, cy + triSize * 0.55);
+                ctx.closePath();
+                ctx.fillStyle = '#ffffff';
+                ctx.fill();
+
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.88);
+                if (posterImg) {
+                    posterImg.src = dataUrl;
+                    posterImg.style.display = 'block';
+                }
+                if (notice) notice.style.display = 'none';
+
+                // Automatically save to backend
+                fetch('../save_video_poster.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ news_id: <?php echo (int)$news_id; ?>, poster_data: dataUrl })
+                }).then(r => r.json()).then(res => {
+                    console.log('Video poster saved successfully:', res);
+                }).catch(err => console.warn('Poster auto-save warning:', err));
+            } catch(e) {
+                console.warn('Canvas capture of existing video failed:', e);
+                if (notice) notice.style.display = 'none';
+            }
+        }
+
+        if (currentVideo.readyState >= 2) {
+            currentVideo.currentTime = Math.min(1.0, currentVideo.duration > 0.5 ? currentVideo.duration / 2 : 0.1);
+        } else {
+            currentVideo.addEventListener('loadedmetadata', function() {
+                currentVideo.currentTime = Math.min(1.0, currentVideo.duration > 0.5 ? currentVideo.duration / 2 : 0.1);
+            });
+        }
+        currentVideo.addEventListener('seeked', captureFromCurrentVideo, { once: true });
     }
 });
 

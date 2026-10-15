@@ -121,6 +121,8 @@ $currentCatSlug = $_GET['cat'] ?? ($_GET['slug'] ?? '');
   <meta property="og:video" content="<?= htmlspecialchars($pageOgVideo) ?>">
   <meta property="og:video:secure_url" content="<?= htmlspecialchars($pageOgVideo) ?>">
   <meta property="og:video:type" content="video/mp4">
+  <meta property="og:video:width" content="1280">
+  <meta property="og:video:height" content="720">
   <?php endif; ?>
 
   <?php if (isset($pageArticlePublished)): ?>

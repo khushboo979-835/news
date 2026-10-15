@@ -101,10 +101,16 @@ $pageOgType = 'article';
 $pageArticlePublished = $article['created_at'];
 $pageArticleSection = $article['category_name'];
 
-// If YouTube video, ensure YouTube thumbnail is used for WhatsApp
+// If YouTube video, ensure YouTube thumbnail is used for WhatsApp & social link cards
 $ytId = get_youtube_video_id($article['media_url'] ?? '') ?: get_youtube_video_id($article['content'] ?? '');
 if ($ytId) {
     $pageOgImage = "https://img.youtube.com/vi/{$ytId}/hqdefault.jpg";
+    $pageOgType = 'video.other';
+} elseif ($article['media_type'] === 'video_upload' || preg_match('/\.(mp4|webm|mov)$/i', $article['media_url'] ?? '')) {
+    // If MP4 uploaded video, set og:video and video frame image
+    $pageOgVideo = get_video_file_url($article['media_url']);
+    $pageOgType = 'video.other';
+    $pageOgImage = get_article_thumbnail_url($article);
 }
 
 $currentUrl = $pageOgUrl;

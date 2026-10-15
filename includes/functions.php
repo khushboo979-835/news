@@ -582,7 +582,15 @@ function get_article_thumbnail_url($article) {
         }
     }
 
-    // 4. YouTube Embed in article content
+    // 4. Video Upload: only use video poster, never return unrelated editorial photos!
+    if ($article['media_type'] === 'video_upload' || preg_match('/\.(mp4|webm|mov|mkv|avi)$/i', $article['media_url'] ?? '')) {
+        if (!empty($article['thumbnail_url']) && strpos($article['thumbnail_url'], 'thumb_video_') !== false) {
+            return UPLOAD_URL . basename($article['thumbnail_url']);
+        }
+        return ASSETS_URL . 'images/video_default_cover.jpg';
+    }
+
+    // 5. YouTube Embed in article content
     if (!empty($article['content'])) {
         $ytContentId = get_youtube_video_id($article['content']);
         if ($ytContentId) {
@@ -600,7 +608,7 @@ function get_article_thumbnail_url($article) {
         }
     }
 
-    // 5. Intelligent Topic-Aware Editorial Fallback (Ensures distinct editorial news photos)
+    // 6. Intelligent Topic-Aware Editorial Fallback (for image/text articles only)
     return get_contextual_fallback_image($headline, $category, $id);
 }
 
@@ -674,15 +682,10 @@ function render_media_container($mediaType, $mediaUrl, $headline = '', $content 
         $mediaType = 'video_upload';
     }
 
-    // Resolve poster for video playback
+    // Resolve poster for video playback: only use dedicated video poster (never unrelated content images!)
     $posterUrl = '';
-    if (!empty($thumbnailUrl)) {
+    if (!empty($thumbnailUrl) && strpos($thumbnailUrl, 'thumb_video_') !== false) {
         $posterUrl = get_media_url($thumbnailUrl, 'image');
-    } elseif (!empty($content)) {
-        $extractedPoster = extract_first_image_from_content($content);
-        if ($extractedPoster) {
-            $posterUrl = get_media_url($extractedPoster, 'image');
-        }
     }
     $posterAttr = !empty($posterUrl) ? ' poster="' . htmlspecialchars($posterUrl) . '"' : '';
 
