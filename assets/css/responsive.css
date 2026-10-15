@@ -486,14 +486,181 @@ html, body {
     gap: 12px !important;
   }
 
-  /* Article Reading Page Mobile */
+  /* Article Reading Page Mobile - Exact Dainik Bhaskar Mobile App/Web */
   .article-rich-body {
-    font-size: 1.05rem !important;
-    line-height: 1.7 !important;
+    font-size: 1.08rem !important;
+    line-height: 1.82 !important;
     word-break: break-word;
   }
 
   .article-rich-body p {
-    margin-bottom: 12px;
+    margin-bottom: 16px;
+  }
+
+  .db-article-container {
+    padding: 14px 12px !important;
+    border-radius: 8px !important;
+    margin-bottom: 16px !important;
+  }
+
+  .db-breadcrumb {
+    font-size: 0.76rem !important;
+    margin-bottom: 8px !important;
+    gap: 4px !important;
+  }
+
+  .db-bc-current {
+    max-width: 130px !important;
+  }
+
+  .db-headline {
+    font-size: 1.34rem !important;
+    line-height: 1.32 !important;
+    margin: 0 0 10px 0 !important;
+  }
+
+  .db-story-highlights {
+    padding: 10px 12px !important;
+    margin-bottom: 14px !important;
+    border-radius: 0 6px 6px 0 !important;
+  }
+
+  .db-highlights-header {
+    font-size: 0.88rem !important;
+    margin-bottom: 6px !important;
+  }
+
+  .db-highlights-content {
+    font-size: 0.92rem !important;
+    line-height: 1.5 !important;
+  }
+
+  .db-meta-bar {
+    padding: 10px 0 !important;
+    gap: 10px !important;
+    margin-bottom: 14px !important;
+  }
+
+  .db-author-avatar {
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 1rem !important;
+  }
+
+  .db-author-name {
+    font-size: 0.88rem !important;
+  }
+
+  .db-post-meta {
+    font-size: 0.74rem !important;
+  }
+
+  .db-share-actions {
+    gap: 6px !important;
+  }
+
+  .db-share-btn {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 0.9rem !important;
+  }
+
+  .db-hero-media-wrapper {
+    margin: 12px 0 16px 0 !important;
+  }
+
+  .bhaskar-media-figure {
+    border-radius: 8px !important;
+  }
+
+  .db-wa-channel-box {
+    padding: 10px 12px !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+    margin: 18px 0 !important;
+  }
+
+  .db-wa-join-pill {
+    width: 100% !important;
+    justify-content: center !important;
+    padding: 8px 12px !important;
+    font-size: 0.84rem !important;
+  }
+
+  .db-article-body {
+    font-size: 1.08rem !important;
+    line-height: 1.82 !important;
+    margin-top: 16px !important;
+  }
+
+  .db-article-body p {
+    margin-bottom: 16px !important;
+  }
+
+  .db-bottom-share-card {
+    padding: 14px 12px !important;
+    margin-top: 24px !important;
+  }
+
+  .db-bottom-share-title {
+    font-size: 0.88rem !important;
+  }
+
+  .db-bottom-btn {
+    font-size: 0.82rem !important;
+    padding: 6px 12px !important;
+  }
+
+  .db-related-section {
+    margin-top: 24px !important;
+  }
+
+  .db-section-title {
+    font-size: 1.12rem !important;
+  }
+
+  .db-related-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .db-related-card {
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 10px !important;
+    padding: 8px !important;
+    border-radius: 8px !important;
+  }
+
+  .db-related-thumb-link {
+    flex: 0 0 110px !important;
+    width: 110px !important;
+    height: 75px !important;
+    border-radius: 6px !important;
+    aspect-ratio: auto !important;
+  }
+
+  .db-related-body {
+    padding: 0 !important;
+  }
+
+  .db-related-headline {
+    font-size: 0.88rem !important;
+    margin: 0 0 4px 0 !important;
+  }
+
+  .db-related-headline a {
+    -webkit-line-clamp: 2 !important;
+  }
+
+  .db-related-tag {
+    font-size: 0.72rem !important;
+    padding: 1px 6px !important;
+    margin-bottom: 4px !important;
+  }
+
+  .db-related-time {
+    font-size: 0.72rem !important;
   }
 }

@@ -109,7 +109,7 @@ if ($ytId) {
 
 $currentUrl = $pageOgUrl;
 
-// Related Articles
+// Related Articles (Category first, then general latest so reader always has 4 varied stories)
 $relatedStmt = $pdo->prepare("
     SELECT n.*, c.name AS category_name, c.slug AS category_slug 
     FROM news n 
@@ -121,9 +121,37 @@ $relatedStmt = $pdo->prepare("
 $relatedStmt->execute([':cat_id' => $article['category_id'], ':id' => $article['id']]);
 $relatedArticles = $relatedStmt->fetchAll();
 
+if (count($relatedArticles) < 4) {
+    $needed = 4 - count($relatedArticles);
+    $excludeIds = array_merge([$article['id']], array_column($relatedArticles, 'id'));
+    $placeholders = implode(',', array_fill(0, count($excludeIds), '?'));
+    $fallbackStmt = $pdo->prepare("
+        SELECT n.*, c.name AS category_name, c.slug AS category_slug 
+        FROM news n 
+        JOIN categories c ON n.category_id = c.id 
+        WHERE n.id NOT IN ($placeholders)
+        ORDER BY n.priority_order ASC, n.created_at DESC 
+        LIMIT {$needed}
+    ");
+    $fallbackStmt->execute($excludeIds);
+    $moreStories = $fallbackStmt->fetchAll();
+    $relatedArticles = array_merge($relatedArticles, $moreStories);
+}
+
 // Fetch Sidebar Ad
 $sidebarAd = get_ad_by_position($pdo, 'sidebar_banner');
 $trendingArticles = get_trending_news($pdo, 5);
+
+// Parse Headline for Dainik Bhaskar style Lead Kicker (prefix before colon)
+$rawHeadline = trim($article['headline']);
+$colonPos = mb_strpos($rawHeadline, ':');
+if ($colonPos !== false && $colonPos > 2 && $colonPos < (mb_strlen($rawHeadline) - 3)) {
+    $headlineKicker = mb_substr($rawHeadline, 0, $colonPos + 1);
+    $headlineMain = trim(mb_substr($rawHeadline, $colonPos + 1));
+} else {
+    $headlineKicker = '';
+    $headlineMain = $rawHeadline;
+}
 
 require_once __DIR__ . '/includes/header.php';
 ?>
@@ -137,89 +165,167 @@ require_once __DIR__ . '/includes/header.php';
 
       <!-- 2. Center Article Reader -->
       <main class="bhaskar-main-feed">
-        <article class="bhaskar-story-card" style="padding: 28px;">
+        <article class="bhaskar-story-card db-article-container">
           
-          <div class="bhaskar-story-header">
-            <a href="<?= get_category_url($article['category_slug']) ?>" class="bhaskar-category-pill">
-              <?= htmlspecialchars($article['category_name']) ?>
-            </a>
+          <!-- Breadcrumb Navigation -->
+          <nav class="db-breadcrumb" aria-label="breadcrumb">
+            <a href="<?= BASE_URL ?>/" class="db-bc-link"><i class="fa-solid fa-house"></i> होम</a>
+            <span class="db-bc-sep">/</span>
+            <a href="<?= get_category_url($article['category_slug']) ?>" class="db-bc-link"><?= htmlspecialchars($article['category_name']) ?></a>
+            <span class="db-bc-sep">/</span>
+            <span class="db-bc-current"><?= htmlspecialchars(mb_substr($rawHeadline, 0, 32, 'UTF-8')) ?>...</span>
+          </nav>
 
-            <h1 class="bhaskar-headline" style="font-size: 1.8rem; line-height: 1.35;">
-              <?= htmlspecialchars($article['headline']) ?>
+          <header class="db-article-header">
+            <!-- Category Tag & Live Pulse -->
+            <div class="db-category-strip">
+              <a href="<?= get_category_url($article['category_slug']) ?>" class="db-category-tag">
+                <i class="fa-solid fa-layer-group"></i> <?= htmlspecialchars($article['category_name']) ?>
+              </a>
+              <span class="db-reading-time"><i class="fa-regular fa-clock"></i> 2 मिनट रीडिंग</span>
+            </div>
+
+            <!-- Dainik Bhaskar Style Headline with Colored Kicker -->
+            <h1 class="db-headline">
+              <?php if (!empty($headlineKicker)): ?>
+                <span class="db-headline-kicker"><?= htmlspecialchars($headlineKicker) ?></span>
+              <?php endif; ?>
+              <?= htmlspecialchars($headlineMain) ?>
             </h1>
 
+            <!-- Story Highlights ("खास बातें / मुख्य बिंदु") -->
             <?php if (!empty($article['subheadline'])): ?>
-              <div class="bhaskar-subheadline" style="font-size: 1.15rem; font-weight: 600; color: var(--gray-600); border-left: 4px solid var(--theme-color); padding-left: 12px; margin: 15px 0;">
-                <?= htmlspecialchars($article['subheadline']) ?>
+              <div class="db-story-highlights">
+                <div class="db-highlights-header">
+                  <i class="fa-solid fa-bolt" style="color: #f97316;"></i>
+                  <span>खास बातें (Key Highlights)</span>
+                </div>
+                <div class="db-highlights-content">
+                  <?= nl2br(htmlspecialchars($article['subheadline'])) ?>
+                </div>
               </div>
             <?php endif; ?>
 
-            <div class="bhaskar-story-footer" style="margin-bottom: 20px;">
-              <div class="bhaskar-meta-info">
-                <span><i class="fa-solid fa-user-pen"></i> डेस्क रिपोर्टर</span>
-                <span>•</span>
-                <span><i class="fa-regular fa-clock"></i> <?= format_hindi_date($article['created_at']) ?></span>
-                <span>•</span>
-                <span><i class="fa-regular fa-eye"></i> <?= number_format($article['views']) ?> व्यूज</span>
+            <!-- Byline, Publication Time & Share Buttons -->
+            <div class="db-meta-bar">
+              <div class="db-author-box">
+                <span class="db-author-avatar"><i class="fa-solid fa-user-pen"></i></span>
+                <div class="db-author-details">
+                  <div class="db-author-name">दैनिक खबर ब्यूरो, पटना</div>
+                  <div class="db-post-meta">
+                    <span><i class="fa-regular fa-calendar"></i> <?= format_hindi_date($article['created_at']) ?></span>
+                    <span class="db-meta-sep">•</span>
+                    <span><i class="fa-regular fa-eye"></i> <?= number_format($article['views']) ?> व्यूज</span>
+                  </div>
+                </div>
               </div>
 
-              <div class="bhaskar-share-btns">
+              <!-- Top Social Share Bar -->
+              <div class="db-share-actions">
                 <a href="https://api.whatsapp.com/send?text=<?= urlencode('*' . trim($article['headline']) . "*\n\n" . $currentUrl) ?>" 
                    target="_blank" 
                    rel="noopener" 
-                   class="share-icon-btn whatsapp js-share-trigger" 
+                   class="db-share-btn db-wa js-share-trigger" 
                    data-title="<?= htmlspecialchars($article['headline']) ?>" 
                    data-url="<?= htmlspecialchars($currentUrl) ?>" 
                    title="WhatsApp पर शेयर करें">
                   <i class="fa-brands fa-whatsapp"></i>
                 </a>
-                <a href="https://www.facebook.com/sharer/sharer.php?u=<?= urlencode($currentUrl) ?>" target="_blank" rel="noopener" class="share-icon-btn facebook" title="Share on Facebook">
+                <a href="https://www.facebook.com/sharer/sharer.php?u=<?= urlencode($currentUrl) ?>" target="_blank" rel="noopener" class="db-share-btn db-fb" title="Share on Facebook">
                   <i class="fa-brands fa-facebook-f"></i>
                 </a>
-                <a href="https://twitter.com/intent/tweet?text=<?= urlencode($article['headline']) ?>&url=<?= urlencode($currentUrl) ?>" target="_blank" rel="noopener" class="share-icon-btn twitter" title="Share on X">
+                <a href="https://twitter.com/intent/tweet?text=<?= urlencode($article['headline']) ?>&url=<?= urlencode($currentUrl) ?>" target="_blank" rel="noopener" class="db-share-btn db-tw" title="Share on X">
                   <i class="fa-brands fa-x-twitter"></i>
                 </a>
-                <button type="button" class="share-icon-btn copy js-copy-link" data-url="<?= htmlspecialchars($currentUrl) ?>" title="लिंक कॉपी करें">
+                <button type="button" class="db-share-btn db-copy js-copy-link" data-url="<?= htmlspecialchars($currentUrl) ?>" title="लिंक कॉपी करें">
                   <i class="fa-solid fa-link"></i>
                 </button>
               </div>
             </div>
+          </header>
+
+          <!-- Hero Media Presentation (Image or Video) -->
+          <div class="db-hero-media-wrapper">
+            <?= render_media_container($article['media_type'], $article['media_url'], $article['headline'], $article['content'], $article['thumbnail_url'] ?? '') ?>
           </div>
 
-          <!-- Aspect Ratio Safe Media -->
-          <?= render_media_container($article['media_type'], $article['media_url'], $article['headline'], $article['content'], $article['thumbnail_url'] ?? '') ?>
+          <!-- WhatsApp Channel Join CTA Bar (Bhaskar Mobile Pattern) -->
+          <div class="db-wa-channel-box">
+            <div class="db-wa-left">
+              <div class="db-wa-icon"><i class="fa-brands fa-whatsapp"></i></div>
+              <div class="db-wa-text">
+                <strong>दैनिक खबर के WhatsApp चैनल से जुड़ें</strong>
+                <span>बिहार और देश की हर ब्रेकिंग खबर सीधे अपने फोन पर पाएं</span>
+              </div>
+            </div>
+            <a href="https://whatsapp.com/channel/0029Vb5VvJ46RGJHfG4Q0n3k" target="_blank" rel="noopener" class="db-wa-join-pill">
+              फॉलो करें <i class="fa-solid fa-arrow-right"></i>
+            </a>
+          </div>
 
-          <!-- Rich Text Content -->
-          <div class="article-rich-body" style="font-size: 1.15rem; line-height: 1.85; color: var(--gray-800); margin-top: 25px;">
+          <!-- Rich Article Body -->
+          <div class="article-rich-body db-article-body">
             <?= $article['content'] ?>
+          </div>
+
+          <!-- Bottom Share & Engagement Card -->
+          <div class="db-bottom-share-card">
+            <div class="db-bottom-share-title">
+              <i class="fa-solid fa-share-nodes"></i> यह खबर अपने दोस्तों और परिजनों के साथ साझा करें:
+            </div>
+            <div class="db-bottom-share-btns">
+              <a href="https://api.whatsapp.com/send?text=<?= urlencode('*' . trim($article['headline']) . "*\n\n" . $currentUrl) ?>" 
+                 target="_blank" 
+                 rel="noopener" 
+                 class="db-bottom-btn db-btn-wa js-share-trigger" 
+                 data-title="<?= htmlspecialchars($article['headline']) ?>" 
+                 data-url="<?= htmlspecialchars($currentUrl) ?>">
+                <i class="fa-brands fa-whatsapp"></i> WhatsApp
+              </a>
+              <a href="https://www.facebook.com/sharer/sharer.php?u=<?= urlencode($currentUrl) ?>" target="_blank" rel="noopener" class="db-bottom-btn db-btn-fb">
+                <i class="fa-brands fa-facebook-f"></i> Facebook
+              </a>
+              <button type="button" class="db-bottom-btn db-btn-copy js-copy-link" data-url="<?= htmlspecialchars($currentUrl) ?>">
+                <i class="fa-solid fa-link"></i> लिंक कॉपी करें
+              </button>
+            </div>
           </div>
 
         </article>
 
-        <!-- Related Stories -->
+        <!-- Related Stories (Dainik Bhaskar Style) -->
         <?php if (!empty($relatedArticles)): ?>
-          <div style="margin-top: 30px;">
-            <h3 style="font-size: 1.3rem; font-weight: 800; color: var(--gray-900); margin-bottom: 16px; border-bottom: 2px solid var(--theme-color); padding-bottom: 8px;">
-              यह भी पढ़ें (Related News)
-            </h3>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+          <section class="db-related-section">
+            <div class="db-section-header">
+              <span class="db-section-bar"></span>
+              <h3 class="db-section-title">यह भी पढ़ें (Related News)</h3>
+            </div>
+            <div class="db-related-grid">
               <?php foreach ($relatedArticles as $rStory): ?>
-                <div class="bhaskar-story-card" style="padding: 14px; background:#fff; border-radius:10px; border:1px solid #e2e8f0;">
-                  <a href="<?= get_article_url($rStory) ?>" class="bhaskar-thumb-link" style="display:block; position:relative; border-radius:8px; overflow:hidden;">
-                    <img src="<?= get_article_thumbnail_url($rStory) ?>" alt="<?= htmlspecialchars($rStory['headline']) ?>" loading="lazy" style="width:100%; aspect-ratio:16/9; object-fit:cover; display:block;" onerror="this.onerror=null; this.src='<?= ASSETS_URL ?>images/news_cover_default.jpg';">
+                <article class="db-related-card">
+                  <a href="<?= get_article_url($rStory) ?>" class="db-related-thumb-link">
+                    <img src="<?= get_article_thumbnail_url($rStory) ?>" alt="<?= htmlspecialchars($rStory['headline']) ?>" loading="lazy" onerror="this.onerror=null; this.src='<?= ASSETS_URL ?>images/news_cover_default.jpg';">
                     <?php if ($rStory['media_type'] === 'video_upload' || $rStory['media_type'] === 'video_embed'): ?>
-                      <span class="bhaskar-thumb-play"><i class="fa-solid fa-play"></i></span>
+                      <span class="db-related-play"><i class="fa-solid fa-play"></i></span>
                     <?php endif; ?>
                   </a>
-                  <h4 style="font-size: 0.95rem; font-weight: 700; margin-top: 10px; line-height: 1.4;">
-                    <a href="<?= get_article_url($rStory) ?>" style="color:var(--gray-900); text-decoration:none;">
-                      <?= htmlspecialchars($rStory['headline']) ?>
+                  <div class="db-related-info">
+                    <a href="<?= get_category_url($rStory['category_slug']) ?>" class="db-related-tag">
+                      <?= htmlspecialchars($rStory['category_name']) ?>
                     </a>
-                  </h4>
-                </div>
+                    <h4 class="db-related-headline">
+                      <a href="<?= get_article_url($rStory) ?>">
+                        <?= htmlspecialchars($rStory['headline']) ?>
+                      </a>
+                    </h4>
+                    <div class="db-related-time">
+                      <i class="fa-regular fa-clock"></i> <?= format_hindi_date($rStory['created_at']) ?>
+                    </div>
+                  </div>
+                </article>
               <?php endforeach; ?>
             </div>
-          </div>
+          </section>
         <?php endif; ?>
 
       </main>
@@ -227,17 +333,21 @@ require_once __DIR__ . '/includes/header.php';
       <!-- 3. Right Rail -->
       <aside class="bhaskar-right-rail">
         <div class="google-follow-card">
-          <div class="google-follow-text">दैनिक खबर को Google पर फॉलो करें →</div>
+          <div class="google-follow-text">दैनिक खबर को Google News पर फॉलो करें →</div>
           <a href="https://news.google.com" target="_blank" rel="noopener" class="google-follow-btn">+Follow</a>
         </div>
 
-        <div class="bhaskar-sidebar-ad">
-          <?php if ($sidebarAd): ?>
+        <?php 
+        $adImg = $sidebarAd ? get_ad_image_url($sidebarAd['image_url']) : '';
+        if ($sidebarAd && !empty($adImg) && strpos($adImg, 'placeholder.svg') === false): 
+        ?>
+          <div class="bhaskar-sidebar-ad">
+            <span class="ad-label" style="display:block; font-size:10px; color:#94a3b8; text-transform:uppercase; padding:4px 8px; text-align:right;">विज्ञापन</span>
             <a href="<?= htmlspecialchars($sidebarAd['link_url']) ?>" target="_blank" rel="sponsored noopener">
-              <img src="<?= get_ad_image_url($sidebarAd['image_url']) ?>" alt="Ad">
+              <img src="<?= htmlspecialchars($adImg) ?>" alt="Ad" loading="lazy">
             </a>
-          <?php endif; ?>
-        </div>
+          </div>
+        <?php endif; ?>
 
         <div class="bhaskar-trending-widget">
           <h3 class="bhaskar-widget-header">

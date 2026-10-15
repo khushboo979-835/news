@@ -300,8 +300,8 @@ function get_top_leaderboard_ad($pdo_conn = null) {
  * Ad Image URL Resolver
  */
 function get_ad_image_url($image_url) {
-    if (empty($image_url)) {
-        return ASSETS_URL . 'images/placeholder.svg';
+    if (empty($image_url) || $image_url === 'placeholder.svg') {
+        return '';
     }
     if (strpos($image_url, 'http://') === 0 || strpos($image_url, 'https://') === 0) {
         return $image_url;
@@ -312,7 +312,7 @@ function get_ad_image_url($image_url) {
     if (file_exists(__DIR__ . '/../assets/images/' . $image_url)) {
         return ASSETS_URL . 'images/' . $image_url;
     }
-    return ASSETS_URL . 'images/placeholder.svg';
+    return '';
 }
 
 /**
@@ -435,7 +435,79 @@ function get_media_url($url, $media_type = 'image', $content = '', $thumbnail_ur
             return get_media_url($extracted, 'image');
         }
     }
-    return file_exists(UPLOAD_DIR . 'news_cover_default.jpg') ? (UPLOAD_URL . 'news_cover_default.jpg') : (ASSETS_URL . 'images/news_cover_default.jpg');
+    return get_contextual_fallback_image('', '');
+}
+
+/**
+ * Smart Topic-Aware Editorial Fallback Image Resolver
+ * Ensures every article has a distinct, beautiful, relevant news cover image
+ * instead of the plain logo card when physical uploaded files are missing.
+ */
+function get_contextual_fallback_image($headline = '', $category = '') {
+    $text = mb_strtolower($headline . ' ' . $category, 'UTF-8');
+    
+    // 1. Durga Puja / Pandal / Dussehra / Temples / Aarti / Religious
+    if (preg_match('/(पूजा|पंडाल|दुर्गा|दशहरा|मंदिर|मठ|त्योहार|आरती|चालीसा|हनुमान)/u', $text)) {
+        if (file_exists(__DIR__ . '/../assets/images/news_durga_puja_pandal.jpg')) {
+            return ASSETS_URL . 'images/news_durga_puja_pandal.jpg';
+        }
+    }
+    // 2. Police Action / Raid / Smuggling / Gambling / Gang / Encounter / Murder
+    if (preg_match('/(छापेमारी|तस्कर|सट्टा|गेसिंग|शराब|बदमाश|होटल|रेड|गिरफ्तार|मुठभेड़|एनकाउंटर|गोली|हत्या|मर्डर)/u', $text)) {
+        if (file_exists(__DIR__ . '/../assets/images/news_patna_police.jpg')) {
+            return ASSETS_URL . 'images/news_patna_police.jpg';
+        }
+        return ASSETS_URL . 'images/news_kotwali_guessing_raid.jpg';
+    }
+    // 3. Police / Daroga / Protest / SP / DSP / Administrative / Transfer / GPF / Bribery
+    if (preg_match('/(दारोगा|पुलिस|थाना|सचिवालय|आईपीएस|एसपी|डीएसपी|आंदोलन|मांग|वेतन|प्रदर्शन|हंगाम|फेरबदल|रिश्वत|भुगतान|जीपीएफ)/u', $text)) {
+        return ASSETS_URL . 'images/news_bihar_daroga_protest.jpg';
+    }
+    // 4. Theft / Snatching / Loot / Crime
+    if (preg_match('/(चोरी|चोर|बाइक|गिरोह|स्नैचिंग|लूट|चेन|अपराध)/u', $text)) {
+        return ASSETS_URL . 'images/news_bike_theft_police.jpg';
+    }
+    // 5. Stunt / Marine Drive / Traffic / Roads / Vehicle
+    if (preg_match('/(स्टंट|मरीन ड्राइव|यातायात|ट्रैफिक|गाड़ी|कार)/u', $text)) {
+        return ASSETS_URL . 'images/news_marine_drive_stunt.jpg';
+    }
+    // 6. Hospital / Injury / Emergency / Accident / Medical
+    if (preg_match('/(हादसा|घायल|इलाज|अस्पताल|डॉक्टर|सड़क|एक्सीडेंट)/u', $text)) {
+        if (file_exists(__DIR__ . '/../assets/images/news_hospital_emergency.jpg')) {
+            return ASSETS_URL . 'images/news_hospital_emergency.jpg';
+        }
+        return ASSETS_URL . 'images/news_marine_drive_stunt.jpg';
+    }
+    // 7. Ganga / Flood / Water / Rain / Weather
+    if (preg_match('/(बाढ़|गंगा|जलस्तर|नदी|पानी|डूब|बारिश|मौसम)/u', $text)) {
+        return ASSETS_URL . 'images/news_patna_flood.jpg';
+    }
+    // 8. Cinema / Film / Theater / Culture / Books / Music
+    if (preg_match('/(सिनेमा|फिल्म|रंगमंच|नाटक|कला|कलाकार|शो|पुस्तक|विमोचन)/u', $text)) {
+        return ASSETS_URL . 'images/news_regent_cinema.jpg';
+    }
+    // 9. Airport / Aviation / Birds / Flights
+    if (preg_match('/(एयरपोर्ट|विमान|फ्लाइट|उड़ान|हवाई|पक्षी|बर्ड)/u', $text)) {
+        if (file_exists(__DIR__ . '/../assets/images/news_patna_airport.jpg')) {
+            return ASSETS_URL . 'images/news_patna_airport.jpg';
+        }
+    }
+
+    // 10. Balanced deterministic distribution among verified real news photos
+    $pool = [
+        'news_bihar_daroga_protest.jpg',
+        'news_bike_theft_police.jpg',
+        'news_kotwali_guessing_raid.jpg',
+        'news_marine_drive_stunt.jpg',
+        'news_patna_flood.jpg',
+        'news_regent_cinema.jpg',
+        'news_durga_puja_pandal.jpg',
+        'news_patna_police.jpg',
+        'news_hospital_emergency.jpg',
+        'news_patna_airport.jpg'
+    ];
+    $idx = abs(crc32($headline ?: 'dainik_khabar_news')) % count($pool);
+    return ASSETS_URL . 'images/' . $pool[$idx];
 }
 
 /**
@@ -443,8 +515,10 @@ function get_media_url($url, $media_type = 'image', $content = '', $thumbnail_ur
  * Ideal for WhatsApp Link Previews (og:image) and Feed Cards
  */
 function get_article_thumbnail_url($article) {
-    $fallbackCover = file_exists(UPLOAD_DIR . 'news_cover_default.jpg') ? (UPLOAD_URL . 'news_cover_default.jpg') : (ASSETS_URL . 'images/news_cover_default.jpg');
-    if (!is_array($article)) return $fallbackCover;
+    if (!is_array($article)) return ASSETS_URL . 'images/news_cover_default.jpg';
+
+    $headline = $article['headline'] ?? '';
+    $category = $article['category_name'] ?? '';
 
     // 1. YouTube Video in media_url
     $ytId = get_youtube_video_id($article['media_url'] ?? '');
@@ -487,8 +561,8 @@ function get_article_thumbnail_url($article) {
         }
     }
 
-    // 5. Branded Default 1200x630 Card
-    return $fallbackCover;
+    // 5. Intelligent Topic-Aware News Photo Fallback (Never shows identical logo)
+    return get_contextual_fallback_image($headline, $category);
 }
 
 /**
@@ -628,12 +702,21 @@ function render_media_container($mediaType, $mediaUrl, $headline = '', $content 
             </div>';
         }
     } else {
-        // Image: clean aspect-ratio container with normal sizing for all picture dimensions & onerror fallback
+        // Image: Dainik Bhaskar modern news photography presentation
         $imgSrc = get_media_url($mediaUrl, 'image', $content, $thumbnailUrl);
+        if (empty($imgSrc) || strpos($imgSrc, 'news_cover_default.jpg') !== false) {
+            $imgSrc = get_contextual_fallback_image($headline);
+        }
         return '
-        <div class="bhaskar-media-container" style="width:100%; border-radius:10px; overflow:hidden; background:#f8fafc; border:1px solid #f1f5f9; text-align:center; margin:16px 0;">
-            <img src="' . htmlspecialchars($imgSrc) . '" alt="' . $escapedHeadline . '" class="bhaskar-media-elem" loading="lazy" onerror="this.onerror=null; this.src=\'' . $fallbackLogo . '\';" style="max-width:100%; max-height:540px; width:auto; height:auto; object-fit:contain; display:block; margin:0 auto; border-radius:8px;">
-        </div>';
+        <figure class="bhaskar-media-figure" style="margin:16px 0 20px 0; width:100%; border-radius:12px; overflow:hidden; background:#0f172a; box-shadow:0 4px 16px rgba(0,0,0,0.08);">
+            <div style="width:100%; max-height:500px; display:flex; align-items:center; justify-content:center; overflow:hidden; background:#0f172a;">
+                <img src="' . htmlspecialchars($imgSrc) . '" alt="' . $escapedHeadline . '" class="bhaskar-media-elem" loading="eager" style="max-width:100%; max-height:500px; width:auto; height:auto; object-fit:contain; display:block; margin:0 auto;">
+            </div>
+            <figcaption style="padding:8px 14px; background:#f8fafc; font-size:0.82rem; color:#64748b; border-top:1px solid #e2e8f0; font-weight:600; text-align:left; display:flex; align-items:center; gap:6px;">
+                <i class="fa-solid fa-camera" style="color:var(--theme-color);"></i>
+                <span>' . $escapedHeadline . ' (फ़ाइल फ़ोटो)</span>
+            </figcaption>
+        </figure>';
     }
 }
 

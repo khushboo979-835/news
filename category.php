@@ -132,13 +132,17 @@ require_once __DIR__ . '/includes/header.php';
           <a href="https://news.google.com" target="_blank" rel="noopener" class="google-follow-btn">+Follow</a>
         </div>
 
-        <div class="bhaskar-sidebar-ad">
-          <?php if ($sidebarAd): ?>
+        <?php 
+        $adImg = $sidebarAd ? get_ad_image_url($sidebarAd['image_url']) : '';
+        if ($sidebarAd && !empty($adImg) && strpos($adImg, 'placeholder.svg') === false): 
+        ?>
+          <div class="bhaskar-sidebar-ad">
+            <span class="ad-label" style="display:block; font-size:10px; color:#94a3b8; text-transform:uppercase; padding:4px 8px; text-align:right;">विज्ञापन</span>
             <a href="<?= htmlspecialchars($sidebarAd['link_url']) ?>" target="_blank" rel="sponsored noopener">
-              <img src="<?= get_ad_image_url($sidebarAd['image_url']) ?>" alt="Ad">
+              <img src="<?= htmlspecialchars($adImg) ?>" alt="Ad" loading="lazy">
             </a>
-          <?php endif; ?>
-        </div>
+          </div>
+        <?php endif; ?>
 
         <div class="bhaskar-trending-widget">
           <h3 class="bhaskar-widget-header">

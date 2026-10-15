@@ -1380,3 +1380,566 @@ ul, ol {
   border: 1px solid var(--gray-200);
 }
 
+/* ==========================================================================
+   11. Dainik Bhaskar Style Article Reader (Exact bhaskar.com / Dainik Bhaskar)
+   ========================================================================== */
+.db-article-container {
+  padding: 24px 28px;
+  background: #ffffff;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--gray-200);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 24px;
+}
+
+/* Breadcrumbs */
+.db-breadcrumb {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--gray-500);
+  margin-bottom: 14px;
+}
+
+.db-bc-link {
+  color: var(--gray-600);
+  text-decoration: none;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.2s;
+}
+
+.db-bc-link:hover {
+  color: var(--theme-color);
+}
+
+.db-bc-sep {
+  color: var(--gray-400);
+}
+
+.db-bc-current {
+  color: var(--gray-500);
+  font-weight: 500;
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Category Strip */
+.db-category-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.db-category-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #fee2e2;
+  color: #dc2626;
+  font-weight: 800;
+  font-size: 0.82rem;
+  padding: 4px 10px;
+  border-radius: 4px;
+  text-decoration: none;
+  letter-spacing: 0.2px;
+}
+
+.db-category-tag:hover {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+.db-reading-time {
+  font-size: 0.8rem;
+  color: var(--gray-500);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* Headline & Colored Kicker */
+.db-headline {
+  font-family: 'Mukta', 'Noto Sans Devanagari', sans-serif;
+  font-size: 1.85rem;
+  font-weight: 800;
+  line-height: 1.34;
+  color: #111827;
+  margin: 0 0 16px 0;
+  word-break: break-word;
+}
+
+.db-headline-kicker {
+  color: #dc2626; /* Dainik Bhaskar Red / Accent kicker */
+  font-weight: 900;
+  margin-right: 6px;
+  display: inline;
+}
+
+/* Story Highlights ("खास बातें") */
+.db-story-highlights {
+  background: #fff8f1;
+  border: 1px solid #ffedd5;
+  border-left: 5px solid #ea580c;
+  border-radius: 0 8px 8px 0;
+  padding: 14px 16px;
+  margin-bottom: 20px;
+}
+
+.db-highlights-header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #9a3412;
+  margin-bottom: 8px;
+}
+
+.db-highlights-content {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #431407;
+  font-weight: 500;
+}
+
+/* Meta Bar: Author & Social Sharing */
+.db-meta-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding: 12px 0 16px 0;
+  border-top: 1px solid var(--gray-100);
+  border-bottom: 1px solid var(--gray-100);
+  margin-bottom: 20px;
+}
+
+.db-author-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.db-author-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--theme-color);
+  font-size: 1.15rem;
+  flex-shrink: 0;
+}
+
+.db-author-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.db-author-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.db-post-meta {
+  font-size: 0.8rem;
+  color: var(--gray-500);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.db-meta-sep {
+  color: var(--gray-400);
+}
+
+.db-share-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.db-share-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--gray-200);
+  background: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.db-share-btn.db-wa {
+  color: #16a34a;
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+.db-share-btn.db-wa:hover {
+  background: #16a34a;
+  color: #ffffff;
+}
+
+.db-share-btn.db-fb {
+  color: #1877f2;
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+.db-share-btn.db-fb:hover {
+  background: #1877f2;
+  color: #ffffff;
+}
+
+.db-share-btn.db-tw {
+  color: #0f172a;
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+.db-share-btn.db-tw:hover {
+  background: #0f172a;
+  color: #ffffff;
+}
+
+.db-share-btn.db-copy {
+  color: #64748b;
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+.db-share-btn.db-copy:hover {
+  background: var(--theme-color);
+  color: #ffffff;
+  border-color: var(--theme-color);
+}
+
+/* Hero Media Wrapper */
+.db-hero-media-wrapper {
+  margin: 16px 0 20px 0;
+  width: 100%;
+}
+
+.bhaskar-media-figure {
+  margin: 0;
+  width: 100%;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #0f172a;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
+/* WhatsApp Channel Follow Strip */
+.db-wa-channel-box {
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+  border: 1px solid #bbf7d0;
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin: 22px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.db-wa-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.db-wa-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #22c55e;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  flex-shrink: 0;
+}
+
+.db-wa-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.db-wa-text strong {
+  font-size: 0.95rem;
+  color: #14532d;
+  font-weight: 800;
+}
+
+.db-wa-text span {
+  font-size: 0.8rem;
+  color: #166534;
+  margin-top: 2px;
+}
+
+.db-wa-join-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #16a34a;
+  color: #ffffff;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(22, 163, 74, 0.3);
+  transition: all 0.2s;
+}
+
+.db-wa-join-pill:hover {
+  background: #15803d;
+  transform: translateY(-1px);
+}
+
+/* Article Body Typography */
+.db-article-body {
+  font-family: 'Mukta', 'Noto Sans Devanagari', -apple-system, sans-serif;
+  font-size: 1.16rem;
+  line-height: 1.9;
+  color: #1e293b;
+  margin-top: 20px;
+}
+
+.db-article-body p {
+  margin-bottom: 20px;
+}
+
+.db-article-body strong {
+  color: #0f172a;
+  font-weight: 800;
+}
+
+.db-article-body h2, .db-article-body h3 {
+  font-family: 'Mukta', 'Noto Sans Devanagari', sans-serif;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 28px 0 12px 0;
+  line-height: 1.35;
+}
+
+/* Bottom Share Card */
+.db-bottom-share-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin-top: 30px;
+  text-align: center;
+}
+
+.db-bottom-share-title {
+  font-size: 0.96rem;
+  font-weight: 700;
+  color: #334155;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.db-bottom-share-btns {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.db-bottom-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+}
+
+.db-bottom-btn.db-btn-wa {
+  background: #25d366;
+  color: #ffffff;
+}
+.db-bottom-btn.db-btn-wa:hover {
+  background: #1eb956;
+}
+
+.db-bottom-btn.db-btn-fb {
+  background: #1877f2;
+  color: #ffffff;
+}
+.db-bottom-btn.db-btn-fb:hover {
+  background: #1464cc;
+}
+
+.db-bottom-btn.db-btn-copy {
+  background: #ffffff;
+  color: #475569;
+  border-color: #cbd5e1;
+}
+.db-bottom-btn.db-btn-copy:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+/* Related News Section */
+.db-related-section {
+  margin-top: 32px;
+}
+
+.db-section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 8px;
+}
+
+.db-section-bar {
+  width: 4px;
+  height: 20px;
+  background: var(--theme-color);
+  border-radius: 2px;
+}
+
+.db-section-title {
+  font-family: 'Mukta', 'Noto Sans Devanagari', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+}
+
+.db-related-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.db-related-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.db-related-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.db-related-thumb-link {
+  display: block;
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #0f172a;
+  overflow: hidden;
+}
+
+.db-related-thumb-link img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.db-related-card:hover .db-related-thumb-link img {
+  transform: scale(1.04);
+}
+
+.db-related-play {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.35);
+  color: #ffffff;
+  font-size: 1.2rem;
+}
+
+.db-related-info {
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.db-related-tag {
+  display: inline-block;
+  align-self: flex-start;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #dc2626;
+  background: #fee2e2;
+  padding: 2px 8px;
+  border-radius: 3px;
+  text-decoration: none;
+  margin-bottom: 6px;
+}
+
+.db-related-headline {
+  font-family: 'Mukta', 'Noto Sans Devanagari', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.4;
+  margin: 0 0 8px 0;
+  flex-grow: 1;
+}
+
+.db-related-headline a {
+  color: #1e293b;
+  text-decoration: none;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.db-related-headline a:hover {
+  color: var(--theme-color);
+}
+
+.db-related-time {
+  font-size: 0.76rem;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+

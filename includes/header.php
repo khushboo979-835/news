@@ -72,10 +72,19 @@ $currentCatSlug = $_GET['cat'] ?? ($_GET['slug'] ?? '');
               $localImgPath = __DIR__ . '/../assets/images/' . $imgBase;
           }
       }
-      // If local image is physically missing on disk, fallback to valid default cover
+      // If local image is physically missing on disk, fallback to contextual news photo
       if (!$localImgPath || !file_exists($localImgPath)) {
-          $ogImage = $defaultCover;
-          $localImgPath = UPLOAD_DIR . 'news_cover_default.jpg';
+          $contextualImg = get_contextual_fallback_image($ogTitle ?? '', $pageArticleSection ?? '');
+          $ogImage = $contextualImg;
+          $fallbackBase = basename($ogImage);
+          if (file_exists(__DIR__ . '/../assets/images/' . $fallbackBase)) {
+              $localImgPath = __DIR__ . '/../assets/images/' . $fallbackBase;
+          } elseif (file_exists(UPLOAD_DIR . $fallbackBase)) {
+              $localImgPath = UPLOAD_DIR . $fallbackBase;
+          } else {
+              $ogImage = $defaultCover;
+              $localImgPath = UPLOAD_DIR . 'news_cover_default.jpg';
+          }
       }
       if ($localImgPath && file_exists($localImgPath) && ($dims = @getimagesize($localImgPath))) {
           $ogImgWidth = $dims[0];

@@ -191,17 +191,17 @@ require_once __DIR__ . '/includes/header.php';
         </div>
 
         <!-- Sponsored Sidebar Ad -->
-        <div class="bhaskar-sidebar-ad">
-          <?php if ($sidebarAd): ?>
+        <?php 
+        $adImg = $sidebarAd ? get_ad_image_url($sidebarAd['image_url']) : '';
+        if ($sidebarAd && !empty($adImg) && strpos($adImg, 'placeholder.svg') === false): 
+        ?>
+          <div class="bhaskar-sidebar-ad">
+            <span class="ad-label" style="display:block; font-size:10px; color:#94a3b8; text-transform:uppercase; padding:4px 8px; text-align:right;">विज्ञापन</span>
             <a href="<?= htmlspecialchars($sidebarAd['link_url']) ?>" target="_blank" rel="sponsored noopener">
-              <img src="<?= get_ad_image_url($sidebarAd['image_url']) ?>" alt="<?= htmlspecialchars($sidebarAd['title']) ?>">
+              <img src="<?= htmlspecialchars($adImg) ?>" alt="<?= htmlspecialchars($sidebarAd['title'] ?? 'Ad') ?>" loading="lazy">
             </a>
-          <?php else: ?>
-            <a href="https://coralwebtechnology.com" target="_blank" rel="noopener">
-              <img src="<?= ASSETS_URL ?>images/ad_sidebar.svg" alt="Advertisement">
-            </a>
-          <?php endif; ?>
-        </div>
+          </div>
+        <?php endif; ?>
 
         <!-- Trending Rank List (1 to 5) -->
         <div class="bhaskar-trending-widget">
