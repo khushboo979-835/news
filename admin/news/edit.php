@@ -70,19 +70,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-        // 2. Check for YouTube Link in ANY field (video_embed_url, direct_media_url, or user input)
-        $detectedYtId = get_youtube_video_id($video_embed_url) ?: get_youtube_video_id($direct_media_url);
-        if (!$detectedYtId && $media_type === 'video_embed') {
-            $detectedYtId = get_youtube_video_id($news['media_url']);
-        }
+        // 2. YouTube ID detection if entered
+        $enteredYtId = get_youtube_video_id($video_embed_url) ?: get_youtube_video_id($direct_media_url);
 
         $newFileUploaded = false;
-        // Check both 'media_file' and 'video_file' uploads
+        // Respect tab selection: only look at matching file input
         $fileToUpload = null;
-        if (isset($_FILES['media_file']) && $_FILES['media_file']['error'] !== UPLOAD_ERR_NO_FILE) {
-            $fileToUpload = $_FILES['media_file'];
-        } elseif (isset($_FILES['video_file']) && $_FILES['video_file']['error'] !== UPLOAD_ERR_NO_FILE) {
-            $fileToUpload = $_FILES['video_file'];
+        if ($media_type === 'image') {
+            if (isset($_FILES['media_file']) && $_FILES['media_file']['error'] !== UPLOAD_ERR_NO_FILE) {
+                $fileToUpload = $_FILES['media_file'];
+            }
+        } elseif ($media_type === 'video_upload') {
+            if (isset($_FILES['video_file']) && $_FILES['video_file']['error'] !== UPLOAD_ERR_NO_FILE) {
+                $fileToUpload = $_FILES['video_file'];
+            } elseif (isset($_FILES['media_file']) && $_FILES['media_file']['error'] !== UPLOAD_ERR_NO_FILE) {
+                $fileToUpload = $_FILES['media_file'];
+            }
         }
 
         if ($fileToUpload && $fileToUpload['error'] !== UPLOAD_ERR_NO_FILE) {
@@ -126,30 +129,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // 3. If NO new physical file uploaded:
         if (!$newFileUploaded && empty($error)) {
-            if ($detectedYtId) {
-                // YouTube Video: auto-set clean watch URL and YouTube thumbnail
-                $media_type = 'video_embed';
-                $media_url = "https://www.youtube.com/watch?v={$detectedYtId}";
-                if (!$thumbUploaded) {
-                    $thumbnail_url = "https://img.youtube.com/vi/{$detectedYtId}/hqdefault.jpg";
-                }
-            } elseif ($remove_media) {
+            if ($remove_media) {
                 // User explicitly wants to remove media
                 $firstImg = extract_first_image_from_content($content);
                 $media_type = 'image';
                 $media_url = $firstImg ?: 'news_cover_default.jpg';
                 $thumbnail_url = $media_url;
-            } elseif ($media_type === 'video_embed') {
-                if (!empty($video_embed_url)) {
-                    $ytId = get_youtube_video_id($video_embed_url);
-                    if ($ytId) {
-                        $media_url = "https://www.youtube.com/watch?v={$ytId}";
-                        if (!$thumbUploaded) {
-                            $thumbnail_url = "https://img.youtube.com/vi/{$ytId}/hqdefault.jpg";
-                        }
-                    } else {
-                        $media_url = $video_embed_url;
+            } elseif ($media_type === 'video_embed' || (!empty($enteredYtId) && $media_type !== 'image' && $media_type !== 'video_upload')) {
+                $media_type = 'video_embed';
+                $ytId = $enteredYtId ?: get_youtube_video_id($content) ?: get_youtube_video_id($news['media_url'] ?? '');
+                if ($ytId) {
+                    $media_url = "https://www.youtube.com/watch?v={$ytId}";
+                    if (!$thumbUploaded) {
+                        $thumbnail_url = "https://img.youtube.com/vi/{$ytId}/hqdefault.jpg";
                     }
+                } elseif (!empty($video_embed_url)) {
+                    $media_url = $video_embed_url;
                 } else {
                     $error = ($language === 'en') ? 'Please enter YouTube video link!' : 'कृपया यूट्यूब वीडियो का लिंक दर्ज करें!';
                 }
@@ -177,8 +172,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // 4. Final safety checks for media & thumbnail URLs
         if ($media_type === 'video_embed') {
             $checkYt = get_youtube_video_id($media_url) ?: get_youtube_video_id($content);
-            if ($checkYt && (empty($thumbnail_url) || strpos($thumbnail_url, 'news_cover_default') !== false || strpos($thumbnail_url, 'news_default') !== false)) {
-                $thumbnail_url = "https://img.youtube.com/vi/{$checkYt}/hqdefault.jpg";
+            if ($checkYt) {
+                $media_url = "https://www.youtube.com/watch?v={$checkYt}";
+                if (empty($thumbnail_url) || strpos($thumbnail_url, 'news_cover_default') !== false || strpos($thumbnail_url, 'news_default') !== false) {
+                    $thumbnail_url = "https://img.youtube.com/vi/{$checkYt}/hqdefault.jpg";
+                }
+            }
+        } elseif ($media_type === 'video_upload') {
+            if (!$thumbUploaded && (empty($thumbnail_url) || $thumbnail_url === 'news_default.jpg' || $thumbnail_url === 'news_cover_default.jpg' || !file_exists(UPLOAD_DIR . $thumbnail_url))) {
+                $firstImg = extract_first_image_from_content($content);
+                $thumbnail_url = $firstImg ?: 'news_cover_default.jpg';
             }
         } elseif ($media_type === 'image') {
             if (empty($thumbnail_url) || $thumbnail_url === 'news_default.jpg' || $thumbnail_url === 'news_patna_flood.jpg') {
@@ -472,18 +475,19 @@ $current_lang = $_POST['language'] ?? $news['language'] ?? 'hi';
 
                 <!-- PANEL 2: YOUTUBE VIDEO -->
                 <div id="media-panel-video_embed" style="margin-bottom: 18px; display:none;">
-                    <label style="display:block; font-weight:700; margin-bottom:6px; font-size:0.9rem; color:#b91c1c;">
-                        <i class="fa-brands fa-youtube"></i> यूट्यूब वीडियो का लिंक दर्ज करें (YouTube / Shorts Link):
+                    <label style="display:block; font-weight:700; margin-bottom:6px; font-size:0.95rem; color:#b91c1c;">
+                        <i class="fa-brands fa-youtube" style="font-size:1.2rem; color:#ef4444;"></i> यूट्यूब वीडियो का लिंक दर्ज करें (YouTube / Shorts Link):
                     </label>
-                    <input type="text" id="videoEmbedInput" name="video_embed_url" oninput="updateYouTubePreview(this.value)" value="<?php echo ($news['media_type'] === 'video_embed') ? htmlspecialchars($news['media_url']) : ''; ?>" placeholder="उदा. https://www.youtube.com/watch?v=... या https://youtu.be/... या Shorts लिंक" style="width:100%; padding:10px; border:1.5px solid #f87171; border-radius:6px; font-size:0.9rem;">
-                    <small style="color:#15803d; font-weight:600; display:block; margin-top:6px; font-size:0.82rem;">
-                        <i class="fa-solid fa-circle-check"></i> यूट्यूब लिंक डालने पर इसका पोस्टर स्वतः WhatsApp व वेबसाइट पर दिख जाएगा (अलग से फ़ोटो डालने की ज़रूरत नहीं है)।
+                    <input type="text" id="videoEmbedInput" name="video_embed_url" oninput="updateYouTubePreview(this.value)" value="<?php echo ($news['media_type'] === 'video_embed') ? htmlspecialchars($news['media_url']) : ''; ?>" placeholder="उदा. https://www.youtube.com/watch?v=... या https://youtu.be/... या Shorts लिंक" style="width:100%; padding:10px 12px; border:2px solid #f87171; border-radius:6px; font-size:0.92rem;">
+                    <small style="color:#15803d; font-weight:700; display:block; margin-top:6px; font-size:0.82rem;">
+                        <i class="fa-solid fa-circle-check"></i> यूट्यूब लिंक डालने पर इसका वीडियो प्लेयर वेबसाइट पर चलेगा और असली थंबनेल WhatsApp शेयर पर दिखेगा!
                     </small>
                     
-                    <div id="ytLivePreview" style="margin-top:12px; display:none; border-radius:8px; overflow:hidden; border:1.5px solid #86efac; text-align:center;">
-                        <img id="ytThumbImg" src="" style="width:100%; max-height:160px; object-fit:cover; display:block;">
-                        <div style="font-size:0.82rem; color:#15803d; padding:6px; background:#f0fdf4; font-weight:700;">
-                            <i class="fa-solid fa-circle-check"></i> यूट्यूब थंबनेल लोड हुआ (WhatsApp व होमपेज पर यही पोस्टर दिखेगा)
+                    <div id="ytLivePreview" style="margin-top:12px; display:none; border-radius:8px; overflow:hidden; border:1.5px solid #86efac; text-align:center; background:#f0fdf4; padding:10px;">
+                        <div id="ytIframePreview" style="margin-bottom:8px; border-radius:6px; overflow:hidden; display:none;"></div>
+                        <img id="ytThumbImg" src="" style="width:100%; max-height:160px; object-fit:cover; display:block; border-radius:6px;">
+                        <div style="font-size:0.82rem; color:#15803d; padding-top:6px; font-weight:700;">
+                            <i class="fa-solid fa-circle-check"></i> यूट्यूब वीडियो कनेक्ट हो गया (WhatsApp शेयर व होमपेज पर यही पोस्टर दिखेगा)
                         </div>
                     </div>
                 </div>
@@ -595,11 +599,24 @@ function selectMediaTab(tab) {
         }
     });
 
+    const photoInput = document.getElementById('photoFileInput');
+    const videoInput = document.getElementById('videoFileInput');
     if (tab === 'video_embed') {
+        if (photoInput) photoInput.value = '';
+        if (videoInput) videoInput.value = '';
+        const prevBox = document.getElementById('photoPreviewContainer');
+        if (prevBox) prevBox.style.display = 'none';
         const veInput = document.getElementById('videoEmbedInput');
-        if (veInput && veInput.value) {
-            updateYouTubePreview(veInput.value);
+        if (veInput) {
+            veInput.focus();
+            if (veInput.value) updateYouTubePreview(veInput.value);
         }
+    } else if (tab === 'image') {
+        if (videoInput) videoInput.value = '';
+    } else if (tab === 'video_upload') {
+        if (photoInput) photoInput.value = '';
+        const prevBox = document.getElementById('photoPreviewContainer');
+        if (prevBox) prevBox.style.display = 'none';
     }
 }
 
@@ -651,12 +668,18 @@ function getYouTubeId(url) {
 function updateYouTubePreview(url) {
     const box = document.getElementById('ytLivePreview');
     const img = document.getElementById('ytThumbImg');
+    const iframeBox = document.getElementById('ytIframePreview');
     const ytId = getYouTubeId(url);
     if (ytId && box && img) {
         img.src = 'https://img.youtube.com/vi/' + ytId + '/hqdefault.jpg';
         box.style.display = 'block';
+        if (iframeBox) {
+            iframeBox.innerHTML = '<iframe src="https://www.youtube-nocookie.com/embed/' + ytId + '?rel=0" style="width:100%; aspect-ratio:16/9; border:0; border-radius:6px;" allowfullscreen></iframe>';
+            iframeBox.style.display = 'block';
+        }
     } else if (box) {
         box.style.display = 'none';
+        if (iframeBox) iframeBox.style.display = 'none';
     }
 }
 

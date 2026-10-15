@@ -557,8 +557,8 @@ function render_media_container($mediaType, $mediaUrl, $headline = '', $content 
     }
     $posterAttr = !empty($posterUrl) ? ' poster="' . htmlspecialchars($posterUrl) . '"' : '';
 
-    // Check if mediaUrl is a YouTube URL or iframe embed regardless of mediaType
-    $ytId = get_youtube_video_id($mediaUrl);
+    // Check if mediaUrl OR content has a YouTube URL or iframe embed regardless of mediaType
+    $ytId = get_youtube_video_id($mediaUrl) ?: get_youtube_video_id($content);
     if ($ytId) {
         return '
         <div class="bhaskar-video-wrapper" style="position:relative; width:100%; aspect-ratio:16/9; background:#0f172a; border-radius:10px; overflow:hidden; margin:16px 0; box-shadow:0 4px 15px rgba(0,0,0,0.12);">
@@ -596,16 +596,30 @@ function render_media_container($mediaType, $mediaUrl, $headline = '', $content 
                 <video src="' . $videoSrc . '"' . $posterAttr . ' class="bhaskar-media-elem" controls playsinline preload="metadata" style="width:100%; max-height:520px; display:block; margin:0 auto; outline:none;" onerror="this.parentElement.innerHTML=\'<div style=\\\'padding:24px 16px;text-align:center;background:#f8fafc;border-radius:10px;border:1px solid #f1f5f9;\\\'><img src=\\\'' . $fallbackLogo . '\\\' style=\\\'max-height:140px;margin:0 auto 12px;display:block;\\\'><span style=\\\'display:inline-block;font-size:12px;font-weight:700;color:#e53935;background:#fee2e2;padding:4px 10px;border-radius:20px;\\\'>दैनिक खबर</span></div>\';"></video>
             </div>';
         } else {
-            // Video file not on disk: check if content has an image to display
-            if (!empty($content)) {
+            // Video file not on disk: check if thumbnail or content image exists
+            $fallbackImg = '';
+            if (!empty($thumbnailUrl) && $thumbnailUrl !== 'news_cover_default.jpg' && $thumbnailUrl !== 'news_default.jpg') {
+                $resolvedThumb = get_media_url($thumbnailUrl, 'image');
+                if ($resolvedThumb && strpos($resolvedThumb, 'news_cover_default.jpg') === false) {
+                    $fallbackImg = $resolvedThumb;
+                }
+            }
+            if (!$fallbackImg && !empty($content)) {
                 $contentImg = extract_first_image_from_content($content);
                 if ($contentImg) {
-                    $imgSrc = get_media_url($contentImg, 'image');
-                    return '
-                    <div class="bhaskar-media-container" style="width:100%; border-radius:10px; overflow:hidden; background:#f8fafc; border:1px solid #f1f5f9; text-align:center; margin:16px 0;">
-                        <img src="' . htmlspecialchars($imgSrc) . '" alt="' . $escapedHeadline . '" class="bhaskar-media-elem" loading="lazy" onerror="this.onerror=null; this.src=\'' . $fallbackLogo . '\';" style="max-width:100%; max-height:540px; width:auto; height:auto; object-fit:contain; display:block; margin:0 auto; border-radius:8px;">
-                    </div>';
+                    $fallbackImg = get_media_url($contentImg, 'image');
                 }
+            }
+            if ($fallbackImg) {
+                return '
+                <div class="bhaskar-video-wrapper" style="position:relative; width:100%; aspect-ratio:16/9; background:#0f172a; border-radius:10px; overflow:hidden; margin:16px 0; box-shadow:0 4px 15px rgba(0,0,0,0.12);">
+                    <img src="' . htmlspecialchars($fallbackImg) . '" alt="' . $escapedHeadline . '" style="width:100%; height:100%; object-fit:cover; display:block;">
+                    <div style="position:absolute; inset:0; background:rgba(0,0,0,0.35); display:flex; align-items:center; justify-content:center;">
+                        <div style="width:58px; height:58px; border-radius:50%; background:rgba(229,57,53,0.92); display:flex; align-items:center; justify-content:center; box-shadow:0 4px 14px rgba(0,0,0,0.5);">
+                            <i class="fa-solid fa-play" style="color:#fff; font-size:1.4rem; margin-left:3px;"></i>
+                        </div>
+                    </div>
+                </div>';
             }
             return '
             <div class="bhaskar-media-container" style="width:100%; border-radius:10px; overflow:hidden; background:#f8fafc; border:1px solid #f1f5f9; text-align:center; margin:16px 0; padding:24px 16px;">

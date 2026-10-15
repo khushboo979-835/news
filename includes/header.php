@@ -46,11 +46,21 @@ $currentCatSlug = $_GET['cat'] ?? ($_GET['slug'] ?? '');
   $ogImgHeight = 630;
   $ogImageType = 'image/jpeg';
 
-  if (strpos($ogImage, 'img.youtube.com') !== false) {
-      // YouTube Video Thumbnail (High Definition)
-      $ogImgWidth = 480;
-      $ogImgHeight = 360;
-      $ogImageType = 'image/jpeg';
+  $isExternalImg = preg_match('/^https?:\/\//i', $ogImage) 
+      && strpos($ogImage, 'dainikkhabr.com') === false 
+      && strpos($ogImage, 'localhost') === false;
+
+  if ($isExternalImg || strpos($ogImage, 'youtube.com') !== false || strpos($ogImage, 'ytimg.com') !== false) {
+      // YouTube Video Thumbnail or Remote CDN image
+      if (strpos($ogImage, 'youtube.com') !== false || strpos($ogImage, 'ytimg.com') !== false) {
+          $ogImgWidth = 480;
+          $ogImgHeight = 360;
+          $ogImageType = 'image/jpeg';
+      } else {
+          $ogImgWidth = 1200;
+          $ogImgHeight = 630;
+          $ogImageType = 'image/jpeg';
+      }
   } else {
       $localImgPath = null;
       $parsedImgPath = parse_url($ogImage, PHP_URL_PATH);

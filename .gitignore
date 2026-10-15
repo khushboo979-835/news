@@ -1,0 +1,22 @@
+# Ignore dynamically uploaded media files so Git pull/deploy never deletes them
+uploads/news_*
+uploads/thumb_*
+uploads/content_*
+
+# Keep essential default media files
+!uploads/news_cover_default.jpg
+!uploads/news_default.jpg
+!uploads/logo.png
+!uploads/ad_header.jpg
+!uploads/top_banner_ad.png
+!uploads/news_bihar_daroga_protest.jpg
+!uploads/news_bike_theft_police.jpg
+!uploads/news_kotwali_guessing_raid.jpg
+!uploads/news_marine_drive_stunt.jpg
+!uploads/news_patna_flood.jpg
+!uploads/news_regent_cinema.jpg
+
+# OS and IDE files
+.DS_Store
+Thumbs.db
+*.log
