@@ -20,7 +20,7 @@ uploads/content_*
 !uploads/news_hospital_emergency.jpg
 !uploads/news_patna_airport.jpg
 
-# OS and IDE files
-.DS_Store
-Thumbs.db
-*.log
+# Dynamic Card Cache & Scratch Folders
+uploads/cards/*
+scratch/
+

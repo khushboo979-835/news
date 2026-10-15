@@ -50,7 +50,12 @@ $currentCatSlug = $_GET['cat'] ?? ($_GET['slug'] ?? '');
       && strpos($ogImage, 'dainikkhabr.com') === false 
       && strpos($ogImage, 'localhost') === false;
 
-  if ($isExternalImg || strpos($ogImage, 'youtube.com') !== false || strpos($ogImage, 'ytimg.com') !== false) {
+  if (strpos($ogImage, 'share_card.php') !== false) {
+      // Dynamic WhatsApp / Social Share Card (Exact 1200x630 landscape card)
+      $ogImgWidth = 1200;
+      $ogImgHeight = 630;
+      $ogImageType = 'image/jpeg';
+  } elseif ($isExternalImg || strpos($ogImage, 'youtube.com') !== false || strpos($ogImage, 'ytimg.com') !== false) {
       // YouTube Video Thumbnail or Remote CDN image
       if (strpos($ogImage, 'youtube.com') !== false || strpos($ogImage, 'ytimg.com') !== false) {
           $ogImgWidth = 480;

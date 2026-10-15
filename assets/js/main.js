@@ -25,23 +25,38 @@ function handleRichMediaShare(shareBtn) {
   const title = (shareBtn.getAttribute('data-title') || document.title).trim();
   const url = shareBtn.getAttribute('data-url') || window.location.href;
 
-  // Clean professional message format: *Headline* + URL
+  // Clean professional message format matching Dainik Bhaskar: *Headline* + URL
   const shareMessage = `*${title}*\n\n${url}`;
+  const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareMessage)}`;
 
-  // On mobile browsers, use native share for instant rich card preview in WhatsApp & other apps
+  const isWhatsAppBtn = shareBtn.classList.contains('db-wa') || 
+                        shareBtn.classList.contains('db-btn-wa') || 
+                        (shareBtn.getAttribute('href') && shareBtn.getAttribute('href').includes('whatsapp'));
+
+  if (isWhatsAppBtn) {
+    if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+      window.location.href = `whatsapp://send?text=${encodeURIComponent(shareMessage)}`;
+      setTimeout(() => {
+        window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+      }, 500);
+    } else {
+      window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+    }
+    return;
+  }
+
+  // Universal native share for general share triggers
   if (navigator.share && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
     navigator.share({
       title: title,
-      text: title,
+      text: shareMessage,
       url: url
     }).catch((err) => {
       if (err.name !== 'AbortError') {
-        const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareMessage)}`;
         window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
       }
     });
   } else {
-    const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareMessage)}`;
     window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
   }
 }

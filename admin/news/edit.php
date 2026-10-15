@@ -89,18 +89,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $enteredYtId = get_youtube_video_id($video_embed_url) ?: get_youtube_video_id($direct_media_url);
 
         $newFileUploaded = false;
-        // Respect tab selection: only look at matching file input
+        $newFileUploaded = false;
         $fileToUpload = null;
-        if ($media_type === 'image') {
-            if (isset($_FILES['media_file']) && $_FILES['media_file']['error'] !== UPLOAD_ERR_NO_FILE) {
-                $fileToUpload = $_FILES['media_file'];
-            }
-        } elseif ($media_type === 'video_upload') {
-            if (isset($_FILES['video_file']) && $_FILES['video_file']['error'] !== UPLOAD_ERR_NO_FILE) {
-                $fileToUpload = $_FILES['video_file'];
-            } elseif (isset($_FILES['media_file']) && $_FILES['media_file']['error'] !== UPLOAD_ERR_NO_FILE) {
-                $fileToUpload = $_FILES['media_file'];
-            }
+        if (isset($_FILES['video_file']) && $_FILES['video_file']['error'] !== UPLOAD_ERR_NO_FILE) {
+            $fileToUpload = $_FILES['video_file'];
+        } elseif (isset($_FILES['media_file']) && $_FILES['media_file']['error'] !== UPLOAD_ERR_NO_FILE) {
+            $fileToUpload = $_FILES['media_file'];
         }
 
         if ($fileToUpload && $fileToUpload['error'] !== UPLOAD_ERR_NO_FILE) {
@@ -134,6 +128,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $newFileUploaded = true;
                         if ($media_type === 'image') {
                             $thumbnail_url = $new_filename;
+                        } elseif ($media_type === 'video_upload' && empty($thumbnail_url)) {
+                            $thumbnail_url = 'video_default_cover.jpg';
                         }
                     } else {
                         $error = ($language === 'en') ? 'Failed to upload file. Check folder permissions.' : 'फ़ाइल अपलोड करने में समस्या हुई। कृपया फ़ाइल साइज़ चेक करें।';
@@ -167,10 +163,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (!empty($direct_media_url)) {
                     $media_url = $direct_media_url;
                 }
-                // Clear old non-video images so they never appear on WhatsApp
-                if (empty($thumbnail_url) || $thumbnail_url === 'news_cover_default.jpg' || $thumbnail_url === 'news_default.jpg' || strpos($thumbnail_url, 'thumb_video_') === false) {
+                // Ensure video news always has a valid video poster
+                if (empty($thumbnail_url) || $thumbnail_url === 'news_cover_default.jpg' || $thumbnail_url === 'news_default.jpg') {
                     if (!$thumbUploaded) {
-                        $thumbnail_url = '';
+                        $thumbnail_url = 'video_default_cover.jpg';
                     }
                 }
             } else {
@@ -267,6 +263,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $success = ($language === 'en') ? 'News updated successfully!' : 'समाचार सफलतापूर्वक अपडेट कर दिया गया!';
                 
+                @array_map('unlink', glob(UPLOAD_DIR . 'cards/card_' . $id . '_*'));
+                @unlink(UPLOAD_DIR . 'cards/card_default.jpg');
+
                 // Refresh data
                 $stmt = $pdo->prepare("SELECT * FROM news WHERE id = ? LIMIT 1");
                 $stmt->execute([$id]);
@@ -642,24 +641,12 @@ function selectMediaTab(tab) {
         }
     });
 
-    const photoInput = document.getElementById('photoFileInput');
-    const videoInput = document.getElementById('videoFileInput');
     if (tab === 'video_embed') {
-        if (photoInput) photoInput.value = '';
-        if (videoInput) videoInput.value = '';
-        const prevBox = document.getElementById('photoPreviewContainer');
-        if (prevBox) prevBox.style.display = 'none';
         const veInput = document.getElementById('videoEmbedInput');
         if (veInput) {
             veInput.focus();
             if (veInput.value) updateYouTubePreview(veInput.value);
         }
-    } else if (tab === 'image') {
-        if (videoInput) videoInput.value = '';
-    } else if (tab === 'video_upload') {
-        if (photoInput) photoInput.value = '';
-        const prevBox = document.getElementById('photoPreviewContainer');
-        if (prevBox) prevBox.style.display = 'none';
     }
 }
 
@@ -672,6 +659,23 @@ function previewSelectedPhoto(input) {
 
     if (input.files && input.files[0]) {
         const file = input.files[0];
+        const isVideo = file.type.startsWith('video/') || /\.(mp4|webm|mov|mkv|avi|3gp)$/i.test(file.name);
+        if (isVideo) {
+            // Auto switch to video upload tab seamlessly
+            selectMediaTab('video_upload');
+            const videoInput = document.getElementById('videoFileInput');
+            if (videoInput && window.DataTransfer) {
+                try {
+                    const dt = new DataTransfer();
+                    dt.items.add(file);
+                    videoInput.files = dt.files;
+                    previewSelectedVideo(videoInput);
+                    input.value = '';
+                    return;
+                } catch(e) {}
+            }
+        }
+
         compressImageIfNeeded(file, function(processedFile, wasCompressed) {
             if (wasCompressed && window.DataTransfer) {
                 try {
@@ -758,6 +762,23 @@ function captureVideoPoster(file, callback) {
 function previewSelectedVideo(input) {
     if (input.files && input.files[0]) {
         const file = input.files[0];
+        const isImage = file.type.startsWith('image/') || /\.(jpg|jpeg|png|webp|gif|jfif)$/i.test(file.name);
+        if (isImage) {
+            // Auto switch to photo tab seamlessly
+            selectMediaTab('image');
+            const photoInput = document.getElementById('photoFileInput');
+            if (photoInput && window.DataTransfer) {
+                try {
+                    const dt = new DataTransfer();
+                    dt.items.add(file);
+                    photoInput.files = dt.files;
+                    previewSelectedPhoto(photoInput);
+                    input.value = '';
+                    return;
+                } catch(e) {}
+            }
+        }
+
         const previewBox = document.getElementById('selectedVideoLivePreview');
         const videoEl = document.getElementById('selectedVideoPlayer');
         if (previewBox && videoEl) {

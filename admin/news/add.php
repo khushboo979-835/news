@@ -80,16 +80,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $newFileUploaded = false;
         $fileToUpload = null;
-        if ($media_type === 'image') {
-            if (isset($_FILES['media_file']) && $_FILES['media_file']['error'] !== UPLOAD_ERR_NO_FILE) {
-                $fileToUpload = $_FILES['media_file'];
-            }
-        } elseif ($media_type === 'video_upload') {
-            if (isset($_FILES['video_file']) && $_FILES['video_file']['error'] !== UPLOAD_ERR_NO_FILE) {
-                $fileToUpload = $_FILES['video_file'];
-            } elseif (isset($_FILES['media_file']) && $_FILES['media_file']['error'] !== UPLOAD_ERR_NO_FILE) {
-                $fileToUpload = $_FILES['media_file'];
-            }
+        if (isset($_FILES['video_file']) && $_FILES['video_file']['error'] !== UPLOAD_ERR_NO_FILE) {
+            $fileToUpload = $_FILES['video_file'];
+        } elseif (isset($_FILES['media_file']) && $_FILES['media_file']['error'] !== UPLOAD_ERR_NO_FILE) {
+            $fileToUpload = $_FILES['media_file'];
         }
 
         if ($fileToUpload && $fileToUpload['error'] !== UPLOAD_ERR_NO_FILE) {
@@ -123,6 +117,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $newFileUploaded = true;
                         if ($media_type === 'image') {
                             $thumbnail_url = $new_filename;
+                        } elseif ($media_type === 'video_upload' && empty($thumbnail_url)) {
+                            $thumbnail_url = 'video_default_cover.jpg';
                         }
                     } else {
                         $error = ($language === 'en') ? 'Failed to upload media file. Check folder permissions.' : 'फ़ाइल अपलोड करने में समस्या हुई। कृपया फ़ाइल का साइज़ चेक करें।';
@@ -185,8 +181,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         } elseif ($media_type === 'video_upload') {
             if (!$thumbUploaded && (empty($thumbnail_url) || $thumbnail_url === 'news_default.jpg' || $thumbnail_url === 'news_cover_default.jpg')) {
-                $firstImg = extract_first_image_from_content($content);
-                $thumbnail_url = $firstImg ?: 'news_cover_default.jpg';
+                $thumbnail_url = 'video_default_cover.jpg';
             }
         } elseif (empty($thumbnail_url) || $thumbnail_url === 'news_default.jpg' || $thumbnail_url === 'news_patna_flood.jpg') {
             if ($media_type === 'image' && !empty($media_url) && $media_url !== 'news_cover_default.jpg') {
@@ -214,6 +209,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $priority_order,
                     $is_breaking
                 ]);
+
+                $new_news_id = $pdo->lastInsertId();
+                if ($new_news_id) {
+                    @array_map('unlink', glob(UPLOAD_DIR . 'cards/card_' . $new_news_id . '_*'));
+                }
+                @unlink(UPLOAD_DIR . 'cards/card_default.jpg');
 
                 header("Location: " . SITE_URL . "/admin/news/index.php");
                 exit;
@@ -524,24 +525,12 @@ function selectMediaTab(tab) {
         }
     });
 
-    const photoInput = document.getElementById('photoFileInput');
-    const videoInput = document.getElementById('videoFileInput');
     if (tab === 'video_embed') {
-        if (photoInput) photoInput.value = '';
-        if (videoInput) videoInput.value = '';
-        const prevBox = document.getElementById('photoPreviewContainer');
-        if (prevBox) prevBox.style.display = 'none';
         const veInput = document.getElementById('videoEmbedInput');
         if (veInput) {
             veInput.focus();
             if (veInput.value) updateYouTubePreview(veInput.value);
         }
-    } else if (tab === 'image') {
-        if (videoInput) videoInput.value = '';
-    } else if (tab === 'video_upload') {
-        if (photoInput) photoInput.value = '';
-        const prevBox = document.getElementById('photoPreviewContainer');
-        if (prevBox) prevBox.style.display = 'none';
     }
 }
 
@@ -552,6 +541,23 @@ function previewSelectedPhoto(input) {
 
     if (input.files && input.files[0]) {
         const file = input.files[0];
+        const isVideo = file.type.startsWith('video/') || /\.(mp4|webm|mov|mkv|avi|3gp)$/i.test(file.name);
+        if (isVideo) {
+            // Auto switch to video upload tab seamlessly
+            selectMediaTab('video_upload');
+            const videoInput = document.getElementById('videoFileInput');
+            if (videoInput && window.DataTransfer) {
+                try {
+                    const dt = new DataTransfer();
+                    dt.items.add(file);
+                    videoInput.files = dt.files;
+                    previewSelectedVideo(videoInput);
+                    input.value = '';
+                    return;
+                } catch(e) {}
+            }
+        }
+
         compressImageIfNeeded(file, function(processedFile, wasCompressed) {
             if (wasCompressed && window.DataTransfer) {
                 try {
@@ -638,6 +644,23 @@ function captureVideoPoster(file, callback) {
 function previewSelectedVideo(input) {
     if (input.files && input.files[0]) {
         const file = input.files[0];
+        const isImage = file.type.startsWith('image/') || /\.(jpg|jpeg|png|webp|gif|jfif)$/i.test(file.name);
+        if (isImage) {
+            // Auto switch to photo tab seamlessly
+            selectMediaTab('image');
+            const photoInput = document.getElementById('photoFileInput');
+            if (photoInput && window.DataTransfer) {
+                try {
+                    const dt = new DataTransfer();
+                    dt.items.add(file);
+                    photoInput.files = dt.files;
+                    previewSelectedPhoto(photoInput);
+                    input.value = '';
+                    return;
+                } catch(e) {}
+            }
+        }
+
         const previewBox = document.getElementById('selectedVideoLivePreview');
         const videoEl = document.getElementById('selectedVideoPlayer');
         if (previewBox && videoEl) {

@@ -82,35 +82,20 @@ $pageTitle = $article['headline'];
 $pageDescription = !empty($article['subheadline']) ? $article['subheadline'] : get_excerpt($article['content'], 160);
 
 // Resolve Article Media Image URL for Open Graph & WhatsApp / Facebook Link Sharing
-$articleImage = get_article_thumbnail_url($article);
-if (!empty($articleImage)) {
-    if (strpos($articleImage, '//') === 0) {
-        $articleImage = 'https:' . $articleImage;
-    } elseif (strpos($articleImage, 'http://') !== 0 && strpos($articleImage, 'https://') !== 0) {
-        $articleImage = rtrim(BASE_URL, '/') . '/' . ltrim($articleImage, '/');
-    }
-    $articleImage = preg_replace('/^http:\/\/(dainikkhabr\.com)/i', 'https://$1', $articleImage);
-    $pageOgImage = $articleImage;
-} else {
-    $defaultCover = file_exists(UPLOAD_DIR . 'news_cover_default.jpg') ? (UPLOAD_URL . 'news_cover_default.jpg') : (ASSETS_URL . 'images/news_cover_default.jpg');
-    $pageOgImage = $defaultCover;
-}
-
+// Dynamic 1200x630 Card generator matching Dainik Bhaskar layout with branded footer
+$pageOgImage = rtrim(BASE_URL, '/') . '/share_card.php?id=' . (int)$article['id'];
 $pageOgUrl = get_article_url($article);
 $pageOgType = 'article';
 $pageArticlePublished = $article['created_at'];
 $pageArticleSection = $article['category_name'];
 
-// If YouTube video, ensure YouTube thumbnail is used for WhatsApp & social link cards
+// If video article, provide og:video tags and video.other type
 $ytId = get_youtube_video_id($article['media_url'] ?? '') ?: get_youtube_video_id($article['content'] ?? '');
 if ($ytId) {
-    $pageOgImage = "https://img.youtube.com/vi/{$ytId}/hqdefault.jpg";
     $pageOgType = 'video.other';
-} elseif ($article['media_type'] === 'video_upload' || preg_match('/\.(mp4|webm|mov)$/i', $article['media_url'] ?? '')) {
-    // If MP4 uploaded video, set og:video and video frame image
+} elseif ($article['media_type'] === 'video_upload' || preg_match('/\.(mp4|webm|mov|mkv|avi)$/i', $article['media_url'] ?? '')) {
     $pageOgVideo = get_video_file_url($article['media_url']);
     $pageOgType = 'video.other';
-    $pageOgImage = get_article_thumbnail_url($article);
 }
 
 $currentUrl = $pageOgUrl;

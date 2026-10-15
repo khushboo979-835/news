@@ -582,10 +582,19 @@ function get_article_thumbnail_url($article) {
         }
     }
 
-    // 4. Video Upload: only use video poster, never return unrelated editorial photos!
-    if ($article['media_type'] === 'video_upload' || preg_match('/\.(mp4|webm|mov|mkv|avi)$/i', $article['media_url'] ?? '')) {
-        if (!empty($article['thumbnail_url']) && strpos($article['thumbnail_url'], 'thumb_video_') !== false) {
-            return UPLOAD_URL . basename($article['thumbnail_url']);
+    // 4. Video Upload: resolve dedicated video poster or high-res video graphic
+    if (($article['media_type'] ?? '') === 'video_upload' || preg_match('/\.(mp4|webm|mov|mkv|avi)$/i', $article['media_url'] ?? '')) {
+        if (!empty($article['thumbnail_url']) && !in_array($article['thumbnail_url'], ['news_default.jpg', 'news_cover_default.jpg', 'news_patna_flood.jpg'])) {
+            $tb = basename($article['thumbnail_url']);
+            if (file_exists(UPLOAD_DIR . $tb)) {
+                return UPLOAD_URL . $tb;
+            }
+            if (file_exists(__DIR__ . '/../assets/images/' . $tb)) {
+                return ASSETS_URL . 'images/' . $tb;
+            }
+            if (strpos($article['thumbnail_url'], 'http') === 0) {
+                return $article['thumbnail_url'];
+            }
         }
         return ASSETS_URL . 'images/video_default_cover.jpg';
     }
@@ -682,10 +691,13 @@ function render_media_container($mediaType, $mediaUrl, $headline = '', $content 
         $mediaType = 'video_upload';
     }
 
-    // Resolve poster for video playback: only use dedicated video poster (never unrelated content images!)
+    // Resolve poster for video playback: use dedicated video poster or fallback graphic
     $posterUrl = '';
-    if (!empty($thumbnailUrl) && strpos($thumbnailUrl, 'thumb_video_') !== false) {
+    if (!empty($thumbnailUrl) && !in_array($thumbnailUrl, ['news_default.jpg', 'news_cover_default.jpg', 'news_patna_flood.jpg'])) {
         $posterUrl = get_media_url($thumbnailUrl, 'image');
+    }
+    if (empty($posterUrl) || strpos($posterUrl, 'news_cover_default') !== false) {
+        $posterUrl = ASSETS_URL . 'images/video_default_cover.jpg';
     }
     $posterAttr = !empty($posterUrl) ? ' poster="' . htmlspecialchars($posterUrl) . '"' : '';
 
