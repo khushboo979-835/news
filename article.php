@@ -137,7 +137,7 @@ require_once __DIR__ . '/includes/header.php';
 
       <!-- 2. Center Article Reader -->
       <main class="bhaskar-main-feed">
-        <!-- DB_DEBUG: <?= htmlspecialchars(json_encode($article, JSON_UNESCAPED_UNICODE)) ?> -->
+        <!-- DB_DEBUG: upload_max=[<?= ini_get('upload_max_filesize') ?>], post_max=[<?= ini_get('post_max_size') ?>], memory_limit=[<?= ini_get('memory_limit') ?>] -->
         <article class="bhaskar-story-card" style="padding: 28px;">
           
           <div class="bhaskar-story-header">
