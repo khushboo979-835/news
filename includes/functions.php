@@ -435,7 +435,7 @@ function get_media_url($url, $media_type = 'image', $content = '', $thumbnail_ur
             return get_media_url($extracted, 'image');
         }
     }
-    return get_contextual_fallback_image('', '');
+    return '';
 }
 
 /**
@@ -443,17 +443,25 @@ function get_media_url($url, $media_type = 'image', $content = '', $thumbnail_ur
  * Ensures every article has a distinct, beautiful, relevant news cover image
  * instead of the plain logo card when physical uploaded files are missing.
  */
-function get_contextual_fallback_image($headline = '', $category = '') {
+function get_contextual_fallback_image($headline = '', $category = '', $seed = 0) {
     $text = mb_strtolower($headline . ' ' . $category, 'UTF-8');
     
-    // 1. Durga Puja / Pandal / Dussehra / Temples / Aarti / Religious
+    // 1. Durga Puja / Pandal / Dussehra / Temples / Religious
     if (preg_match('/(पूजा|पंडाल|दुर्गा|दशहरा|मंदिर|मठ|त्योहार|आरती|चालीसा|हनुमान)/u', $text)) {
+        if (preg_match('/(डीजे|प्रतिबंध|नियम|गाइडलाइन|आदेश|पुलिस)/u', $text)) {
+            if (file_exists(__DIR__ . '/../assets/images/news_patna_police.jpg')) {
+                return ASSETS_URL . 'images/news_patna_police.jpg';
+            }
+        }
         if (file_exists(__DIR__ . '/../assets/images/news_durga_puja_pandal.jpg')) {
             return ASSETS_URL . 'images/news_durga_puja_pandal.jpg';
         }
     }
-    // 2. Police Action / Raid / Smuggling / Gambling / Gang / Encounter / Murder
+    // 2. Police Action / Raid / Smuggling / Gambling / Hotel Raid / Crime
     if (preg_match('/(छापेमारी|तस्कर|सट्टा|गेसिंग|शराब|बदमाश|होटल|रेड|गिरफ्तार|मुठभेड़|एनकाउंटर|गोली|हत्या|मर्डर)/u', $text)) {
+        if (preg_match('/(होटल|सट्टा|गेसिंग|जुआ|कोतवाली)/u', $text)) {
+            return ASSETS_URL . 'images/news_kotwali_guessing_raid.jpg';
+        }
         if (file_exists(__DIR__ . '/../assets/images/news_patna_police.jpg')) {
             return ASSETS_URL . 'images/news_patna_police.jpg';
         }
@@ -463,20 +471,21 @@ function get_contextual_fallback_image($headline = '', $category = '') {
     if (preg_match('/(दारोगा|पुलिस|थाना|सचिवालय|आईपीएस|एसपी|डीएसपी|आंदोलन|मांग|वेतन|प्रदर्शन|हंगाम|फेरबदल|रिश्वत|भुगतान|जीपीएफ)/u', $text)) {
         return ASSETS_URL . 'images/news_bihar_daroga_protest.jpg';
     }
-    // 4. Theft / Snatching / Loot / Crime
+    // 4. Theft / Snatching / Loot / Crime / Bike
     if (preg_match('/(चोरी|चोर|बाइक|गिरोह|स्नैचिंग|लूट|चेन|अपराध)/u', $text)) {
         return ASSETS_URL . 'images/news_bike_theft_police.jpg';
     }
     // 5. Stunt / Marine Drive / Traffic / Roads / Vehicle
     if (preg_match('/(स्टंट|मरीन ड्राइव|यातायात|ट्रैफिक|गाड़ी|कार)/u', $text)) {
-        return ASSETS_URL . 'images/news_marine_drive_stunt.jpg';
+        if (!preg_match('/(शव|मौत|हत्या|मृत)/u', $text)) {
+            return ASSETS_URL . 'images/news_marine_drive_stunt.jpg';
+        }
     }
-    // 6. Hospital / Injury / Emergency / Accident / Medical
-    if (preg_match('/(हादसा|घायल|इलाज|अस्पताल|डॉक्टर|सड़क|एक्सीडेंट)/u', $text)) {
+    // 6. Hospital / Injury / Emergency / Accident / Medical / Death / Dead body
+    if (preg_match('/(हादसा|घायल|इलाज|अस्पताल|डॉक्टर|सड़क|एक्सीडेंट|शव|मौत|मृत|लावारिस|पोस्टमार्टम)/u', $text)) {
         if (file_exists(__DIR__ . '/../assets/images/news_hospital_emergency.jpg')) {
             return ASSETS_URL . 'images/news_hospital_emergency.jpg';
         }
-        return ASSETS_URL . 'images/news_marine_drive_stunt.jpg';
     }
     // 7. Ganga / Flood / Water / Rain / Weather
     if (preg_match('/(बाढ़|गंगा|जलस्तर|नदी|पानी|डूब|बारिश|मौसम)/u', $text)) {
@@ -495,18 +504,19 @@ function get_contextual_fallback_image($headline = '', $category = '') {
 
     // 10. Balanced deterministic distribution among verified real news photos
     $pool = [
+        'news_durga_puja_pandal.jpg',
+        'news_patna_police.jpg',
+        'news_hospital_emergency.jpg',
+        'news_patna_airport.jpg',
         'news_bihar_daroga_protest.jpg',
         'news_bike_theft_police.jpg',
         'news_kotwali_guessing_raid.jpg',
         'news_marine_drive_stunt.jpg',
-        'news_patna_flood.jpg',
         'news_regent_cinema.jpg',
-        'news_durga_puja_pandal.jpg',
-        'news_patna_police.jpg',
-        'news_hospital_emergency.jpg',
-        'news_patna_airport.jpg'
+        'news_patna_flood.jpg'
     ];
-    $idx = abs(crc32($headline ?: 'dainik_khabar_news')) % count($pool);
+    $hashString = (string)$seed . ' ' . $headline;
+    $idx = abs(crc32($hashString ?: 'dainik_khabar_news')) % count($pool);
     return ASSETS_URL . 'images/' . $pool[$idx];
 }
 
@@ -519,6 +529,7 @@ function get_article_thumbnail_url($article) {
 
     $headline = $article['headline'] ?? '';
     $category = $article['category_name'] ?? '';
+    $id = $article['id'] ?? 0;
 
     // 1. YouTube Video in media_url
     $ytId = get_youtube_video_id($article['media_url'] ?? '');
@@ -526,23 +537,35 @@ function get_article_thumbnail_url($article) {
         return "https://img.youtube.com/vi/{$ytId}/hqdefault.jpg";
     }
 
-    // 2. Explicit Dedicated Thumbnail (uploaded specifically for video/story)
-    if (!empty($article['thumbnail_url']) && $article['thumbnail_url'] !== 'news_default.jpg' && $article['thumbnail_url'] !== 'news_cover_default.jpg' && $article['thumbnail_url'] !== 'news_patna_flood.jpg') {
+    // 2. Explicit Dedicated Thumbnail (Must physically exist on disk or be remote URL)
+    if (!empty($article['thumbnail_url']) && !in_array($article['thumbnail_url'], ['news_default.jpg', 'news_cover_default.jpg', 'news_patna_flood.jpg'])) {
         $ytThumbId = get_youtube_video_id($article['thumbnail_url']);
         if ($ytThumbId) {
             return "https://img.youtube.com/vi/{$ytThumbId}/hqdefault.jpg";
         }
-        $resolvedThumb = get_media_url($article['thumbnail_url'], 'image');
-        if ($resolvedThumb && strpos($resolvedThumb, 'news_cover_default.jpg') === false) {
-            return $resolvedThumb;
+        $thumbFile = basename($article['thumbnail_url']);
+        if (file_exists(UPLOAD_DIR . $thumbFile)) {
+            return UPLOAD_URL . $thumbFile;
+        }
+        if (file_exists(__DIR__ . '/../assets/images/' . $thumbFile)) {
+            return ASSETS_URL . 'images/' . $thumbFile;
+        }
+        if (strpos($article['thumbnail_url'], 'http://') === 0 || strpos($article['thumbnail_url'], 'https://') === 0) {
+            return $article['thumbnail_url'];
         }
     }
 
-    // 3. Direct Image Media
-    if (($article['media_type'] ?? '') === 'image' && !empty($article['media_url']) && $article['media_url'] !== 'news_default.jpg' && $article['media_url'] !== 'news_cover_default.jpg' && $article['media_url'] !== 'news_patna_flood.jpg') {
-        $resolvedMedia = get_media_url($article['media_url'], 'image');
-        if ($resolvedMedia && strpos($resolvedMedia, 'news_cover_default.jpg') === false) {
-            return $resolvedMedia;
+    // 3. Direct Image Media (Must physically exist on disk or be remote URL)
+    if (($article['media_type'] ?? '') === 'image' && !empty($article['media_url']) && !in_array($article['media_url'], ['news_default.jpg', 'news_cover_default.jpg', 'news_patna_flood.jpg'])) {
+        $mediaFile = basename($article['media_url']);
+        if (file_exists(UPLOAD_DIR . $mediaFile)) {
+            return UPLOAD_URL . $mediaFile;
+        }
+        if (file_exists(__DIR__ . '/../assets/images/' . $mediaFile)) {
+            return ASSETS_URL . 'images/' . $mediaFile;
+        }
+        if (strpos($article['media_url'], 'http://') === 0 || strpos($article['media_url'], 'https://') === 0) {
+            return $article['media_url'];
         }
     }
 
@@ -553,16 +576,19 @@ function get_article_thumbnail_url($article) {
             return "https://img.youtube.com/vi/{$ytContentId}/hqdefault.jpg";
         }
         $contentImg = extract_first_image_from_content($article['content']);
-        if ($contentImg && $contentImg !== 'news_default.jpg' && $contentImg !== 'news_cover_default.jpg' && $contentImg !== 'news_patna_flood.jpg') {
-            $resolvedContentImg = get_media_url($contentImg, 'image');
-            if ($resolvedContentImg && strpos($resolvedContentImg, 'news_cover_default.jpg') === false) {
-                return $resolvedContentImg;
+        if ($contentImg && !in_array($contentImg, ['news_default.jpg', 'news_cover_default.jpg', 'news_patna_flood.jpg'])) {
+            $cBase = basename($contentImg);
+            if (file_exists(UPLOAD_DIR . $cBase)) {
+                return UPLOAD_URL . $cBase;
+            }
+            if (strpos($contentImg, 'http://') === 0 || strpos($contentImg, 'https://') === 0) {
+                return $contentImg;
             }
         }
     }
 
-    // 5. Intelligent Topic-Aware News Photo Fallback (Never shows identical logo)
-    return get_contextual_fallback_image($headline, $category);
+    // 5. Intelligent Topic-Aware Editorial Fallback (Ensures distinct editorial news photos)
+    return get_contextual_fallback_image($headline, $category, $id);
 }
 
 /**
