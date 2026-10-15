@@ -27,10 +27,10 @@ $pageDescription = 'दैनिक खबर: ' . ($category['name'] ?? 'सम
 $categoryNews = get_news_by_category_slug($pdo, $category['slug'], 12);
 
 $pageOgUrl = get_category_url($category['slug'] ?? 'top-news');
-if (!empty($categoryNews) && !empty($categoryNews[0]['media_url'])) {
-    $pageOgImage = get_media_url($categoryNews[0]['media_url'], $categoryNews[0]['media_type']);
+if (!empty($categoryNews) && !empty($categoryNews[0]['id'])) {
+    $pageOgImage = rtrim(BASE_URL, '/') . '/share_card.php?id=' . (int)$categoryNews[0]['id'];
 } else {
-    $pageOgImage = ASSETS_URL . 'images/logo.png';
+    $pageOgImage = rtrim(BASE_URL, '/') . '/share_card.php';
 }
 
 // Fetch Sidebar Ad & Trending

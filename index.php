@@ -18,12 +18,8 @@ $allStories = get_prioritized_news($pdo, 12);
 $heroStory = !empty($allStories) ? $allStories[0] : null;
 $feedStories = !empty($allStories) ? array_slice($allStories, 1) : [];
 
-$pageOgUrl = BASE_URL . '/index.php';
-if ($heroStory && !empty($heroStory['media_url'])) {
-    $pageOgImage = get_media_url($heroStory['media_url'], $heroStory['media_type'], $heroStory['content'] ?? '');
-} else {
-    $pageOgImage = rtrim(BASE_URL, '/') . '/uploads/news_default.jpg';
-}
+$pageOgUrl = rtrim(BASE_URL, '/') . '/';
+$pageOgImage = rtrim(BASE_URL, '/') . '/share_card.php';
 
 // Fetch Sidebar Ad & Trending Stories
 $sidebarAd = get_ad_by_position($pdo, 'sidebar_banner');
