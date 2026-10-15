@@ -42,7 +42,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             @mkdir(UPLOAD_DIR, 0777, true);
         }
 
-        // Process dedicated video thumbnail file if uploaded
+        // 1. Process dedicated video thumbnail file if uploaded
+        $thumbUploaded = false;
         if (isset($_FILES['thumbnail_file']) && $_FILES['thumbnail_file']['error'] !== UPLOAD_ERR_NO_FILE) {
             if ($_FILES['thumbnail_file']['error'] === UPLOAD_ERR_OK) {
                 $tFile = $_FILES['thumbnail_file'];
@@ -53,21 +54,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if (move_uploaded_file($tFile['tmp_name'], UPLOAD_DIR . $tFilename)) {
                         @chmod(UPLOAD_DIR . $tFilename, 0644);
                         $thumbnail_url = $tFilename;
+                        $thumbUploaded = true;
                     }
                 }
             }
         }
 
-        // 1. If file uploaded, auto-detect type and save
+        // 2. Check for YouTube Link in ANY field
+        $detectedYtId = get_youtube_video_id($video_embed_url) ?: get_youtube_video_id($direct_media_url);
+
+        $newFileUploaded = false;
+        $fileToUpload = null;
         if (isset($_FILES['media_file']) && $_FILES['media_file']['error'] !== UPLOAD_ERR_NO_FILE) {
-            if ($_FILES['media_file']['error'] === UPLOAD_ERR_INI_SIZE || $_FILES['media_file']['error'] === UPLOAD_ERR_FORM_SIZE) {
-                $error = ($language === 'en') ? 'Uploaded file size exceeds server limit. Please choose a smaller file or compress it.' : 'अपलोड की गई फ़ाइल का साइज़ सर्वर की सीमा से बड़ा है। कृपया छोटी फ़ाइल चुनें।';
-            } elseif ($_FILES['media_file']['error'] === UPLOAD_ERR_PARTIAL) {
+            $fileToUpload = $_FILES['media_file'];
+        } elseif (isset($_FILES['video_file']) && $_FILES['video_file']['error'] !== UPLOAD_ERR_NO_FILE) {
+            $fileToUpload = $_FILES['video_file'];
+        }
+
+        if ($fileToUpload && $fileToUpload['error'] !== UPLOAD_ERR_NO_FILE) {
+            if ($fileToUpload['error'] === UPLOAD_ERR_INI_SIZE || $fileToUpload['error'] === UPLOAD_ERR_FORM_SIZE) {
+                $error = ($language === 'en') ? 'Uploaded file size exceeds server limit. Please choose a smaller file.' : 'अपलोड की गई फ़ाइल का साइज़ सर्वर की सीमा से बड़ा है। कृपया छोटी फ़ाइल चुनें।';
+            } elseif ($fileToUpload['error'] === UPLOAD_ERR_PARTIAL) {
                 $error = ($language === 'en') ? 'File was only partially uploaded. Please try again.' : 'फ़ाइल अधूरी अपलोड हुई। कृपया पुनः प्रयास करें।';
-            } elseif ($_FILES['media_file']['error'] !== UPLOAD_ERR_OK) {
-                $error = ($language === 'en') ? 'File upload failed with error code: ' . $_FILES['media_file']['error'] : 'फ़ाइल अपलोड करने में विफल (त्रुटि कोड: ' . $_FILES['media_file']['error'] . ')';
+            } elseif ($fileToUpload['error'] !== UPLOAD_ERR_OK) {
+                $error = ($language === 'en') ? 'File upload failed with error code: ' . $fileToUpload['error'] : 'फ़ाइल अपलोड करने में विफल (त्रुटि कोड: ' . $fileToUpload['error'] . ')';
             } else {
-                $file = $_FILES['media_file'];
+                $file = $fileToUpload;
                 $file_ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
                 $allowed_img = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'avif', 'jfif', 'svg', 'bmp', 'heic', 'heif'];
                 $allowed_vid = ['mp4', 'webm', 'mov', 'mkv', 'avi', '3gp', 'm4v', 'ts', 'ogv'];
@@ -77,7 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 } elseif (in_array($file_ext, $allowed_vid)) {
                     $media_type = 'video_upload';
                 } else {
-                    $error = ($language === 'en') ? 'Invalid file format! Please upload an image or video.' : 'अमान्य फ़ाइल फ़ॉर्मेट! कृपया फ़ोटो (JPG, PNG, WEBP) या वीडियो (MP4, MOV) फ़ाइल चुनें।';
+                    $error = ($language === 'en') ? 'Invalid file format! Please upload an image (JPG, PNG) or video (MP4).' : 'अमान्य फ़ाइल फ़ॉर्मेट! कृपया फ़ोटो (JPG, PNG, WEBP) या वीडियो (MP4, MOV) फ़ाइल चुनें।';
                 }
 
                 if (empty($error)) {
@@ -87,6 +99,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if (move_uploaded_file($file['tmp_name'], $target_path)) {
                         @chmod($target_path, 0644);
                         $media_url = $new_filename;
+                        $newFileUploaded = true;
                         if ($media_type === 'image') {
                             $thumbnail_url = $new_filename;
                         }
@@ -95,43 +108,60 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 }
             }
-        } elseif ($media_type === 'video_embed') {
-            if (!empty($video_embed_url)) {
-                if (preg_match('/src=["\']([^"\']+)["\']/i', $video_embed_url, $m)) {
-                    $video_embed_url = $m[1];
+        }
+
+        // 3. If NO physical file uploaded:
+        if (!$newFileUploaded && empty($error)) {
+            if ($detectedYtId) {
+                $media_type = 'video_embed';
+                $media_url = "https://www.youtube.com/watch?v={$detectedYtId}";
+                if (!$thumbUploaded) {
+                    $thumbnail_url = "https://img.youtube.com/vi/{$detectedYtId}/hqdefault.jpg";
                 }
-                $media_url = $video_embed_url;
-                $ytId = get_youtube_video_id($video_embed_url);
-                if ($ytId && empty($thumbnail_url)) {
-                    $thumbnail_url = "https://img.youtube.com/vi/{$ytId}/hqdefault.jpg";
+            } elseif ($media_type === 'video_embed') {
+                if (!empty($video_embed_url)) {
+                    $ytId = get_youtube_video_id($video_embed_url);
+                    if ($ytId) {
+                        $media_url = "https://www.youtube.com/watch?v={$ytId}";
+                        if (!$thumbUploaded) {
+                            $thumbnail_url = "https://img.youtube.com/vi/{$ytId}/hqdefault.jpg";
+                        }
+                    } else {
+                        $media_url = $video_embed_url;
+                    }
+                } else {
+                    $error = ($language === 'en') ? 'Please enter YouTube video link!' : 'कृपया यूट्यूब वीडियो का लिंक दर्ज करें!';
+                }
+            } elseif ($media_type === 'video_upload' && !empty($direct_media_url)) {
+                $media_url = $direct_media_url;
+            } elseif (!empty($direct_media_url)) {
+                $media_url = $direct_media_url;
+                $media_type = 'image';
+                if (empty($thumbnail_url)) {
+                    $thumbnail_url = $direct_media_url;
                 }
             } else {
-                $error = ($language === 'en') ? 'Please enter YouTube video link!' : 'कृपया यूट्यूब वीडियो का लिंक दर्ज करें!';
-            }
-        } elseif ($media_type === 'video_upload' && !empty($direct_media_url)) {
-            $media_url = $direct_media_url;
-        } elseif (!empty($direct_media_url)) {
-            $media_url = $direct_media_url;
-            $media_type = 'image';
-            if (empty($thumbnail_url)) {
-                $thumbnail_url = $direct_media_url;
-            }
-        } else {
-            // No file uploaded: Auto-extract first image from content
-            $firstImg = extract_first_image_from_content($content);
-            if ($firstImg) {
-                $media_url = $firstImg;
-                $thumbnail_url = $firstImg;
-                $media_type = 'image';
-            } else {
-                $media_url = 'news_cover_default.jpg';
-                $thumbnail_url = 'news_cover_default.jpg';
-                $media_type = 'image';
+                // Auto-extract first image from content
+                $firstImg = extract_first_image_from_content($content);
+                if ($firstImg) {
+                    $media_url = $firstImg;
+                    $thumbnail_url = $firstImg;
+                    $media_type = 'image';
+                } else {
+                    $media_url = 'news_cover_default.jpg';
+                    $thumbnail_url = 'news_cover_default.jpg';
+                    $media_type = 'image';
+                }
             }
         }
 
-        // Final fallback for thumbnail_url
-        if (empty($thumbnail_url)) {
+        // 4. Final fallback for thumbnail_url
+        if ($media_type === 'video_embed') {
+            $checkYt = get_youtube_video_id($media_url) ?: get_youtube_video_id($content);
+            if ($checkYt && (empty($thumbnail_url) || strpos($thumbnail_url, 'news_cover_default') !== false || strpos($thumbnail_url, 'news_default') !== false)) {
+                $thumbnail_url = "https://img.youtube.com/vi/{$checkYt}/hqdefault.jpg";
+            }
+        } elseif (empty($thumbnail_url) || $thumbnail_url === 'news_default.jpg' || $thumbnail_url === 'news_patna_flood.jpg') {
             if ($media_type === 'image' && !empty($media_url) && $media_url !== 'news_cover_default.jpg') {
                 $thumbnail_url = $media_url;
             } else {
@@ -299,66 +329,79 @@ $selected_lang = $_POST['language'] ?? 'hi';
                     </label>
                 </div>
 
-                <!-- Media Type Selection -->
+                <!-- Media Type Tabs -->
                 <div style="margin-bottom: 18px;">
-                    <label style="display:block; font-weight:600; margin-bottom:6px; font-size:0.9rem;">
-                        मीडिया का प्रकार (Media Type)
+                    <label style="display:block; font-weight:700; margin-bottom:8px; font-size:0.95rem; color:#111827;">
+                        <i class="fa-solid fa-photo-film" style="color:var(--admin-theme);"></i> समाचार मीडिया चुनें (Select Media Type):
                     </label>
-                    <select name="media_type" id="mediaTypeSelect" onchange="handleMediaTypeChange()" style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:6px; font-family:inherit; background:#fff; font-weight:600;">
-                        <option value="image" <?php echo (isset($_POST['media_type']) && $_POST['media_type'] === 'image') ? 'selected' : ''; ?>>📷 फ़ोटो फ़ाइल अपलोड (Choose Photo File)</option>
-                        <option value="video_upload" <?php echo (isset($_POST['media_type']) && $_POST['media_type'] === 'video_upload') ? 'selected' : ''; ?>>🎥 वीडियो फ़ाइल अपलोड (Choose Video File)</option>
-                        <option value="video_embed" <?php echo (isset($_POST['media_type']) && $_POST['media_type'] === 'video_embed') ? 'selected' : ''; ?>>🔗 यूट्यूब वीडियो लिंक (YouTube / Shorts URL)</option>
-                    </select>
+                    
+                    <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:6px; background:#f1f5f9; padding:4px; border-radius:10px; border:1px solid #e2e8f0;">
+                        <button type="button" id="tab-btn-image" onclick="selectMediaTab('image')" style="padding:10px 6px; border:none; border-radius:8px; font-weight:700; font-size:0.85rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:all 0.2s;">
+                            <i class="fa-solid fa-camera"></i> <span>1. फ़ोटो</span>
+                        </button>
+                        <button type="button" id="tab-btn-video_embed" onclick="selectMediaTab('video_embed')" style="padding:10px 6px; border:none; border-radius:8px; font-weight:700; font-size:0.85rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:all 0.2s;">
+                            <i class="fa-brands fa-youtube" style="color:#ef4444;"></i> <span>2. यूट्यूब</span>
+                        </button>
+                        <button type="button" id="tab-btn-video_upload" onclick="selectMediaTab('video_upload')" style="padding:10px 6px; border:none; border-radius:8px; font-weight:700; font-size:0.85rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:all 0.2s;">
+                            <i class="fa-solid fa-file-video" style="color:#3b82f6;"></i> <span>3. वीडियो फ़ाइल</span>
+                        </button>
+                    </div>
+                    <input type="hidden" name="media_type" id="mediaTypeSelect" value="<?php echo htmlspecialchars($_POST['media_type'] ?? 'image'); ?>">
                 </div>
 
-                <!-- File Upload Field -->
-                <div id="fileUploadGroup" style="margin-bottom: 18px;">
-                    <label id="fileUploadLabel" style="display:block; font-weight:600; margin-bottom:6px; font-size:0.9rem;">
-                        फ़ोटो फ़ाइल चुनें (Choose Photo File)
+                <!-- PANEL 1: PHOTO UPLOAD -->
+                <div id="media-panel-image" style="margin-bottom: 18px;">
+                    <label style="display:block; font-weight:700; margin-bottom:6px; font-size:0.9rem; color:#1e293b;">
+                        फ़ोटो फ़ाइल चुनें (Choose Photo File: JPG, PNG, WEBP):
                     </label>
-                    <input type="file" id="mediaFileInput" name="media_file" accept="image/*,video/*,.mp4,.webm,.mov,.mkv,.avi,.jpg,.jpeg,.png,.webp,.gif,.jfif,.avif" onchange="previewSelectedMedia(this)" style="width:100%; font-size:0.88rem; padding:8px; border:1.5px solid #d1d5db; border-radius:6px; background:#f9fafb;">
-
-                    <!-- Live Selected Preview -->
-                    <div id="livePreviewContainer" style="display:none; margin-top:12px; padding:10px; background:#ecfdf5; border:1.5px dashed #10b981; border-radius:8px; text-align:center;">
+                    <input type="file" id="photoFileInput" name="media_file" accept="image/*,.jpg,.jpeg,.png,.webp,.gif,.jfif,.avif" onchange="previewSelectedPhoto(this)" style="width:100%; font-size:0.88rem; padding:9px; border:1.5px solid #cbd5e1; border-radius:6px; background:#f8fafc;">
+                    <small style="color:#64748b; font-size:0.78rem; display:block; margin-top:4px;">💡 फ़ोटो चुनते ही यह वेबसाइट और WhatsApp शेयरिंग पर दिखने लगेगी।</small>
+                    
+                    <!-- Live Selected Photo Preview -->
+                    <div id="photoPreviewContainer" style="display:none; margin-top:12px; padding:10px; background:#ecfdf5; border:1.5px dashed #10b981; border-radius:8px; text-align:center;">
                         <div style="font-size:0.85rem; font-weight:700; color:#065f46; margin-bottom:8px; display:flex; align-items:center; justify-content:center; gap:6px;">
-                            <i class="fa-solid fa-circle-check" style="color:#10b981;"></i> <span id="previewTitle">फ़ोटो चुनी गई (Ready to Upload)</span>
+                            <i class="fa-solid fa-circle-check" style="color:#10b981;"></i> <span>फ़ोटो चुनी गई (Ready to Upload)</span>
                         </div>
-                        <div id="previewMediaBox" style="max-height:180px; overflow:hidden; border-radius:6px; background:#0f172a; display:flex; align-items:center; justify-content:center;"></div>
-                        <div id="previewFileInfo" style="font-size:0.8rem; color:#047857; margin-top:6px; font-weight:600;"></div>
+                        <div id="photoPreviewBox" style="max-height:180px; overflow:hidden; border-radius:6px; background:#0f172a; display:flex; align-items:center; justify-content:center;"></div>
+                        <div id="photoFileInfo" style="font-size:0.8rem; color:#047857; margin-top:6px; font-weight:600;"></div>
                     </div>
                 </div>
 
-                <!-- Dedicated Video Thumbnail Upload Field -->
-                <div id="videoThumbnailGroup" style="margin-bottom: 18px; display:none; background:#f0fdf4; padding:12px; border-radius:8px; border:1px solid #bbf7d0;">
-                    <label style="display:block; font-weight:700; margin-bottom:6px; font-size:0.88rem; color:#166534;">
-                        <i class="fa-solid fa-image"></i> वीडियो कवर / पोस्टर फ़ोटो (Video Cover for WhatsApp)
+                <!-- PANEL 2: YOUTUBE VIDEO -->
+                <div id="media-panel-video_embed" style="margin-bottom: 18px; display:none;">
+                    <label style="display:block; font-weight:700; margin-bottom:6px; font-size:0.9rem; color:#b91c1c;">
+                        <i class="fa-brands fa-youtube"></i> यूट्यूब वीडियो का लिंक दर्ज करें (YouTube / Shorts Link):
                     </label>
-                    <input type="file" name="thumbnail_file" accept="image/*,.jpg,.jpeg,.png,.webp" style="width:100%; font-size:0.85rem; padding:6px; background:#fff; border:1px solid #86efac; border-radius:6px;">
-                    <small style="color:#15803d; display:block; margin-top:4px; font-size:0.78rem;">
-                        व्हाट्सएप पर शेयर करने और होमपेज कार्ड पर यही फ़ोटो दिखेगी। (JPG, PNG, WEBP)
+                    <input type="text" id="videoEmbedInput" name="video_embed_url" oninput="updateYouTubePreview(this.value)" value="<?php echo htmlspecialchars($_POST['video_embed_url'] ?? ''); ?>" placeholder="उदा. https://www.youtube.com/watch?v=... या https://youtu.be/... या Shorts लिंक" style="width:100%; padding:10px; border:1.5px solid #f87171; border-radius:6px; font-size:0.9rem;">
+                    <small style="color:#15803d; font-weight:600; display:block; margin-top:6px; font-size:0.82rem;">
+                        <i class="fa-solid fa-circle-check"></i> यूट्यूब लिंक डालने पर इसका पोस्टर स्वतः WhatsApp व वेबसाइट पर दिख जाएगा (अलग से फ़ोटो डालने की ज़रूरत नहीं है)।
                     </small>
-                </div>
-
-                <!-- Direct Media URL Option -->
-                <div id="directMediaUrlGroup" style="margin-bottom: 18px;">
-                    <label id="directMediaUrlLabel" style="display:block; font-weight:600; margin-bottom:6px; font-size:0.85rem; color:#4b5563;">
-                        या डायरेक्ट URL दर्ज करें (Or Enter Direct URL):
-                    </label>
-                    <input type="text" name="direct_media_url" value="<?php echo htmlspecialchars($_POST['direct_media_url'] ?? ''); ?>" placeholder="https://example.com/media.mp4 या photo.jpg" style="width:100%; padding:9px 12px; border:1px solid #d1d5db; border-radius:6px; font-size:0.88rem;">
-                </div>
-
-                <!-- Video Embed Input -->
-                <div id="videoEmbedGroup" style="margin-bottom: 18px; display:none;">
-                    <label style="display:block; font-weight:600; margin-bottom:6px; font-size:0.9rem;">
-                        यूट्यूब / वीडियो लिंक (YouTube/Shorts/Embed URL)
-                    </label>
-                    <input type="text" id="videoEmbedInput" name="video_embed_url" oninput="updateYouTubePreview(this.value)" value="<?php echo htmlspecialchars($_POST['video_embed_url'] ?? ''); ?>" placeholder="https://www.youtube.com/watch?v=... या https://youtu.be/... या Shorts लिंक" style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:6px; font-size:0.9rem;">
                     
-                    <div id="ytLivePreview" style="margin-top:10px; display:none; border-radius:8px; overflow:hidden; border:1px solid #bbf7d0; text-align:center;">
+                    <div id="ytLivePreview" style="margin-top:12px; display:none; border-radius:8px; overflow:hidden; border:1.5px solid #86efac; text-align:center;">
                         <img id="ytThumbImg" src="" style="width:100%; max-height:160px; object-fit:cover; display:block;">
-                        <div style="font-size:0.8rem; color:#15803d; padding:6px; background:#f0fdf4; font-weight:700;">
-                            <i class="fa-solid fa-circle-check"></i> यूट्यूब थंबनेल लोड हुआ (व्हाट्सएप शेयर व होमपेज पर यही दिखेगा)
+                        <div style="font-size:0.82rem; color:#15803d; padding:6px; background:#f0fdf4; font-weight:700;">
+                            <i class="fa-solid fa-circle-check"></i> यूट्यूब थंबनेल लोड हुआ (WhatsApp व होमपेज पर यही पोस्टर दिखेगा)
                         </div>
+                    </div>
+                </div>
+
+                <!-- PANEL 3: VIDEO FILE (MP4) -->
+                <div id="media-panel-video_upload" style="margin-bottom: 18px; display:none;">
+                    <label style="display:block; font-weight:700; margin-bottom:6px; font-size:0.9rem; color:#1d4ed8;">
+                        <i class="fa-solid fa-file-video"></i> वीडियो फ़ाइल चुनें (Choose MP4 Video):
+                    </label>
+                    <input type="file" id="videoFileInput" name="video_file" accept="video/*,.mp4,.webm,.mov,.mkv,.avi" onchange="previewSelectedVideo(this)" style="width:100%; font-size:0.88rem; padding:9px; border:1.5px solid #93c5fd; border-radius:6px; background:#eff6ff;">
+                    <small style="color:#64748b; font-size:0.78rem; display:block; margin-top:4px;">सपोर्टेड: MP4, WebM, MOV</small>
+
+                    <!-- Dedicated Video Thumbnail / Cover Upload Field for WhatsApp -->
+                    <div style="margin-top: 14px; background:#f0fdf4; padding:12px; border-radius:8px; border:1px solid #bbf7d0;">
+                        <label style="display:block; font-weight:700; margin-bottom:6px; font-size:0.88rem; color:#166534;">
+                            <i class="fa-solid fa-image"></i> वीडियो कवर / पोस्टर फ़ोटो (WhatsApp शेयर व कार्ड्स के लिए)
+                        </label>
+                        <input type="file" name="thumbnail_file" accept="image/*,.jpg,.jpeg,.png,.webp" style="width:100%; font-size:0.85rem; padding:6px; background:#fff; border:1px solid #86efac; border-radius:6px;">
+                        <small style="color:#15803d; display:block; margin-top:4px; font-size:0.78rem;">
+                            💡 व्हाट्सएप पर वीडियो सीधे पोस्टर नहीं बनती, इसलिए यहाँ फ़ोटो अपलोड करें ताकि WhatsApp शेयर करने पर फ़ोटो दिखे।
+                        </small>
                     </div>
                 </div>
 
@@ -424,119 +467,73 @@ function compressImageIfNeeded(file, callback) {
     reader.readAsDataURL(file);
 }
 
-function previewSelectedMedia(input) {
-    const container = document.getElementById('livePreviewContainer');
-    const mediaBox = document.getElementById('previewMediaBox');
-    const fileInfo = document.getElementById('previewFileInfo');
-    
+function selectMediaTab(tab) {
+    const input = document.getElementById('mediaTypeSelect');
+    if (input) input.value = tab;
+
+    const tabs = ['image', 'video_embed', 'video_upload'];
+    tabs.forEach(t => {
+        const btn = document.getElementById('tab-btn-' + t);
+        const panel = document.getElementById('media-panel-' + t);
+        if (t === tab) {
+            if (btn) {
+                btn.style.background = (t === 'video_embed') ? '#ef4444' : ((t === 'video_upload') ? '#2563eb' : 'var(--admin-theme)');
+                btn.style.color = '#fff';
+                btn.style.boxShadow = '0 2px 6px rgba(0,0,0,0.15)';
+            }
+            if (panel) panel.style.display = 'block';
+        } else {
+            if (btn) {
+                btn.style.background = 'transparent';
+                btn.style.color = '#4b5563';
+                btn.style.boxShadow = 'none';
+            }
+            if (panel) panel.style.display = 'none';
+        }
+    });
+
+    if (tab === 'video_embed') {
+        const veInput = document.getElementById('videoEmbedInput');
+        if (veInput && veInput.value) {
+            updateYouTubePreview(veInput.value);
+        }
+    }
+}
+
+function previewSelectedPhoto(input) {
+    const container = document.getElementById('photoPreviewContainer');
+    const mediaBox = document.getElementById('photoPreviewBox');
+    const fileInfo = document.getElementById('photoFileInfo');
+
     if (input.files && input.files[0]) {
         const file = input.files[0];
-        const fileType = file.type;
-        
-        if (fileType.startsWith('image/')) {
-            compressImageIfNeeded(file, function(processedFile, wasCompressed) {
-                if (wasCompressed && window.DataTransfer) {
-                    try {
-                        const dt = new DataTransfer();
-                        dt.items.add(processedFile);
-                        input.files = dt.files;
-                    } catch(e) {}
-                }
-                const finalSizeKB = (processedFile.size / 1024).toFixed(1);
-                const finalSizeStr = (processedFile.size > 1024 * 1024) ? (processedFile.size / (1024 * 1024)).toFixed(2) + ' MB' : finalSizeKB + ' KB';
-                container.style.display = 'block';
-                fileInfo.innerText = `चुनी गई फ़ाइल: ${processedFile.name} (${finalSizeStr}${wasCompressed ? ' - ऑटो कंप्रेस्ड' : ''})`;
-                const url = URL.createObjectURL(processedFile);
-                mediaBox.innerHTML = `<img src="${url}" style="max-width:100%; max-height:180px; object-fit:contain; border-radius:6px;" alt="Preview">`;
-                const sel = document.getElementById('mediaTypeSelect');
-                if (sel) { sel.value = 'image'; handleMediaTypeChange(); }
-            });
-        } else if (fileType.startsWith('video/')) {
-            const fileSizeKB = (file.size / 1024).toFixed(1);
-            const fileSizeStr = (file.size > 1024 * 1024) ? (file.size / (1024 * 1024)).toFixed(2) + ' MB' : fileSizeKB + ' KB';
+        compressImageIfNeeded(file, function(processedFile, wasCompressed) {
+            if (wasCompressed && window.DataTransfer) {
+                try {
+                    const dt = new DataTransfer();
+                    dt.items.add(processedFile);
+                    input.files = dt.files;
+                } catch(e) {}
+            }
+            const finalSizeKB = (processedFile.size / 1024).toFixed(1);
+            const finalSizeStr = (processedFile.size > 1024 * 1024) ? (processedFile.size / (1024 * 1024)).toFixed(2) + ' MB' : finalSizeKB + ' KB';
             container.style.display = 'block';
-            fileInfo.innerText = `चुनी गई फ़ाइल: ${file.name} (${fileSizeStr})`;
-            const url = URL.createObjectURL(file);
-            mediaBox.innerHTML = `<video src="${url}" controls autoplay muted style="max-width:100%; max-height:180px; border-radius:6px;"></video>`;
-            const sel = document.getElementById('mediaTypeSelect');
-            if (sel) { sel.value = 'video_upload'; handleMediaTypeChange(); }
-        } else {
-            mediaBox.innerHTML = `<div style="padding:15px; color:#fff;"><i class="fa-solid fa-file"></i> ${file.name}</div>`;
-        }
+            fileInfo.innerText = `चुनी गई फ़ाइल: ${processedFile.name} (${finalSizeStr}${wasCompressed ? ' - ऑटो कंप्रेस्ड' : ''})`;
+            const url = URL.createObjectURL(processedFile);
+            mediaBox.innerHTML = `<img src="${url}" style="max-width:100%; max-height:180px; object-fit:contain; border-radius:6px;" alt="Preview">`;
+        });
     } else {
         container.style.display = 'none';
         mediaBox.innerHTML = '';
     }
 }
 
-function switchFormLang(lang) {
-    const btnHi = document.getElementById('lang-btn-hi');
-    const btnEn = document.getElementById('lang-btn-en');
-    const lblHeadline = document.getElementById('lbl-headline');
-    const inputHeadline = document.getElementById('input-headline');
-    const lblSubheadline = document.getElementById('lbl-subheadline');
-    const inputSubheadline = document.getElementById('input-subheadline');
-    const lblContent = document.getElementById('lbl-content');
-
-    if (lang === 'en') {
-        btnEn.style.background = 'var(--admin-theme)';
-        btnEn.style.color = '#fff';
-        btnEn.style.boxShadow = '0 2px 6px rgba(229,57,53,0.3)';
-        
-        btnHi.style.background = 'transparent';
-        btnHi.style.color = '#4b5563';
-        btnHi.style.boxShadow = 'none';
-
-        if (lblHeadline) lblHeadline.innerHTML = 'Main Headline <span style="color:red;">*</span>';
-        if (inputHeadline) inputHeadline.placeholder = 'e.g. Russian President Vladimir Putin to visit India for BRICS summit...';
-        if (lblSubheadline) lblSubheadline.innerHTML = 'Sub-headline / Short Summary';
-        if (inputSubheadline) inputSubheadline.placeholder = 'Key summary or sub-heading of the article...';
-        if (lblContent) lblContent.innerHTML = 'Full News Content <span style="color:red;">*</span>';
-    } else {
-        btnHi.style.background = 'var(--admin-theme)';
-        btnHi.style.color = '#fff';
-        btnHi.style.boxShadow = '0 2px 6px rgba(229,57,53,0.3)';
-        
-        btnEn.style.background = 'transparent';
-        btnEn.style.color = '#4b5563';
-        btnEn.style.boxShadow = 'none';
-
-        if (lblHeadline) lblHeadline.innerHTML = 'मुख्य शीर्षक (Main Headline) <span style="color:red;">*</span>';
-        if (inputHeadline) inputHeadline.placeholder = 'उदा. रूसी राष्ट्रपति पुतिन BRICS समिट के लिए भारत आएंगे...';
-        if (lblSubheadline) lblSubheadline.innerHTML = 'उप-शीर्षक / ब्रीफ़ समरी (Sub-headline / Short Summary)';
-        if (inputSubheadline) inputSubheadline.placeholder = 'खबर का मुख्य सार या सब-हेडिंग...';
-        if (lblContent) lblContent.innerHTML = 'समाचार का पूरा विवरण (News Content) <span style="color:red;">*</span>';
-    }
-}
-
-function handleMediaTypeChange() {
-    const type = document.getElementById('mediaTypeSelect').value;
-    const fileGroup = document.getElementById('fileUploadGroup');
-    const embedGroup = document.getElementById('videoEmbedGroup');
-    const directGroup = document.getElementById('directMediaUrlGroup');
-    const thumbGroup = document.getElementById('videoThumbnailGroup');
-    const label = document.getElementById('fileUploadLabel');
-    const veInput = document.querySelector('input[name="video_embed_url"]');
-
-    if (type === 'video_embed') {
-        fileGroup.style.display = 'none';
-        if (directGroup) directGroup.style.display = 'none';
-        embedGroup.style.display = 'block';
-        if (thumbGroup) thumbGroup.style.display = 'block';
-    } else if (type === 'video_upload') {
-        fileGroup.style.display = 'block';
-        if (directGroup) directGroup.style.display = 'block';
-        embedGroup.style.display = 'none';
-        if (thumbGroup) thumbGroup.style.display = 'block';
-        if (label) label.innerText = 'वीडियो फ़ाइल चुनें (Choose Video File: MP4, WebM, MOV)';
-        if (veInput) veInput.value = '';
-    } else {
-        fileGroup.style.display = 'block';
-        if (directGroup) directGroup.style.display = 'block';
-        embedGroup.style.display = 'none';
-        if (thumbGroup) thumbGroup.style.display = 'none';
-        if (label) label.innerText = 'फ़ोटो फ़ाइल चुनें (Choose Photo File: JPG, PNG, WEBP)';
-        if (veInput) veInput.value = '';
+function previewSelectedVideo(input) {
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        const fileSizeKB = (file.size / 1024).toFixed(1);
+        const fileSizeStr = (file.size > 1024 * 1024) ? (file.size / (1024 * 1024)).toFixed(2) + ' MB' : fileSizeKB + ' KB';
+        alert(`वीडियो फ़ाइल चुनी गई: ${file.name} (${fileSizeStr})\nअब "समाचार प्रकाशित करें" पर क्लिक करें।`);
     }
 }
 
@@ -557,6 +554,15 @@ function updateYouTubePreview(url) {
         box.style.display = 'none';
     }
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    const currentType = document.getElementById('mediaTypeSelect') ? document.getElementById('mediaTypeSelect').value : 'image';
+    selectMediaTab(currentType || 'image');
+    const veInput = document.getElementById('videoEmbedInput');
+    if (veInput && veInput.value) {
+        updateYouTubePreview(veInput.value);
+    }
+});
 
 document.querySelector('form').addEventListener('submit', function(e) {
     const btn = document.getElementById('submitBtn');

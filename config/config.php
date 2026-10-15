@@ -5,7 +5,11 @@
  */
 
 // Set cache limiter to public so Open Graph & WhatsApp crawlers can cache meta tags
-if (session_status() === PHP_SESSION_NONE) {
+// Do not start session or send Set-Cookie for social crawlers (WhatsApp, Facebook, Twitter, Telegram)
+$crawlerUserAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
+$isSocialCrawler = (bool)preg_match('/(WhatsApp|facebookexternalhit|Facebot|Twitterbot|TelegramBot|LinkedInBot|Googlebot)/i', $crawlerUserAgent);
+
+if (!$isSocialCrawler && session_status() === PHP_SESSION_NONE) {
     session_cache_limiter('public');
     session_start();
 }

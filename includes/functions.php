@@ -345,26 +345,39 @@ function extract_first_image_from_content($html) {
 function get_media_url($url, $media_type = 'image', $content = '', $thumbnail_url = '') {
     $url = trim($url ?? '');
 
-    // If explicit thumbnail provided and we need an image
-    if ($media_type === 'image' && !empty($thumbnail_url) && $thumbnail_url !== 'news_default.jpg' && $thumbnail_url !== 'news_patna_flood.jpg') {
-        return get_media_url($thumbnail_url, 'image');
+    // 1. If URL is a YouTube link or iframe
+    $ytId = get_youtube_video_id($url);
+    if ($ytId) {
+        return ($media_type === 'image') ? "https://img.youtube.com/vi/{$ytId}/hqdefault.jpg" : "https://www.youtube.com/watch?v={$ytId}";
     }
 
-    // Default or empty media URL fallback
-    if (empty($url) || $url === 'news_default.jpg' || $url === 'news_cover_default.jpg') {
+    // 2. If explicit thumbnail provided and we need an image
+    if ($media_type === 'image' && !empty($thumbnail_url) && $thumbnail_url !== 'news_default.jpg' && $thumbnail_url !== 'news_patna_flood.jpg' && $thumbnail_url !== 'news_cover_default.jpg') {
+        $ytThumbId = get_youtube_video_id($thumbnail_url);
+        if ($ytThumbId) {
+            return "https://img.youtube.com/vi/{$ytThumbId}/hqdefault.jpg";
+        }
+        if (strpos($thumbnail_url, 'http://') === 0 || strpos($thumbnail_url, 'https://') === 0) {
+            return $thumbnail_url;
+        }
+        if (file_exists(UPLOAD_DIR . $thumbnail_url)) {
+            return UPLOAD_URL . $thumbnail_url;
+        }
+    }
+
+    // 3. Default or empty media URL fallback
+    if (empty($url) || $url === 'news_default.jpg' || $url === 'news_cover_default.jpg' || $url === 'news_patna_flood.jpg') {
         if (!empty($content)) {
+            $ytContentId = get_youtube_video_id($content);
+            if ($ytContentId) {
+                return ($media_type === 'image') ? "https://img.youtube.com/vi/{$ytContentId}/hqdefault.jpg" : "https://www.youtube.com/watch?v={$ytContentId}";
+            }
             $extracted = extract_first_image_from_content($content);
-            if ($extracted && $extracted !== 'news_default.jpg' && $extracted !== 'news_patna_flood.jpg') {
+            if ($extracted && $extracted !== 'news_default.jpg' && $extracted !== 'news_patna_flood.jpg' && $extracted !== 'news_cover_default.jpg') {
                 return get_media_url($extracted, 'image');
             }
         }
-        if (file_exists(UPLOAD_DIR . 'news_cover_default.jpg')) {
-            return UPLOAD_URL . 'news_cover_default.jpg';
-        }
-        if (file_exists(__DIR__ . '/../assets/images/news_cover_default.jpg')) {
-            return ASSETS_URL . 'images/news_cover_default.jpg';
-        }
-        return ASSETS_URL . 'images/news_cover_default.jpg';
+        return file_exists(UPLOAD_DIR . 'news_cover_default.jpg') ? (UPLOAD_URL . 'news_cover_default.jpg') : (ASSETS_URL . 'images/news_cover_default.jpg');
     }
     
     // Auto-detect if media_type is mismatched with actual file extension
@@ -380,20 +393,20 @@ function get_media_url($url, $media_type = 'image', $content = '', $thumbnail_ur
     
     if ($media_type === 'video_upload') {
         // Video files (.mp4) cannot be rendered directly in <img> tags or og:image
-        if (!empty($thumbnail_url) && $thumbnail_url !== 'news_default.jpg' && $thumbnail_url !== 'news_patna_flood.jpg') {
+        if (!empty($thumbnail_url) && $thumbnail_url !== 'news_default.jpg' && $thumbnail_url !== 'news_patna_flood.jpg' && $thumbnail_url !== 'news_cover_default.jpg') {
             return get_media_url($thumbnail_url, 'image');
         }
-        // If content has an image, use it as thumbnail
         if (!empty($content)) {
+            $ytContentId = get_youtube_video_id($content);
+            if ($ytContentId) {
+                return "https://img.youtube.com/vi/{$ytContentId}/hqdefault.jpg";
+            }
             $extracted = extract_first_image_from_content($content);
-            if ($extracted && $extracted !== 'news_default.jpg' && $extracted !== 'news_patna_flood.jpg') {
+            if ($extracted && $extracted !== 'news_default.jpg' && $extracted !== 'news_patna_flood.jpg' && $extracted !== 'news_cover_default.jpg') {
                 return get_media_url($extracted, 'image');
             }
         }
-        if (file_exists(UPLOAD_DIR . 'news_cover_default.jpg')) {
-            return UPLOAD_URL . 'news_cover_default.jpg';
-        }
-        return ASSETS_URL . 'images/news_cover_default.jpg';
+        return file_exists(UPLOAD_DIR . 'news_cover_default.jpg') ? (UPLOAD_URL . 'news_cover_default.jpg') : (ASSETS_URL . 'images/news_cover_default.jpg');
     }
 
     if (strpos($url, 'http://') === 0 || strpos($url, 'https://') === 0) {
@@ -410,18 +423,19 @@ function get_media_url($url, $media_type = 'image', $content = '', $thumbnail_ur
         if (file_exists(UPLOAD_DIR . $stripped)) {
             return UPLOAD_URL . $stripped;
         }
-        return BASE_URL . '/' . $url;
     }
     if (strpos($url, 'assets/') === 0) {
         return BASE_URL . '/' . $url;
     }
-    if (preg_match('/\.(jpg|jpeg|png|webp|gif|svg|avif|jfif|bmp)$/i', $url) || strpos($url, 'news_') === 0 || strpos($url, 'content_') === 0 || strpos($url, 'thumb_') === 0) {
-        if (file_exists(UPLOAD_DIR . $url)) {
-            return UPLOAD_URL . $url;
+
+    // If local file is physically missing on disk, try content image before falling back
+    if (!empty($content)) {
+        $extracted = extract_first_image_from_content($content);
+        if ($extracted && $extracted !== $url && (strpos($extracted, 'http') === 0 || file_exists(UPLOAD_DIR . basename($extracted)))) {
+            return get_media_url($extracted, 'image');
         }
-        return UPLOAD_URL . $url;
     }
-    return ASSETS_URL . 'images/news_cover_default.jpg';
+    return file_exists(UPLOAD_DIR . 'news_cover_default.jpg') ? (UPLOAD_URL . 'news_cover_default.jpg') : (ASSETS_URL . 'images/news_cover_default.jpg');
 }
 
 /**
@@ -429,39 +443,52 @@ function get_media_url($url, $media_type = 'image', $content = '', $thumbnail_ur
  * Ideal for WhatsApp Link Previews (og:image) and Feed Cards
  */
 function get_article_thumbnail_url($article) {
-    if (!is_array($article)) return ASSETS_URL . 'images/news_cover_default.jpg';
+    $fallbackCover = file_exists(UPLOAD_DIR . 'news_cover_default.jpg') ? (UPLOAD_URL . 'news_cover_default.jpg') : (ASSETS_URL . 'images/news_cover_default.jpg');
+    if (!is_array($article)) return $fallbackCover;
 
-    // 1. Explicit Thumbnail (uploaded specifically for this story/video)
-    if (!empty($article['thumbnail_url']) && $article['thumbnail_url'] !== 'news_default.jpg' && $article['thumbnail_url'] !== 'news_patna_flood.jpg') {
-        return get_media_url($article['thumbnail_url'], 'image');
+    // 1. YouTube Video in media_url
+    $ytId = get_youtube_video_id($article['media_url'] ?? '');
+    if ($ytId) {
+        return "https://img.youtube.com/vi/{$ytId}/hqdefault.jpg";
     }
 
-    // 2. Direct Image Media
-    if (($article['media_type'] ?? '') === 'image' && !empty($article['media_url']) && $article['media_url'] !== 'news_default.jpg' && $article['media_url'] !== 'news_patna_flood.jpg') {
-        return get_media_url($article['media_url'], 'image');
-    }
-
-    // 3. YouTube Embed Thumbnail
-    if (($article['media_type'] ?? '') === 'video_embed' && !empty($article['media_url'])) {
-        $ytThumb = get_youtube_thumbnail($article['media_url']);
-        if ($ytThumb && strpos($ytThumb, 'logo.png') === false) {
-            return $ytThumb;
+    // 2. Explicit Dedicated Thumbnail (uploaded specifically for video/story)
+    if (!empty($article['thumbnail_url']) && $article['thumbnail_url'] !== 'news_default.jpg' && $article['thumbnail_url'] !== 'news_cover_default.jpg' && $article['thumbnail_url'] !== 'news_patna_flood.jpg') {
+        $ytThumbId = get_youtube_video_id($article['thumbnail_url']);
+        if ($ytThumbId) {
+            return "https://img.youtube.com/vi/{$ytThumbId}/hqdefault.jpg";
+        }
+        $resolvedThumb = get_media_url($article['thumbnail_url'], 'image');
+        if ($resolvedThumb && strpos($resolvedThumb, 'news_cover_default.jpg') === false) {
+            return $resolvedThumb;
         }
     }
 
-    // 4. First Embedded Content Image
+    // 3. Direct Image Media
+    if (($article['media_type'] ?? '') === 'image' && !empty($article['media_url']) && $article['media_url'] !== 'news_default.jpg' && $article['media_url'] !== 'news_cover_default.jpg' && $article['media_url'] !== 'news_patna_flood.jpg') {
+        $resolvedMedia = get_media_url($article['media_url'], 'image');
+        if ($resolvedMedia && strpos($resolvedMedia, 'news_cover_default.jpg') === false) {
+            return $resolvedMedia;
+        }
+    }
+
+    // 4. YouTube Embed in article content
     if (!empty($article['content'])) {
+        $ytContentId = get_youtube_video_id($article['content']);
+        if ($ytContentId) {
+            return "https://img.youtube.com/vi/{$ytContentId}/hqdefault.jpg";
+        }
         $contentImg = extract_first_image_from_content($article['content']);
-        if ($contentImg && $contentImg !== 'news_default.jpg' && $contentImg !== 'news_patna_flood.jpg') {
-            return get_media_url($contentImg, 'image');
+        if ($contentImg && $contentImg !== 'news_default.jpg' && $contentImg !== 'news_cover_default.jpg' && $contentImg !== 'news_patna_flood.jpg') {
+            $resolvedContentImg = get_media_url($contentImg, 'image');
+            if ($resolvedContentImg && strpos($resolvedContentImg, 'news_cover_default.jpg') === false) {
+                return $resolvedContentImg;
+            }
         }
     }
 
     // 5. Branded Default 1200x630 Card
-    if (file_exists(UPLOAD_DIR . 'news_cover_default.jpg')) {
-        return UPLOAD_URL . 'news_cover_default.jpg';
-    }
-    return ASSETS_URL . 'images/news_cover_default.jpg';
+    return $fallbackCover;
 }
 
 /**
@@ -731,4 +758,87 @@ function increment_views($pdo_conn = null, $news_id = 0) {
     } catch (PDOException $e) {
         // silent
     }
+}
+
+/**
+ * Auto-Heal News Articles: Slugs, Old Slugs & YouTube Thumbnails
+ */
+function auto_heal_news_articles($db = null) {
+    global $pdo;
+    $db = $db ?: $pdo;
+    if (!$db) return;
+
+    static $healed = false;
+    if ($healed) return;
+    $healed = true;
+
+    try {
+        // 1. Ensure old_slugs column exists in news table
+        $checkCol = $db->query("SHOW COLUMNS FROM `news` LIKE 'old_slugs'");
+        if ($checkCol && $checkCol->rowCount() === 0) {
+            $db->exec("ALTER TABLE `news` ADD COLUMN `old_slugs` TEXT NULL AFTER `slug`");
+        }
+
+        // 2. Fix ugly / numeric / timestamp slugs to clean transliterated slugs
+        $uglyStmt = $db->query("
+            SELECT id, headline, slug, old_slugs 
+            FROM `news` 
+            WHERE slug REGEXP '^(news-[0-9]+-[0-9]+|[0-9]+(-[0-9]+)?|mlc-[0-9]+)$'
+               OR slug IN ('25', '1-50', '1500-100', '6-gpf', 'ips-6')
+        ");
+        $uglyRows = $uglyStmt ? $uglyStmt->fetchAll() : [];
+        if (!empty($uglyRows) && function_exists('slugify')) {
+            $updSlug = $db->prepare("UPDATE `news` SET `slug` = :new_slug, `old_slugs` = :old_slugs WHERE `id` = :id");
+            foreach ($uglyRows as $ur) {
+                $cleanSlug = slugify($ur['headline']);
+                if (!empty($cleanSlug)) {
+                    // Check uniqueness
+                    $chk = $db->prepare("SELECT id FROM news WHERE slug = ? AND id != ?");
+                    $chk->execute([$cleanSlug, $ur['id']]);
+                    if ($chk->rowCount() > 0) {
+                        $cleanSlug .= '-' . $ur['id'];
+                    }
+                    $existingOld = array_filter(array_map('trim', explode(',', $ur['old_slugs'] ?? '')));
+                    if (!in_array($ur['slug'], $existingOld)) {
+                        $existingOld[] = $ur['slug'];
+                    }
+                    $updSlug->execute([
+                        ':new_slug' => $cleanSlug,
+                        ':old_slugs' => implode(',', $existingOld),
+                        ':id' => $ur['id']
+                    ]);
+                }
+            }
+        }
+
+        // 3. Auto-detect any YouTube video in media_url or content and set thumbnail_url
+        $ytCheckStmt = $db->query("
+            SELECT id, media_type, media_url, thumbnail_url, content 
+            FROM `news` 
+            WHERE media_url LIKE '%youtu%' OR content LIKE '%youtu%'
+        ");
+        $ytRows = $ytCheckStmt ? $ytCheckStmt->fetchAll() : [];
+        if (!empty($ytRows)) {
+            $updYt = $db->prepare("UPDATE `news` SET `media_type` = 'video_embed', `media_url` = :m_url, `thumbnail_url` = :t_url WHERE `id` = :id");
+            foreach ($ytRows as $yr) {
+                $ytId = get_youtube_video_id($yr['media_url']) ?: get_youtube_video_id($yr['content']);
+                if ($ytId) {
+                    $mUrl = "https://www.youtube.com/watch?v={$ytId}";
+                    $tUrl = "https://img.youtube.com/vi/{$ytId}/hqdefault.jpg";
+                    $updYt->execute([
+                        ':m_url' => $mUrl,
+                        ':t_url' => $tUrl,
+                        ':id' => $yr['id']
+                    ]);
+                }
+            }
+        }
+    } catch (Exception $e) {
+        // silent
+    }
+}
+
+// Run auto-heal on load if database is available
+if (isset($pdo) && $pdo) {
+    auto_heal_news_articles($pdo);
 }

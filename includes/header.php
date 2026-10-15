@@ -31,35 +31,47 @@ $currentCatSlug = $_GET['cat'] ?? ($_GET['slug'] ?? '');
   $ogDesc = isset($pageDescription) ? $pageDescription : ($siteSettings['tagline'] ?? 'दैनिक खबर: सच्ची और निष्पक्ष पत्रकारिता का सशक्त डिजिटल मंच');
   $ogUrl = isset($pageOgUrl) ? $pageOgUrl : ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]");
   $ogUrl = preg_replace('/^http:\/\/(dainikkhabr\.com)/i', 'https://$1', $ogUrl);
-  $ogType = isset($pageOgType) ? $pageOgType : 'website';
-  $ogImage = isset($pageOgImage) && !empty($pageOgImage) ? $pageOgImage : (rtrim(BASE_URL, '/') . '/assets/images/news_cover_default.jpg');
+  $ogType = isset($pageOgType) ? $pageOgType : 'article';
+  $defaultCover = file_exists(UPLOAD_DIR . 'news_cover_default.jpg') ? (UPLOAD_URL . 'news_cover_default.jpg') : (ASSETS_URL . 'images/news_cover_default.jpg');
+  $ogImage = isset($pageOgImage) && !empty($pageOgImage) ? $pageOgImage : $defaultCover;
   if (strpos($ogImage, '//') === 0) {
       $ogImage = 'https:' . $ogImage;
   } elseif (strpos($ogImage, 'http://') !== 0 && strpos($ogImage, 'https://') !== 0) {
       $ogImage = rtrim(BASE_URL, '/') . '/' . ltrim($ogImage, '/');
   }
   $ogImage = preg_replace('/^http:\/\/(dainikkhabr\.com)/i', 'https://$1', $ogImage);
-  if ((strpos($ogImage, 'news_default.jpg') !== false || strpos($ogImage, 'news_cover_default.jpg') !== false) && strpos($ogImage, '?') === false) {
-      $ogImage .= '?v=' . time();
-  }
-  $ogImageType = preg_match('/\.png(\?.*)?$/i', $ogImage) ? 'image/png' : (preg_match('/\.webp(\?.*)?$/i', $ogImage) ? 'image/webp' : 'image/jpeg');
 
-  // Detect accurate dimensions for WhatsApp / Facebook crawler
+  // Accurate dimensions & type for WhatsApp / Facebook / Twitter Link Preview Crawlers
   $ogImgWidth = 1200;
   $ogImgHeight = 630;
-  $localImgPath = null;
-  $parsedImgPath = parse_url($ogImage, PHP_URL_PATH);
-  if ($parsedImgPath) {
-      $imgBase = basename($parsedImgPath);
-      if (file_exists(UPLOAD_DIR . $imgBase)) {
-          $localImgPath = UPLOAD_DIR . $imgBase;
-      } elseif (file_exists(__DIR__ . '/../assets/images/' . $imgBase)) {
-          $localImgPath = __DIR__ . '/../assets/images/' . $imgBase;
+  $ogImageType = 'image/jpeg';
+
+  if (strpos($ogImage, 'img.youtube.com') !== false) {
+      // YouTube Video Thumbnail (High Definition)
+      $ogImgWidth = 480;
+      $ogImgHeight = 360;
+      $ogImageType = 'image/jpeg';
+  } else {
+      $localImgPath = null;
+      $parsedImgPath = parse_url($ogImage, PHP_URL_PATH);
+      if ($parsedImgPath) {
+          $imgBase = basename($parsedImgPath);
+          if (file_exists(UPLOAD_DIR . $imgBase)) {
+              $localImgPath = UPLOAD_DIR . $imgBase;
+          } elseif (file_exists(__DIR__ . '/../assets/images/' . $imgBase)) {
+              $localImgPath = __DIR__ . '/../assets/images/' . $imgBase;
+          }
       }
-  }
-  if ($localImgPath && ($dims = @getimagesize($localImgPath))) {
-      $ogImgWidth = $dims[0];
-      $ogImgHeight = $dims[1];
+      // If local image is physically missing on disk, fallback to valid default cover
+      if (!$localImgPath || !file_exists($localImgPath)) {
+          $ogImage = $defaultCover;
+          $localImgPath = UPLOAD_DIR . 'news_cover_default.jpg';
+      }
+      if ($localImgPath && file_exists($localImgPath) && ($dims = @getimagesize($localImgPath))) {
+          $ogImgWidth = $dims[0];
+          $ogImgHeight = $dims[1];
+          $ogImageType = $dims['mime'] ?? 'image/jpeg';
+      }
   }
 ?>
   <!-- Primary Meta Tags -->

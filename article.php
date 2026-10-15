@@ -13,27 +13,45 @@ if (empty($slug)) {
     exit;
 }
 
-// Robust Fetch Article by Slug OR by ID
-if (is_numeric($slug)) {
-    $stmt = $pdo->prepare("
-        SELECT n.*, c.name AS category_name, c.slug AS category_slug 
-        FROM news n 
-        JOIN categories c ON n.category_id = c.id 
-        WHERE n.slug = :slug OR n.id = :id_val
-        LIMIT 1
-    ");
-    $stmt->execute([':slug' => $slug, ':id_val' => (int)$slug]);
-} else {
-    $stmt = $pdo->prepare("
-        SELECT n.*, c.name AS category_name, c.slug AS category_slug 
-        FROM news n 
-        JOIN categories c ON n.category_id = c.id 
-        WHERE n.slug = :slug 
-        LIMIT 1
-    ");
-    $stmt->execute([':slug' => $slug]);
-}
+// 1. Try exact slug match
+$stmt = $pdo->prepare("
+    SELECT n.*, c.name AS category_name, c.slug AS category_slug 
+    FROM news n 
+    JOIN categories c ON n.category_id = c.id 
+    WHERE n.slug = :slug 
+    LIMIT 1
+");
+$stmt->execute([':slug' => $slug]);
 $article = $stmt->fetch();
+
+// 2. If not found by slug, check numeric ID
+if (!$article && is_numeric($slug)) {
+    $stmt = $pdo->prepare("
+        SELECT n.*, c.name AS category_name, c.slug AS category_slug 
+        FROM news n 
+        JOIN categories c ON n.category_id = c.id 
+        WHERE n.id = :id_val
+        LIMIT 1
+    ");
+    $stmt->execute([':id_val' => (int)$slug]);
+    $article = $stmt->fetch();
+}
+
+// 3. If not found, check old_slugs history (for backwards compatibility with previously shared links)
+if (!$article) {
+    try {
+        $stmt = $pdo->prepare("
+            SELECT n.*, c.name AS category_name, c.slug AS category_slug 
+            FROM news n 
+            JOIN categories c ON n.category_id = c.id 
+            WHERE FIND_IN_SET(:old_slug, REPLACE(n.old_slugs, ' ', ''))
+               OR n.old_slugs LIKE :like_slug
+            LIMIT 1
+        ");
+        $stmt->execute([':old_slug' => $slug, ':like_slug' => "%{$slug}%"]);
+        $article = $stmt->fetch();
+    } catch (Exception $e) {}
+}
 
 if (!$article) {
     http_response_code(404);
@@ -45,6 +63,14 @@ if (!$article) {
       <a href="' . BASE_URL . '/index.php" class="btn btn-primary" style="margin-top: 15px;">मुख्य पृष्ठ पर जाएं</a>
     </div>';
     require_once __DIR__ . '/includes/footer.php';
+    exit;
+}
+
+// 301 Permanent Redirect if accessed via legacy / numeric / old slug
+if ($slug !== $article['slug']) {
+    $canonicalUrl = get_article_url($article);
+    header("HTTP/1.1 301 Moved Permanently");
+    header("Location: " . $canonicalUrl);
     exit;
 }
 
@@ -66,7 +92,8 @@ if (!empty($articleImage)) {
     $articleImage = preg_replace('/^http:\/\/(dainikkhabr\.com)/i', 'https://$1', $articleImage);
     $pageOgImage = $articleImage;
 } else {
-    $pageOgImage = rtrim(BASE_URL, '/') . '/assets/images/news_cover_default.jpg';
+    $defaultCover = file_exists(UPLOAD_DIR . 'news_cover_default.jpg') ? (UPLOAD_URL . 'news_cover_default.jpg') : (ASSETS_URL . 'images/news_cover_default.jpg');
+    $pageOgImage = $defaultCover;
 }
 
 $pageOgUrl = get_article_url($article);
@@ -74,19 +101,10 @@ $pageOgType = 'article';
 $pageArticlePublished = $article['created_at'];
 $pageArticleSection = $article['category_name'];
 
-if ($article['media_type'] === 'video_embed') {
-    $pageOgType = 'video.other';
-    $pageOgVideo = $article['media_url'];
-} elseif ($article['media_type'] === 'video_upload') {
-    $vFile = $article['media_url'];
-    if (strpos($vFile, 'uploads/') === 0) {
-        $vFile = substr($vFile, 8);
-    }
-    $vExists = (strpos($vFile, 'http://') === 0 || strpos($vFile, 'https://') === 0) || file_exists(UPLOAD_DIR . $vFile) || file_exists(__DIR__ . '/uploads/' . $vFile);
-    if ($vExists) {
-        $pageOgType = 'video.other';
-        $pageOgVideo = (strpos($vFile, 'http') === 0) ? $vFile : (rtrim(UPLOAD_URL, '/') . '/' . ltrim($vFile, '/'));
-    }
+// If YouTube video, ensure YouTube thumbnail is used for WhatsApp
+$ytId = get_youtube_video_id($article['media_url'] ?? '') ?: get_youtube_video_id($article['content'] ?? '');
+if ($ytId) {
+    $pageOgImage = "https://img.youtube.com/vi/{$ytId}/hqdefault.jpg";
 }
 
 $currentUrl = $pageOgUrl;
