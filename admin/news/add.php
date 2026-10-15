@@ -352,7 +352,14 @@ $selected_lang = $_POST['language'] ?? 'hi';
                     <label style="display:block; font-weight:600; margin-bottom:6px; font-size:0.9rem;">
                         यूट्यूब / वीडियो लिंक (YouTube/Shorts/Embed URL)
                     </label>
-                    <input type="text" name="video_embed_url" value="<?php echo htmlspecialchars($_POST['video_embed_url'] ?? ''); ?>" placeholder="https://www.youtube.com/watch?v=... या https://youtu.be/... या Shorts लिंक" style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:6px; font-size:0.9rem;">
+                    <input type="text" id="videoEmbedInput" name="video_embed_url" oninput="updateYouTubePreview(this.value)" value="<?php echo htmlspecialchars($_POST['video_embed_url'] ?? ''); ?>" placeholder="https://www.youtube.com/watch?v=... या https://youtu.be/... या Shorts लिंक" style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:6px; font-size:0.9rem;">
+                    
+                    <div id="ytLivePreview" style="margin-top:10px; display:none; border-radius:8px; overflow:hidden; border:1px solid #bbf7d0; text-align:center;">
+                        <img id="ytThumbImg" src="" style="width:100%; max-height:160px; object-fit:cover; display:block;">
+                        <div style="font-size:0.8rem; color:#15803d; padding:6px; background:#f0fdf4; font-weight:700;">
+                            <i class="fa-solid fa-circle-check"></i> यूट्यूब थंबनेल लोड हुआ (व्हाट्सएप शेयर व होमपेज पर यही दिखेगा)
+                        </div>
+                    </div>
                 </div>
 
                 <hr style="margin: 20px 0; border: none; border-top: 1px solid var(--admin-border);">
@@ -530,6 +537,24 @@ function handleMediaTypeChange() {
         if (thumbGroup) thumbGroup.style.display = 'none';
         if (label) label.innerText = 'फ़ोटो फ़ाइल चुनें (Choose Photo File: JPG, PNG, WEBP)';
         if (veInput) veInput.value = '';
+    }
+}
+
+function getYouTubeId(url) {
+    if (!url) return null;
+    const match = url.match(/(?:youtube(?:-nocookie)?\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?|shorts|live)\/|.*[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/i);
+    return match ? match[1] : null;
+}
+
+function updateYouTubePreview(url) {
+    const box = document.getElementById('ytLivePreview');
+    const img = document.getElementById('ytThumbImg');
+    const ytId = getYouTubeId(url);
+    if (ytId && box && img) {
+        img.src = 'https://img.youtube.com/vi/' + ytId + '/hqdefault.jpg';
+        box.style.display = 'block';
+    } else if (box) {
+        box.style.display = 'none';
     }
 }
 

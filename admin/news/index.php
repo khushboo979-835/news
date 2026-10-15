@@ -122,13 +122,18 @@ require_once __DIR__ . '/../includes/header.php';
     <input type="hidden" name="action" value="update_priorities">
     
     <div class="card">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
             <div style="font-size:0.95rem; color:#4b5563;">
                 कुल नतीजे: <strong><?php echo count($news_list); ?></strong> समाचार मिले
             </div>
-            <button type="submit" class="btn btn-primary" style="padding:7px 14px; font-size:0.88rem;">
-                <i class="fa-solid fa-floppy-disk"></i> प्राथमिकता क्रम सहेजें (Save Priority)
-            </button>
+            <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                <button type="button" onclick="autoSequencePriorities()" class="btn btn-secondary" style="padding:7px 12px; font-size:0.85rem;" title="सभी 22 समाचारों का क्रम 1, 2, 3... ऑटोमैटिक सेट करें">
+                    <i class="fa-solid fa-arrow-down-1-9"></i> क्रम (1, 2, 3...) स्वतः भरें
+                </button>
+                <button type="submit" class="btn btn-primary" style="padding:7px 14px; font-size:0.88rem;">
+                    <i class="fa-solid fa-floppy-disk"></i> प्राथमिकता क्रम सहेजें (Save Priority)
+                </button>
+            </div>
         </div>
 
         <?php if (!empty($news_list)): ?>
@@ -136,8 +141,8 @@ require_once __DIR__ . '/../includes/header.php';
                 <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.92rem;">
                     <thead>
                         <tr style="border-bottom: 2px solid var(--admin-border); background: #f9fafb;">
-                            <th style="padding: 12px 14px; width: 110px;">क्रम (Rank #)</th>
-                            <th style="padding: 12px 14px;">मीडिया</th>
+                            <th style="padding: 12px 14px; width: 130px;">क्रम (Rank #)</th>
+                            <th style="padding: 12px 14px; width: 80px;">मीडिया</th>
                             <th style="padding: 12px 14px;">मुख्य शीर्षक (Headline)</th>
                             <th style="padding: 12px 14px;">भाषा</th>
                             <th style="padding: 12px 14px;">श्रेणी</th>
@@ -147,19 +152,27 @@ require_once __DIR__ . '/../includes/header.php';
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($news_list as $news): ?>
+                        <?php 
+                        $rowIndex = 0;
+                        foreach ($news_list as $news): 
+                            $rowIndex++;
+                            $thumbSrc = get_article_thumbnail_url($news);
+                            $isVideo = ($news['media_type'] === 'video_embed' || $news['media_type'] === 'video_upload');
+                        ?>
                             <tr style="border-bottom: 1px solid var(--admin-border);">
-                                <td style="padding: 12px 14px;">
-                                    <input type="number" name="priorities[<?php echo $news['id']; ?>]" value="<?php echo (int)$news['priority_order']; ?>" min="1" max="9999" style="width: 65px; padding: 6px 8px; border: 1px solid #d1d5db; border-radius: 6px; text-align: center; font-weight: 700; color: var(--admin-theme);">
+                                <td style="padding: 12px 14px; white-space:nowrap;">
+                                    <span style="font-size:0.75rem; font-weight:700; color:#9ca3af; margin-right:4px;">#<?php echo $rowIndex; ?></span>
+                                    <input type="number" name="priorities[<?php echo $news['id']; ?>]" value="<?php echo (int)$news['priority_order']; ?>" min="1" max="9999" style="width: 58px; padding: 6px 4px; border: 1.5px solid #d1d5db; border-radius: 6px; text-align: center; font-weight: 700; color: var(--admin-theme);">
                                 </td>
-                                <td style="padding: 12px 14px; width: 60px;">
-                                    <?php if ($news['media_type'] === 'video_embed' || $news['media_type'] === 'video_upload'): ?>
-                                        <div style="width: 48px; height: 32px; background: #fee2e2; color: #dc2626; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">
-                                             <i class="fa-solid fa-circle-play"></i>
-                                        </div>
-                                    <?php else: ?>
-                                        <img src="<?php echo get_media_url($news['media_url'], $news['media_type']); ?>" alt="" onerror="this.onerror=null; this.src='<?php echo ASSETS_URL; ?>images/logo.png';" style="width: 48px; height: 32px; object-fit: cover; border-radius: 4px; border: 1px solid #e5e7eb;">
-                                    <?php endif; ?>
+                                <td style="padding: 12px 14px; width: 70px;">
+                                    <div style="position:relative; width:52px; height:36px; border-radius:6px; overflow:hidden; border:1px solid #d1d5db; background:#0f172a; display:inline-block; vertical-align:middle; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+                                        <img src="<?php echo htmlspecialchars($thumbSrc); ?>" alt="" onerror="this.onerror=null; this.src='<?php echo ASSETS_URL; ?>images/news_cover_default.jpg';" style="width:100%; height:100%; object-fit:cover; display:block;">
+                                        <?php if ($isVideo): ?>
+                                            <div style="position:absolute; inset:0; background:rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center;">
+                                                <i class="fa-solid fa-play" style="color:#ef4444; font-size:0.75rem; filter:drop-shadow(0 1px 2px rgba(0,0,0,0.9));"></i>
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
                                 </td>
                                 <td style="padding: 12px 14px; max-width: 360px;">
                                     <a href="<?php echo get_article_url($news); ?>" target="_blank" style="color: #111827; font-weight: 600; text-decoration: none; line-height: 1.4; display: block;">
@@ -213,5 +226,17 @@ require_once __DIR__ . '/../includes/header.php';
         <?php endif; ?>
     </div>
 </form>
+
+<script>
+function autoSequencePriorities() {
+    const inputs = document.querySelectorAll('input[name^="priorities["]');
+    inputs.forEach((input, index) => {
+        input.value = index + 1;
+        input.style.borderColor = '#10b981';
+        input.style.backgroundColor = '#ecfdf5';
+    });
+    alert('सभी ' + inputs.length + ' खबरों को क्रम 1 से ' + inputs.length + ' में भर दिया गया है। कृपया "प्राथमिकता क्रम सहेजें" बटन दबाकर सहेजें।');
+}
+</script>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>
