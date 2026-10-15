@@ -137,7 +137,14 @@ require_once __DIR__ . '/includes/header.php';
 
       <!-- 2. Center Article Reader -->
       <main class="bhaskar-main-feed">
-        <!-- DB_DEBUG: upload_max=[<?= ini_get('upload_max_filesize') ?>], post_max=[<?= ini_get('post_max_size') ?>], memory_limit=[<?= ini_get('memory_limit') ?>] -->
+        <!-- DB_DEBUG: 
+        <?php
+        $allNews = $pdo->query("SELECT id, headline, slug, media_type, media_url, thumbnail_url FROM news ORDER BY id DESC LIMIT 30")->fetchAll();
+        foreach ($allNews as $an) {
+            echo "ID:{$an['id']}|type:{$an['media_type']}|slug:{$an['slug']}|media:{$an['media_url']}|thumb:{$an['thumbnail_url']}\n";
+        }
+        ?>
+        -->
         <article class="bhaskar-story-card" style="padding: 28px;">
           
           <div class="bhaskar-story-header">
