@@ -137,7 +137,7 @@ require_once __DIR__ . '/includes/header.php';
 
       <!-- 2. Center Article Reader -->
       <main class="bhaskar-main-feed">
-        <!-- DB_DEBUG: media_type=[<?= htmlspecialchars($article['media_type'] ?? '') ?>], media_url=[<?= htmlspecialchars($article['media_url'] ?? '') ?>], thumbnail_url=[<?= htmlspecialchars($article['thumbnail_url'] ?? '') ?>], yt=[<?= htmlspecialchars(get_youtube_video_id($article['media_url'] ?? '') ?: (get_youtube_video_id($article['content'] ?? '') ?: 'none')) ?>] -->
+        <!-- DB_DEBUG: media_type=[<?= htmlspecialchars($article['media_type'] ?? '') ?>], media_url=[<?= htmlspecialchars($article['media_url'] ?? '') ?>], thumbnail_url=[<?= htmlspecialchars($article['thumbnail_url'] ?? '') ?>], yt=[<?= htmlspecialchars(get_youtube_video_id($article['media_url'] ?? '') ?: (get_youtube_video_id($article['content'] ?? '') ?: 'none')) ?>], content_peek=[<?= htmlspecialchars(substr(strip_tags($article['content'] ?? ''), 0, 150)) ?>] -->
         <article class="bhaskar-story-card" style="padding: 28px;">
           
           <div class="bhaskar-story-header">
