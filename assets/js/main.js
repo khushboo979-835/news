@@ -23,7 +23,10 @@ function closeSearchModal() {
 // Universal WhatsApp & Social Share (Clean Dainik Bhaskar Style)
 function handleRichMediaShare(shareBtn) {
   const title = (shareBtn.getAttribute('data-title') || document.title).trim();
-  const url = shareBtn.getAttribute('data-url') || window.location.href;
+  let url = shareBtn.getAttribute('data-url') || window.location.href;
+  if (!url.includes('ref=')) {
+    url += (url.includes('?') ? '&' : '?') + 'ref=wa';
+  }
 
   // Clean professional message format matching Dainik Bhaskar: *Headline* + URL
   const shareMessage = `*${title}*\n\n${url}`;

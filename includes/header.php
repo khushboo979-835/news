@@ -50,7 +50,7 @@ $currentCatSlug = $_GET['cat'] ?? ($_GET['slug'] ?? '');
       && strpos($ogImage, 'dainikkhabr.com') === false 
       && strpos($ogImage, 'localhost') === false;
 
-  if (strpos($ogImage, 'share_card.php') !== false) {
+  if (strpos($ogImage, 'share_card.php') !== false || strpos($ogImage, 'share-card') !== false) {
       // Dynamic WhatsApp / Social Share Card (Exact 1200x630 landscape card)
       $ogImgWidth = 1200;
       $ogImgHeight = 630;
@@ -137,6 +137,7 @@ $currentCatSlug = $_GET['cat'] ?? ($_GET['slug'] ?? '');
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@dainikkhabr">
   <meta name="twitter:url" content="<?= htmlspecialchars($ogUrl) ?>">
   <meta name="twitter:title" content="<?= htmlspecialchars($ogTitle) ?>">
   <meta name="twitter:description" content="<?= htmlspecialchars($ogDesc) ?>">

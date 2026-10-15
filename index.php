@@ -19,7 +19,7 @@ $heroStory = !empty($allStories) ? $allStories[0] : null;
 $feedStories = !empty($allStories) ? array_slice($allStories, 1) : [];
 
 $pageOgUrl = rtrim(BASE_URL, '/') . '/';
-$pageOgImage = rtrim(BASE_URL, '/') . '/share_card.php';
+$pageOgImage = rtrim(BASE_URL, '/') . '/share-card/default.jpg';
 
 // Fetch Sidebar Ad & Trending Stories
 $sidebarAd = get_ad_by_position($pdo, 'sidebar_banner');
@@ -56,7 +56,8 @@ require_once __DIR__ . '/includes/header.php';
 
         <?php if ($heroStory): 
           $heroUrl = get_article_url($heroStory);
-          $heroShareText = '*' . trim($heroStory['headline']) . "*\n\n" . $heroUrl;
+          $heroShareUrl = $heroUrl . (strpos($heroUrl, '?') !== false ? '&ref=wa' : '?ref=wa');
+          $heroShareText = '*' . trim($heroStory['headline']) . "*\n\n" . $heroShareUrl;
           $shareMsg = urlencode($heroShareText);
         ?>
           <!-- HERO CARD 1: Big Signature Card (Exact Bhaskar Screenshot 1) -->
@@ -103,7 +104,7 @@ require_once __DIR__ . '/includes/header.php';
                  rel="noopener" 
                  class="bhaskar-share-btn js-share-trigger"
                  data-title="<?= htmlspecialchars($heroStory['headline']) ?>"
-                 data-url="<?= htmlspecialchars($heroUrl) ?>"
+                 data-url="<?= htmlspecialchars($heroShareUrl) ?>"
                  title="WhatsApp पर शेयर करें">
                 <i class="fa-brands fa-whatsapp"></i> <span>शेयर</span>
               </a>
@@ -119,7 +120,8 @@ require_once __DIR__ . '/includes/header.php';
           foreach ($feedStories as $story): 
             $cardCounter++;
             $storyUrl = get_article_url($story);
-            $feedShareText = '*' . trim($story['headline']) . "*\n\n" . $storyUrl;
+            $storyShareUrl = $storyUrl . (strpos($storyUrl, '?') !== false ? '&ref=wa' : '?ref=wa');
+            $feedShareText = '*' . trim($story['headline']) . "*\n\n" . $storyShareUrl;
             $storyShare = urlencode($feedShareText);
           ?>
             
@@ -160,7 +162,7 @@ require_once __DIR__ . '/includes/header.php';
                      rel="noopener" 
                      class="bhaskar-share-btn js-share-trigger"
                      data-title="<?= htmlspecialchars($story['headline']) ?>"
-                     data-url="<?= htmlspecialchars($storyUrl) ?>"
+                     data-url="<?= htmlspecialchars($storyShareUrl) ?>"
                      title="WhatsApp पर शेयर करें">
                     <i class="fa-brands fa-whatsapp"></i> <span>शेयर</span>
                   </a>

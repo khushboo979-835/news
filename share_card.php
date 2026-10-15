@@ -35,7 +35,7 @@ if (!is_dir($cardsDir)) {
     @mkdir($cardsDir, 0777, true);
 }
 
-$cacheKey = $article ? ('card_' . $article['id'] . '_' . md5(($article['media_url'] ?? '') . ($article['thumbnail_url'] ?? '') . ($article['headline'] ?? '')) . '.jpg') : 'card_default.jpg';
+$cacheKey = $article ? ('card_' . (int)$article['id'] . '.jpg') : 'card_default.jpg';
 $cacheFile = $cardsDir . $cacheKey;
 
 // If cached version exists and is fresh, serve immediately
@@ -221,12 +221,12 @@ if (file_exists($footerPath)) {
 }
 
 // 6. Cache to disk
-@imagejpeg($canvas, $cacheFile, 90);
+@imagejpeg($canvas, $cacheFile, 85);
 
 // 7. Output image to client / scraper
 header('Content-Type: image/jpeg');
 header('Cache-Control: public, max-age=31536000, immutable');
 header('X-Card-Cache: MISS');
-imagejpeg($canvas, null, 90);
+imagejpeg($canvas, null, 85);
 imagedestroy($canvas);
 exit;

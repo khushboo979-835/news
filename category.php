@@ -28,9 +28,9 @@ $categoryNews = get_news_by_category_slug($pdo, $category['slug'], 12);
 
 $pageOgUrl = get_category_url($category['slug'] ?? 'top-news');
 if (!empty($categoryNews) && !empty($categoryNews[0]['id'])) {
-    $pageOgImage = rtrim(BASE_URL, '/') . '/share_card.php?id=' . (int)$categoryNews[0]['id'];
+    $pageOgImage = rtrim(BASE_URL, '/') . '/share-card/' . (int)$categoryNews[0]['id'] . '.jpg';
 } else {
-    $pageOgImage = rtrim(BASE_URL, '/') . '/share_card.php';
+    $pageOgImage = rtrim(BASE_URL, '/') . '/share-card/default.jpg';
 }
 
 // Fetch Sidebar Ad & Trending
@@ -95,7 +95,8 @@ require_once __DIR__ . '/includes/header.php';
                   </div>
 
                   <?php
-                  $catShareText = '*' . trim($story['headline']) . "*\n\n" . $storyUrl;
+                  $storyShareUrl = $storyUrl . (strpos($storyUrl, '?') !== false ? '&ref=wa' : '?ref=wa');
+                  $catShareText = '*' . trim($story['headline']) . "*\n\n" . $storyShareUrl;
                   ?>
                   <div class="bhaskar-share-btns">
                     <a href="https://api.whatsapp.com/send?text=<?= urlencode($catShareText) ?>" 
@@ -103,7 +104,7 @@ require_once __DIR__ . '/includes/header.php';
                        rel="noopener" 
                        class="share-icon-btn whatsapp js-share-trigger"
                        data-title="<?= htmlspecialchars($story['headline']) ?>"
-                       data-url="<?= htmlspecialchars($storyUrl) ?>"
+                       data-url="<?= htmlspecialchars($storyShareUrl) ?>"
                        title="WhatsApp पर शेयर करें">
                       <i class="fa-brands fa-whatsapp"></i>
                     </a>

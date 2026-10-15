@@ -716,7 +716,10 @@ function render_media_container($mediaType, $mediaUrl, $headline = '', $content 
             $videoSrc = htmlspecialchars($mediaUrl, ENT_QUOTES, 'UTF-8');
             return '
             <div class="bhaskar-video-wrapper" style="width:100%; background:#0f172a; border-radius:10px; overflow:hidden; margin:16px 0; text-align:center; box-shadow:0 4px 15px rgba(0,0,0,0.12);">
-                <video src="' . $videoSrc . '"' . $posterAttr . ' class="bhaskar-media-elem" controls playsinline preload="metadata" style="width:100%; max-height:520px; display:block; margin:0 auto; outline:none;" onerror="this.parentElement.innerHTML=\'<div style=\\\'padding:24px 16px;text-align:center;background:#f8fafc;border-radius:10px;border:1px solid #f1f5f9;\\\'><img src=\\\'' . $fallbackLogo . '\\\' style=\\\'max-height:140px;margin:0 auto 12px;display:block;\\\'><span style=\\\'display:inline-block;font-size:12px;font-weight:700;color:#e53935;background:#fee2e2;padding:4px 10px;border-radius:20px;\\\'>दैनिक खबर</span></div>\';"></video>
+                <video' . $posterAttr . ' class="bhaskar-media-elem" controls playsinline webkit-playsinline preload="metadata" style="width:100%; max-height:520px; display:block; margin:0 auto; outline:none;">
+                    <source src="' . $videoSrc . '" type="video/mp4">
+                    आपका ब्राउज़र वीडियो चलाने में असमर्थ है।
+                </video>
             </div>';
         } else {
             $embedUrl = htmlspecialchars($mediaUrl, ENT_QUOTES, 'UTF-8');
@@ -734,7 +737,10 @@ function render_media_container($mediaType, $mediaUrl, $headline = '', $content 
         
         return '
         <div class="bhaskar-video-container js-video-player-wrap" style="position:relative; width:100%; border-radius:10px; overflow:hidden; background:#000000; margin:16px 0; box-shadow:0 4px 16px rgba(0,0,0,0.15); text-align:center;">
-            <video src="' . htmlspecialchars($videoSrc) . '"' . $posterAttr . ' class="bhaskar-media-elem bhaskar-video-elem" controls playsinline preload="metadata" style="width:100%; max-height:520px; display:block; margin:0 auto; outline:none; background:#000000;" onerror="this.parentElement.innerHTML=\'<div style=\\\'padding:24px 16px;text-align:center;background:#f8fafc;border-radius:10px;border:1px solid #f1f5f9;\\\'><img src=\\\'' . $fallbackLogo . '\\\' style=\\\'max-height:140px;margin:0 auto 12px;display:block;\\\'><span style=\\\'display:inline-block;font-size:12px;font-weight:700;color:#e53935;background:#fee2e2;padding:4px 10px;border-radius:20px;\\\'>दैनिक खबर</span></div>\';"></video>
+            <video' . $posterAttr . ' class="bhaskar-media-elem bhaskar-video-elem" controls playsinline webkit-playsinline preload="metadata" style="width:100%; max-height:520px; display:block; margin:0 auto; outline:none; background:#000000;">
+                <source src="' . htmlspecialchars($videoSrc) . '" type="video/mp4">
+                आपका ब्राउज़र वीडियो चलाने में असमर्थ है।
+            </video>
             <div class="bhaskar-video-play-overlay js-video-play-btn" style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; background:rgba(0,0,0,0.28); cursor:pointer; z-index:3; transition:all 0.25s ease;" title="वीडियो देखने के लिए टच करें">
                 <div style="width:68px; height:68px; border-radius:50%; background:rgba(229,57,53,0.94); border:3px solid #ffffff; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 24px rgba(0,0,0,0.6); transition:transform 0.2s;">
                     <i class="fa-solid fa-play" style="color:#ffffff; font-size:1.7rem; margin-left:4px;"></i>

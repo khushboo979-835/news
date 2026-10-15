@@ -82,8 +82,8 @@ $pageTitle = $article['headline'];
 $pageDescription = !empty($article['subheadline']) ? $article['subheadline'] : get_excerpt($article['content'], 160);
 
 // Resolve Article Media Image URL for Open Graph & WhatsApp / Facebook Link Sharing
-// Dynamic 1200x630 Card generator matching Dainik Bhaskar layout with branded footer
-$pageOgImage = rtrim(BASE_URL, '/') . '/share_card.php?id=' . (int)$article['id'];
+// Clean static 1200x630 Card URL matching Dainik Bhaskar layout with branded footer
+$pageOgImage = rtrim(BASE_URL, '/') . '/share-card/' . (int)$article['id'] . '.jpg';
 $pageOgUrl = get_article_url($article);
 $pageOgType = 'article';
 $pageArticlePublished = $article['created_at'];
@@ -99,6 +99,7 @@ if ($ytId) {
 }
 
 $currentUrl = $pageOgUrl;
+$waShareUrl = $currentUrl . (strpos($currentUrl, '?') !== false ? '&ref=wa' : '?ref=wa');
 
 // Related Articles (Category first, then general latest so reader always has 4 varied stories)
 $relatedStmt = $pdo->prepare("
@@ -213,12 +214,12 @@ require_once __DIR__ . '/includes/header.php';
 
               <!-- Top Social Share Bar -->
               <div class="db-share-actions">
-                <a href="https://api.whatsapp.com/send?text=<?= urlencode('*' . trim($article['headline']) . "*\n\n" . $currentUrl) ?>" 
+                <a href="https://api.whatsapp.com/send?text=<?= urlencode('*' . trim($article['headline']) . "*\n\n" . $waShareUrl) ?>" 
                    target="_blank" 
                    rel="noopener" 
                    class="db-share-btn db-wa js-share-trigger" 
                    data-title="<?= htmlspecialchars($article['headline']) ?>" 
-                   data-url="<?= htmlspecialchars($currentUrl) ?>" 
+                   data-url="<?= htmlspecialchars($waShareUrl) ?>" 
                    title="WhatsApp पर शेयर करें">
                   <i class="fa-brands fa-whatsapp"></i>
                 </a>
@@ -265,12 +266,12 @@ require_once __DIR__ . '/includes/header.php';
               <i class="fa-solid fa-share-nodes"></i> यह खबर अपने दोस्तों और परिजनों के साथ साझा करें:
             </div>
             <div class="db-bottom-share-btns">
-              <a href="https://api.whatsapp.com/send?text=<?= urlencode('*' . trim($article['headline']) . "*\n\n" . $currentUrl) ?>" 
+              <a href="https://api.whatsapp.com/send?text=<?= urlencode('*' . trim($article['headline']) . "*\n\n" . $waShareUrl) ?>" 
                  target="_blank" 
                  rel="noopener" 
                  class="db-bottom-btn db-btn-wa js-share-trigger" 
                  data-title="<?= htmlspecialchars($article['headline']) ?>" 
-                 data-url="<?= htmlspecialchars($currentUrl) ?>">
+                 data-url="<?= htmlspecialchars($waShareUrl) ?>">
                 <i class="fa-brands fa-whatsapp"></i> WhatsApp
               </a>
               <a href="https://www.facebook.com/sharer/sharer.php?u=<?= urlencode($currentUrl) ?>" target="_blank" rel="noopener" class="db-bottom-btn db-btn-fb">

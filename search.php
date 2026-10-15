@@ -26,7 +26,7 @@ if (!empty($query)) {
 $pageTitle = !empty($query) ? 'खोज परिणाम: ' . htmlspecialchars($query) : 'समाचार खोजें';
 $pageDescription = 'दैनिक खबर: ताज़ा एवं प्रमुख समाचार खोजें।';
 $pageOgUrl = BASE_URL . '/search.php' . (!empty($query) ? '?q=' . urlencode($query) : '');
-$pageOgImage = ASSETS_URL . 'images/logo.png';
+$pageOgImage = rtrim(BASE_URL, '/') . '/share-card/default.jpg';
 
 $sidebarAd = get_ad_by_position($pdo, 'sidebar_banner');
 $trendingArticles = get_trending_news($pdo, 5);
@@ -96,7 +96,8 @@ require_once __DIR__ . '/includes/header.php';
                   </div>
 
                   <?php
-                  $searchShareText = '*' . trim($story['headline']) . "*\n\n" . $storyUrl;
+                  $searchShareUrl = $storyUrl . (strpos($storyUrl, '?') !== false ? '&ref=wa' : '?ref=wa');
+                  $searchShareText = '*' . trim($story['headline']) . "*\n\n" . $searchShareUrl;
                   ?>
                   <div class="bhaskar-share-btns">
                     <a href="https://api.whatsapp.com/send?text=<?= urlencode($searchShareText) ?>" 
@@ -104,7 +105,7 @@ require_once __DIR__ . '/includes/header.php';
                        rel="noopener" 
                        class="share-icon-btn whatsapp js-share-trigger" 
                        data-title="<?= htmlspecialchars($story['headline']) ?>" 
-                       data-url="<?= htmlspecialchars($storyUrl) ?>" 
+                       data-url="<?= htmlspecialchars($searchShareUrl) ?>" 
                        title="WhatsApp पर शेयर करें">
                       <i class="fa-brands fa-whatsapp"></i>
                     </a>
