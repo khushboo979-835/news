@@ -265,7 +265,7 @@ require_once __DIR__ . '/includes/header.php';
 
           <!-- Rich Article Body -->
           <div class="article-rich-body db-article-body">
-            <?= $article['content'] ?>
+            <?= clean_article_content_html($article['content']) ?>
           </div>
 
           <!-- Bottom Share & Engagement Card -->

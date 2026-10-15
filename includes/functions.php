@@ -631,6 +631,22 @@ function get_excerpt($text, $limit = 120) {
 }
 
 /**
+ * Clean WYSIWYG Article Content
+ * Removes redundant empty paragraphs like <p><br></p>, <p>&nbsp;</p>, <div><br></div>
+ * and excessive line breaks that cause huge vertical gaps in mobile reading.
+ */
+function clean_article_content_html($html) {
+    if (empty($html)) return '';
+    // 1. Remove empty paragraphs with br or &nbsp; or unicode spaces
+    $html = preg_replace('/<p[^>]*>\s*(?:<br\s*\/?>|&nbsp;|\x{00a0}|\s)*<\/p>/iu', '', $html);
+    // 2. Remove empty divs
+    $html = preg_replace('/<div[^>]*>\s*(?:<br\s*\/?>|&nbsp;|\x{00a0}|\s)*<\/div>/iu', '', $html);
+    // 3. Collapse multiple line breaks into a single line break
+    $html = preg_replace('/(?:<br\s*\/?>\s*){2,}/i', '<br>', $html);
+    return trim($html);
+}
+
+/**
  * Render Aspect-Ratio-Safe Media Container (Zero Distortion / Zero Cropping)
  */
 function render_media_container($mediaType, $mediaUrl, $headline = '', $content = '', $thumbnailUrl = '') {

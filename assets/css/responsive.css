@@ -574,28 +574,42 @@ html, body {
   }
 
   .db-wa-channel-box {
-    padding: 10px 12px !important;
+    padding: 9px 12px !important;
     flex-direction: column !important;
     align-items: stretch !important;
-    gap: 10px !important;
-    margin: 18px 0 !important;
+    gap: 8px !important;
+    margin: 12px 0 14px 0 !important;
   }
 
   .db-wa-join-pill {
     width: 100% !important;
     justify-content: center !important;
-    padding: 8px 12px !important;
+    padding: 7px 12px !important;
     font-size: 0.84rem !important;
   }
 
   .db-article-body {
-    font-size: 1.08rem !important;
-    line-height: 1.82 !important;
-    margin-top: 16px !important;
+    font-size: 1.05rem !important;
+    line-height: 1.72 !important;
+    margin-top: 12px !important;
   }
 
   .db-article-body p {
-    margin-bottom: 16px !important;
+    margin-bottom: 10px !important;
+    line-height: 1.72 !important;
+  }
+
+  .db-article-body p:empty,
+  .db-article-body p:has(> br:only-child),
+  .db-article-body div:empty,
+  .db-article-body div:has(> br:only-child) {
+    display: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .db-article-body br + br {
+    display: none !important;
   }
 
   .db-bottom-share-card {
