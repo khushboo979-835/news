@@ -138,6 +138,11 @@ $currentCatParam = $_GET['cat'] ?? '';
 $isWatchTabActive = ($currentPageScript === 'category.php' && $currentCatParam === 'video');
 $isHomeTabActive = ($currentPageScript === 'index.php' || empty($currentPageScript) || $currentPageScript === '') && !$isWatchTabActive;
 ?>
+<!-- Floating App Pill (Exact Dainik Bhaskar Reference Images 3, 4, 5) -->
+<a href="<?php echo SITE_URL; ?>/" class="bhaskar-floating-app-pill mobile-only" title="ऐप खोलें">
+    <span>ऐप खोलें</span>
+</a>
+
 <nav class="bhaskar-mobile-bottom-nav">
     <a href="<?php echo SITE_URL; ?>/" class="bhaskar-bottom-nav-item <?php echo $isHomeTabActive ? 'active' : ''; ?>">
         <i class="fa-solid fa-house"></i>

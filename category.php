@@ -84,15 +84,9 @@ require_once __DIR__ . '/includes/header.php';
               <article class="bhaskar-card-hero">
                 <h2 class="bhaskar-hero-headline">
                   <a href="<?= $storyUrl ?>">
-                    <?= htmlspecialchars($story['headline']) ?>
+                    <?= render_bhaskar_headline_html($story['headline'], $category['name'], 0) ?>
                   </a>
                 </h2>
-
-                <?php if (!empty($story['subheadline'])): ?>
-                  <p class="bhaskar-hero-sub">
-                    <?= htmlspecialchars($story['subheadline']) ?>
-                  </p>
-                <?php endif; ?>
 
                 <div class="bhaskar-hero-media">
                   <?php if ($isStoryVideo): ?>
@@ -105,9 +99,9 @@ require_once __DIR__ . '/includes/header.php';
                 </div>
 
                 <div class="bhaskar-card-bottom-bar">
-                  <span class="bhaskar-time-ago" style="font-size:0.8rem; color:#64748b;">
-                    <i class="fa-regular fa-clock"></i> <?= time_ago_hindi($story['created_at']) ?>
-                  </span>
+                  <a href="<?= get_category_url($category['slug'] ?? 'top-news') ?>" class="bhaskar-tag-pill">
+                    <?= htmlspecialchars($category['name'] ?? 'समाचार') ?> &gt;
+                  </a>
 
                   <a href="https://api.whatsapp.com/send?text=<?= urlencode($catShareText) ?>" 
                      target="_blank" 
@@ -127,20 +121,14 @@ require_once __DIR__ . '/includes/header.php';
                 <div class="bhaskar-split-left">
                   <h3 class="bhaskar-split-headline">
                     <a href="<?= $storyUrl ?>">
-                      <?= htmlspecialchars($story['headline']) ?>
+                      <?= render_bhaskar_headline_html($story['headline'], $category['name'], $catIndex) ?>
                     </a>
                   </h3>
-                  
-                  <?php if (!empty($story['subheadline'])): ?>
-                    <p class="bhaskar-split-sub">
-                      <?= htmlspecialchars(mb_substr($story['subheadline'], 0, 75)) . (mb_strlen($story['subheadline']) > 75 ? '...' : '') ?>
-                    </p>
-                  <?php endif; ?>
 
                   <div class="bhaskar-card-bottom-bar">
-                    <span class="bhaskar-time-ago" style="font-size:0.75rem; color:#64748b;">
-                      <i class="fa-regular fa-clock"></i> <?= time_ago_hindi($story['created_at']) ?>
-                    </span>
+                    <a href="<?= get_category_url($category['slug'] ?? 'top-news') ?>" class="bhaskar-tag-pill">
+                      <?= htmlspecialchars($category['name'] ?? 'समाचार') ?> &gt;
+                    </a>
 
                     <a href="https://api.whatsapp.com/send?text=<?= urlencode($catShareText) ?>" 
                        target="_blank" 

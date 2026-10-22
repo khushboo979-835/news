@@ -174,16 +174,19 @@ $currentCatSlug = $_GET['cat'] ?? ($_GET['slug'] ?? '');
 <body>
 
   <!-- =========================================================================
-       1. Top Horizontal Header (Exact Bhaskar Top Bar)
+       1. Top Date Line & Header Bar (Exact Dainik Bhaskar Reference Images 3, 4, 5)
        ========================================================================= -->
+  <div class="bhaskar-date-bar">
+    <div class="container" style="text-align:center; padding:4px 0 2px 0; font-size:11px; color:#64748b; font-weight:600; border-bottom:1px solid #f8fafc;">
+      <?= date('D, M d, Y') ?> Updated <?= date('h:i A') ?> IST
+    </div>
+  </div>
+
   <header class="bhaskar-top-header">
     <div class="bhaskar-header-container">
       
-      <!-- Left: Brand Logo (Clean 3D Emblem) -->
+      <!-- Left: Brand Logo (Exact Bhaskar Sun & Typographic Logo) -->
       <div class="bhaskar-header-left">
-        <button class="bhaskar-mobile-toggle" id="mobileDrawerOpen" aria-label="Open menu">
-          <i class="fa-solid fa-bars"></i>
-        </button>
         <a href="<?= BASE_URL ?>/" class="bhaskar-brand-logo" title="<?= htmlspecialchars($siteSettings['site_title'] ?? 'दैनिक खबर') ?>">
           <img src="<?= ASSETS_URL ?>images/logo.png?v=<?= time() ?>" alt="<?= htmlspecialchars($siteSettings['site_title'] ?? 'दैनिक खबर') ?>" class="bhaskar-brand-logo-img">
         </a>
@@ -194,7 +197,7 @@ $currentCatSlug = $_GET['cat'] ?? ($_GET['slug'] ?? '');
         <a href="<?= BASE_URL ?>/" class="bhaskar-nav-link <?= ($currentScript === 'index.php') ? 'active' : '' ?>">
           <i class="fa-solid fa-house"></i> <span>होम</span>
         </a>
-        <a href="<?= get_category_url('top-news') ?>" class="bhaskar-nav-link <?= ($currentCatSlug === 'top-news') ? 'active' : '' ?>">
+        <a href="<?= BASE_URL ?>/category.php?cat=video" class="bhaskar-nav-link <?= ($currentCatSlug === 'video') ? 'active' : '' ?>">
           <i class="fa-regular fa-circle-play"></i> <span>वीडियो</span>
         </a>
         <button type="button" class="bhaskar-nav-link js-search-trigger" id="desktopSearchBtn">
@@ -205,60 +208,27 @@ $currentCatSlug = $_GET['cat'] ?? ($_GET['slug'] ?? '');
         </a>
       </nav>
 
-      <!-- Right: Mobile Header Icons (Mobile Only <= 767px) -->
+      <!-- Right: Mobile Header Outline Icons (Exact Bhaskar Reference Images 3, 4, 5) -->
       <div class="bhaskar-header-icons mobile-only">
-        
-        <!-- Icon 1: Stories -->
-        <a href="<?= BASE_URL ?>/" class="bhaskar-head-icon" title="वेब स्टोरीज">
-          <i class="fa-regular fa-clone"></i>
-        </a>
-
-        <!-- Icon 2: News Feed -->
-        <a href="<?= BASE_URL ?>/" class="bhaskar-head-icon" title="समाचार फ़ीड">
+        <a href="<?= BASE_URL ?>/" class="bhaskar-head-icon" title="ई-पेपर">
           <i class="fa-regular fa-newspaper"></i>
         </a>
-
-        <!-- Icon 3: Video Watch / YouTube Channel -->
-        <a href="https://youtube.com/@dainikkhabar-9?si=jGcOkLeYtPnrLzNS" target="_blank" rel="noopener" class="bhaskar-head-icon" title="दैनिक खबर यूट्यूब चैनल">
+        <a href="<?= BASE_URL ?>/category.php?cat=video" class="bhaskar-head-icon" title="वीडियो">
+          <i class="fa-regular fa-circle-play"></i>
+        </a>
+        <a href="https://youtube.com/@dainikkhabar-9?si=jGcOkLeYtPnrLzNS" target="_blank" rel="noopener" class="bhaskar-head-icon" title="यूट्यूब चैनल">
           <i class="fa-brands fa-youtube" style="color: #e53935;"></i>
         </a>
-
-        <!-- Icon 4: Search Trigger -->
         <button type="button" class="bhaskar-head-icon js-search-trigger" id="searchModalTrigger" title="सर्च करें">
           <i class="fa-solid fa-magnifying-glass"></i>
         </button>
-
-        <!-- Admin / Profile -->
-        <a href="<?= ADMIN_URL ?>/login.php" class="bhaskar-head-icon" title="संपादक लॉगिन (Admin)">
-          <i class="fa-regular fa-circle-user"></i>
-        </a>
-
       </div>
 
     </div>
   </header>
 
   <!-- =========================================================================
-       2. Top Running Billboard Ad Banner (Exact Bhaskar Clean Ad Frame)
-       ========================================================================= -->
-  <div class="bhaskar-top-ad-wrapper">
-    <div class="container">
-      <div class="bhaskar-ad-banner-slot">
-        <?php if ($topLeaderboardAd && !empty($topLeaderboardAd['image_url'])): ?>
-          <a href="<?= htmlspecialchars(!empty($topLeaderboardAd['link_url']) ? $topLeaderboardAd['link_url'] : 'tel:+919534181011') ?>" target="_blank" rel="sponsored noopener">
-            <img src="<?= get_ad_image_url($topLeaderboardAd['image_url']) ?>?v=<?= time() ?>" alt="<?= htmlspecialchars($topLeaderboardAd['title'] ?? 'दैनिक खबर विज्ञापन') ?>" class="bhaskar-running-ad-img">
-          </a>
-        <?php else: ?>
-          <a href="tel:+919534181011" target="_blank" rel="noopener">
-            <img src="<?= ASSETS_URL ?>images/top_banner_ad.png?v=<?= time() ?>" alt="दैनिक खबर विज्ञापन" class="bhaskar-running-ad-img">
-          </a>
-        <?php endif; ?>
-      </div>
-    </div>
-  </div>
-
-  <!-- =========================================================================
-       3. Horizontal Category Swipe Bar (Mobile Only <= 991px)
+       2. Horizontal Category Swipe Bar (Immediate Sub-Header - Exact Bhaskar)
        ========================================================================= -->
   <nav class="bhaskar-cat-nav-bar mobile-only">
     <div class="container bhaskar-cat-scroll">
@@ -282,3 +252,22 @@ $currentCatSlug = $_GET['cat'] ?? ($_GET['slug'] ?? '');
       <?php endforeach; ?>
     </div>
   </nav>
+
+  <!-- =========================================================================
+       3. Top Running Billboard Ad Banner (Sleek Clean Ad Slot)
+       ========================================================================= -->
+  <div class="bhaskar-top-ad-wrapper">
+    <div class="container">
+      <div class="bhaskar-ad-banner-slot">
+        <?php if ($topLeaderboardAd && !empty($topLeaderboardAd['image_url'])): ?>
+          <a href="<?= htmlspecialchars(!empty($topLeaderboardAd['link_url']) ? $topLeaderboardAd['link_url'] : 'tel:+919534181011') ?>" target="_blank" rel="sponsored noopener">
+            <img src="<?= get_ad_image_url($topLeaderboardAd['image_url']) ?>?v=<?= time() ?>" alt="<?= htmlspecialchars($topLeaderboardAd['title'] ?? 'दैनिक खबर विज्ञापन') ?>" class="bhaskar-running-ad-img">
+          </a>
+        <?php else: ?>
+          <a href="tel:+919534181011" target="_blank" rel="noopener">
+            <img src="<?= ASSETS_URL ?>images/top_banner_ad.png?v=<?= time() ?>" alt="दैनिक खबर विज्ञापन" class="bhaskar-running-ad-img">
+          </a>
+        <?php endif; ?>
+      </div>
+    </div>
+  </div>

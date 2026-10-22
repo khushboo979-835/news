@@ -60,18 +60,18 @@ require_once __DIR__ . '/includes/header.php';
           $heroShareText = '*' . trim($heroStory['headline']) . "*\n\n" . $heroShareUrl;
           $shareMsg = urlencode($heroShareText);
         ?>
-          <!-- HERO CARD 1: Big Signature Card (Exact Bhaskar Screenshot 1) -->
+          <!-- HERO CARD 1: Big Signature Card (Exact Bhaskar Screenshot 1 & 3) -->
           <article class="bhaskar-card-hero">
             
-            <!-- Headline with Color Highlight -->
+            <!-- Headline with Dainik Bhaskar Signature Colored Kicker -->
             <h1 class="bhaskar-hero-headline">
               <a href="<?= $heroUrl ?>">
-                <?= htmlspecialchars($heroStory['headline']) ?>
+                <?= render_bhaskar_headline_html($heroStory['headline'], $heroStory['category_name'], 0) ?>
               </a>
             </h1>
 
             <?php if (!empty($heroStory['subheadline'])): ?>
-              <div class="bhaskar-hero-subheadline">
+              <div class="bhaskar-hero-subheadline desktop-only">
                 <?= htmlspecialchars($heroStory['subheadline']) ?>
               </div>
             <?php endif; ?>
@@ -156,32 +156,26 @@ require_once __DIR__ . '/includes/header.php';
             $storyShare = urlencode($feedShareText);
           ?>
             
-            <!-- In-feed Google Follow Banner between cards -->
+            <!-- In-feed Google Follow Banner between cards (Exact Bhaskar Ref Image 4) -->
             <?php if ($cardCounter === 2): ?>
               <div class="bhaskar-infeed-google-card">
                 <div class="bhaskar-infeed-google-text">
                   दैनिक खबर को Google पर पसंदीदा सोर्स बनाएं &rarr;
                 </div>
                 <a href="https://news.google.com" target="_blank" rel="noopener" class="bhaskar-google-badge-btn">
-                  <i class="fa-brands fa-google"></i> <span>On Google</span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" style="vertical-align:middle; margin-right:4px;"><path fill="#ffffff" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/><path fill="#ffffff" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/><path fill="#ffffff" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/><path fill="#ffffff" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/></svg> <span>+Follow us</span>
                 </a>
               </div>
             <?php endif; ?>
 
             <article class="bhaskar-card-split">
-              <!-- Left Content Box -->
+              <!-- Left Content Box (Bada Bada Bold Headline with Colored Kicker) -->
               <div class="bhaskar-split-left">
                 <h2 class="bhaskar-split-headline">
                   <a href="<?= $storyUrl ?>">
-                    <?= htmlspecialchars($story['headline']) ?>
+                    <?= render_bhaskar_headline_html($story['headline'], $story['category_name'], $cardCounter) ?>
                   </a>
                 </h2>
-                
-                <?php if (!empty($story['subheadline'])): ?>
-                  <p class="bhaskar-split-sub">
-                    <?= htmlspecialchars(mb_substr($story['subheadline'], 0, 75)) . (mb_strlen($story['subheadline']) > 75 ? '...' : '') ?>
-                  </p>
-                <?php endif; ?>
 
                 <div class="bhaskar-card-bottom-bar">
                   <a href="<?= get_category_url($story['category_slug']) ?>" class="bhaskar-tag-pill">

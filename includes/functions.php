@@ -198,6 +198,73 @@ function sanitize($data) {
 }
 
 /**
+ * Dainik Bhaskar Iconic Headline Renderer
+ * Produces bold, high-contrast headline with signature colored lead-in kicker (Ref Images 3, 4, 5)
+ */
+function render_bhaskar_headline_html($headline, $categoryName = '', $index = 0) {
+    $headline = trim($headline ?? '');
+    if (empty($headline)) return '';
+
+    // Authentic Dainik Bhaskar kicker colors rotated across feed (Green, Orange, Purple, Blue, Amber, Red, Indigo)
+    $kickerColors = ['#009944', '#ea580c', '#9333ea', '#0284c7', '#d97706', '#dc2626', '#4f46e5'];
+    $color = $kickerColors[$index % count($kickerColors)];
+
+    // 1. Colon delimiter (e.g. "टाइगर पर फायरिंग से पहले शूटर्स ने प्रैक्टिस की थी: होटल में भी मिसफायर...")
+    if (strpos($headline, ':') !== false) {
+        $parts = explode(':', $headline, 2);
+        $kicker = trim($parts[0]);
+        $rest = trim($parts[1]);
+        if (!empty($kicker) && !empty($rest)) {
+            return '<span class="bhaskar-kicker-lead" style="color:' . $color . '; font-weight:800;">' . htmlspecialchars($kicker) . ': </span><span class="bhaskar-main-title">' . htmlspecialchars($rest) . '</span>';
+        }
+    }
+
+    // 2. Dash with spaces delimiter (e.g. "भारतीय तैराक - छेड़छाड़ का आरोप")
+    if (strpos($headline, ' - ') !== false) {
+        $parts = explode(' - ', $headline, 2);
+        $kicker = trim($parts[0]);
+        $rest = trim($parts[1]);
+        if (!empty($kicker) && !empty($rest)) {
+            return '<span class="bhaskar-kicker-lead" style="color:' . $color . '; font-weight:800;">' . htmlspecialchars($kicker) . ': </span><span class="bhaskar-main-title">' . htmlspecialchars($rest) . '</span>';
+        }
+    }
+
+    // 3. Pipe delimiter (e.g. "पटना | गंगा का जलस्तर बढ़ा")
+    if (strpos($headline, ' | ') !== false) {
+        $parts = explode(' | ', $headline, 2);
+        $kicker = trim($parts[0]);
+        $rest = trim($parts[1]);
+        if (!empty($kicker) && !empty($rest)) {
+            return '<span class="bhaskar-kicker-lead" style="color:' . $color . '; font-weight:800;">' . htmlspecialchars($kicker) . ': </span><span class="bhaskar-main-title">' . htmlspecialchars($rest) . '</span>';
+        }
+    }
+
+    // 4. Prefix with hyphen like "ब्लैकबोर्ड-" or "जरूरत की खबर-" (from Ref Image 4 & 5)
+    if (preg_match('/^([^\-]{3,35})\-\s*(.+)$/u', $headline, $matches)) {
+        $kicker = trim($matches[1]);
+        $rest = trim($matches[2]);
+        if (!empty($kicker) && !empty($rest)) {
+            return '<span class="bhaskar-kicker-lead" style="color:' . $color . '; font-weight:800;">' . htmlspecialchars($kicker) . ': </span><span class="bhaskar-main-title">' . htmlspecialchars($rest) . '</span>';
+        }
+    }
+
+    // 5. If category name is meaningful, use it as colored kicker
+    if (!empty($categoryName) && !in_array($categoryName, ['सामान्य', 'General', 'Anya', 'अन्य', 'Top News'])) {
+        return '<span class="bhaskar-kicker-lead" style="color:' . $color . '; font-weight:800;">' . htmlspecialchars($categoryName) . ': </span><span class="bhaskar-main-title">' . htmlspecialchars($headline) . '</span>';
+    }
+
+    // 6. Fallback: take first 3 to 4 words as kicker with colon
+    $words = explode(' ', $headline);
+    if (count($words) >= 5) {
+        $kickerWords = array_slice($words, 0, 4);
+        $restWords = array_slice($words, 4);
+        return '<span class="bhaskar-kicker-lead" style="color:' . $color . '; font-weight:800;">' . htmlspecialchars(implode(' ', $kickerWords)) . ': </span><span class="bhaskar-main-title">' . htmlspecialchars(implode(' ', $restWords)) . '</span>';
+    }
+
+    return '<span class="bhaskar-main-title">' . htmlspecialchars($headline) . '</span>';
+}
+
+/**
  * CSRF Token Management
  */
 function get_csrf_token() {
