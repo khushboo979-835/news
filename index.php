@@ -127,7 +127,7 @@ require_once __DIR__ . '/includes/header.php';
             <!-- Card Bottom: Category Tag on Left, Share on Right -->
             <div class="bhaskar-card-bottom-bar">
               <a href="<?= get_category_url($heroStory['category_slug']) ?>" class="bhaskar-tag-pill">
-                <?= htmlspecialchars($heroStory['category_name']) ?> &gt;
+                <?= htmlspecialchars(trim(preg_replace('/\s*\([^\)]*\)/u', '', $heroStory['category_name'] ?? 'समाचार'))) ?> &gt;
               </a>
 
               <a href="https://api.whatsapp.com/send?text=<?= $shareMsg ?>" 
@@ -179,7 +179,7 @@ require_once __DIR__ . '/includes/header.php';
 
                 <div class="bhaskar-card-bottom-bar">
                   <a href="<?= get_category_url($story['category_slug']) ?>" class="bhaskar-tag-pill">
-                    <?= htmlspecialchars($story['category_name']) ?> &gt;
+                    <?= htmlspecialchars(trim(preg_replace('/\s*\([^\)]*\)/u', '', $story['category_name'] ?? 'समाचार'))) ?> &gt;
                   </a>
 
                   <a href="https://api.whatsapp.com/send?text=<?= $storyShare ?>" 

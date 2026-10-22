@@ -100,7 +100,7 @@ require_once __DIR__ . '/includes/header.php';
 
                 <div class="bhaskar-card-bottom-bar">
                   <a href="<?= get_category_url($category['slug'] ?? 'top-news') ?>" class="bhaskar-tag-pill">
-                    <?= htmlspecialchars($category['name'] ?? 'समाचार') ?> &gt;
+                    <?= htmlspecialchars(trim(preg_replace('/\s*\([^\)]*\)/u', '', $category['name'] ?? 'समाचार'))) ?> &gt;
                   </a>
 
                   <a href="https://api.whatsapp.com/send?text=<?= urlencode($catShareText) ?>" 
@@ -127,7 +127,7 @@ require_once __DIR__ . '/includes/header.php';
 
                   <div class="bhaskar-card-bottom-bar">
                     <a href="<?= get_category_url($category['slug'] ?? 'top-news') ?>" class="bhaskar-tag-pill">
-                      <?= htmlspecialchars($category['name'] ?? 'समाचार') ?> &gt;
+                      <?= htmlspecialchars(trim(preg_replace('/\s*\([^\)]*\)/u', '', $category['name'] ?? 'समाचार'))) ?> &gt;
                     </a>
 
                     <a href="https://api.whatsapp.com/send?text=<?= urlencode($catShareText) ?>" 

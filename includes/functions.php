@@ -205,6 +205,9 @@ function render_bhaskar_headline_html($headline, $categoryName = '', $index = 0)
     $headline = trim($headline ?? '');
     if (empty($headline)) return '';
 
+    // Strip any English parenthesis from category name e.g. "पटना (Patna)" -> "पटना"
+    $cleanCategory = trim(preg_replace('/\s*\([^\)]*\)/u', '', $categoryName ?? ''));
+
     // Authentic Dainik Bhaskar kicker colors rotated across feed (Green, Orange, Purple, Blue, Amber, Red, Indigo)
     $kickerColors = ['#009944', '#ea580c', '#9333ea', '#0284c7', '#d97706', '#dc2626', '#4f46e5'];
     $color = $kickerColors[$index % count($kickerColors)];
@@ -249,8 +252,8 @@ function render_bhaskar_headline_html($headline, $categoryName = '', $index = 0)
     }
 
     // 5. If category name is meaningful, use it as colored kicker
-    if (!empty($categoryName) && !in_array($categoryName, ['सामान्य', 'General', 'Anya', 'अन्य', 'Top News'])) {
-        return '<span class="bhaskar-kicker-lead" style="color:' . $color . '; font-weight:800;">' . htmlspecialchars($categoryName) . ': </span><span class="bhaskar-main-title">' . htmlspecialchars($headline) . '</span>';
+    if (!empty($cleanCategory) && !in_array($cleanCategory, ['सामान्य', 'General', 'Anya', 'अन्य'])) {
+        return '<span class="bhaskar-kicker-lead" style="color:' . $color . '; font-weight:800;">' . htmlspecialchars($cleanCategory) . ': </span><span class="bhaskar-main-title">' . htmlspecialchars($headline) . '</span>';
     }
 
     // 6. Fallback: take first 3 to 4 words as kicker with colon
