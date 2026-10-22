@@ -766,18 +766,18 @@ function render_media_container($mediaType, $mediaUrl, $headline = '', $content 
             </video>
         </div>';
     } else {
-        // Image: Dainik Bhaskar modern news photography presentation
+        // Image: Dainik Bhaskar modern news photography presentation (Zero black letterboxes, 16:9 editorial fit)
         $imgSrc = get_media_url($mediaUrl, 'image', $content, $thumbnailUrl);
         if (empty($imgSrc) || strpos($imgSrc, 'news_cover_default.jpg') !== false) {
             $imgSrc = get_contextual_fallback_image($headline);
         }
         return '
-        <figure class="bhaskar-media-figure" style="margin:16px 0 20px 0; width:100%; border-radius:12px; overflow:hidden; background:#0f172a; box-shadow:0 4px 16px rgba(0,0,0,0.08);">
-            <div style="width:100%; max-height:500px; display:flex; align-items:center; justify-content:center; overflow:hidden; background:#0f172a;">
-                <img src="' . htmlspecialchars($imgSrc) . '" alt="' . $escapedHeadline . '" class="bhaskar-media-elem" loading="eager" style="max-width:100%; max-height:500px; width:auto; height:auto; object-fit:contain; display:block; margin:0 auto;">
+        <figure class="bhaskar-media-figure" style="margin:12px 0 16px 0; width:100%; border-radius:8px; overflow:hidden; background:#f8fafc; box-shadow:0 2px 10px rgba(0,0,0,0.06);">
+            <div style="width:100%; aspect-ratio:16/9; overflow:hidden; background:#f1f5f9; position:relative;">
+                <img src="' . htmlspecialchars($imgSrc) . '" alt="' . $escapedHeadline . '" class="bhaskar-media-elem" loading="eager" style="width:100%; height:100%; object-fit:cover; display:block;">
             </div>
-            <figcaption style="padding:8px 14px; background:#f8fafc; font-size:0.82rem; color:#64748b; border-top:1px solid #e2e8f0; font-weight:600; text-align:left; display:flex; align-items:center; gap:6px;">
-                <i class="fa-solid fa-camera" style="color:var(--theme-color);"></i>
+            <figcaption style="padding:6px 12px; background:#ffffff; font-size:0.78rem; color:#64748b; border-top:1px solid #f1f5f9; font-weight:600; text-align:left; display:flex; align-items:center; gap:6px;">
+                <i class="fa-solid fa-camera" style="color:var(--theme-color); font-size:0.75rem;"></i>
                 <span>' . $escapedHeadline . ' (फ़ाइल फ़ोटो)</span>
             </figcaption>
         </figure>';

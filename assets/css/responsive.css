@@ -211,139 +211,197 @@ html, body {
     color: #f97316;
   }
 
-  /* Body Padding for Bottom Nav */
+  /* =========================================================================
+     Dainik Bhaskar Mobile Stream Design (Exact https://www.bhaskar.com/ Look)
+     ========================================================================= */
   body {
-    padding-bottom: 56px;
-  }
-
-  .bhaskar-top-header {
-    height: 72px;
-  }
-
-  .bhaskar-header-container {
-    padding: 0 10px;
-  }
-
-  .bhaskar-header-left {
-    gap: 8px;
-    flex-shrink: 0;
-  }
-
-  .bhaskar-brand-logo {
-    display: flex;
-    align-items: center;
-  }
-
-  .bhaskar-brand-logo-img {
-    height: 62px;
-    max-height: 62px;
-    width: auto;
-    object-fit: contain;
-  }
-
-  .footer-logo {
-    justify-content: flex-start;
-  }
-
-  .footer-brand-logo-img {
-    height: 64px;
-    max-height: 64px;
-    width: auto;
-    object-fit: contain;
-  }
-
-  /* Category Swipe Bar */
-  .bhaskar-cat-scroll {
-    padding: 6px 10px;
-    gap: 10px;
-  }
-
-  .bhaskar-cat-item {
-    font-size: 0.88rem;
-    padding: 4px 10px;
-  }
-
-  /* Compact Top Billboard Ad on Mobile */
-  .bhaskar-top-ad-wrapper {
-    padding: 6px 0 4px;
-    width: 100%;
-  }
-
-  .bhaskar-ad-banner-slot {
-    min-height: auto;
-    max-height: none;
-    border-radius: var(--radius-sm);
-    width: 100%;
-    overflow: hidden;
-  }
-
-  .bhaskar-running-ad-img {
-    width: 100%;
-    height: auto;
-    max-height: none;
-    display: block;
-    object-fit: contain;
+    background: #ffffff !important;
+    padding-bottom: 64px !important;
   }
 
   .bhaskar-page-body {
-    padding: 8px 0 30px;
+    background: #ffffff !important;
+    padding: 0 0 20px 0 !important;
   }
 
   .container {
-    padding-left: 10px;
-    padding-right: 10px;
-    width: 100%;
-    max-width: 100%;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .bhaskar-layout-grid {
+    display: block !important;
+    width: 100% !important;
+  }
+
+  .bhaskar-main-stream {
+    width: 100% !important;
+    background: #ffffff !important;
+  }
+
+  .bhaskar-top-header {
+    height: 64px;
+  }
+
+  .bhaskar-header-container {
+    padding: 0 12px;
+  }
+
+  .bhaskar-header-left {
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  .bhaskar-brand-logo-img {
+    height: 52px;
+    max-height: 52px;
+    width: auto;
+    object-fit: contain;
+  }
+
+  /* Compact Top Billboard Ad on Mobile (Edge-to-Edge Responsive) */
+  .bhaskar-top-ad-wrapper {
+    padding: 4px 10px !important;
+    margin: 4px 0 !important;
+    width: 100% !important;
+    background: transparent !important;
+    box-sizing: border-box !important;
+  }
+
+  .bhaskar-ad-banner-slot {
+    min-height: auto !important;
+    max-height: 85px !important;
+    border-radius: 6px !important;
+    width: 100% !important;
+    overflow: hidden !important;
+    border: none !important;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06) !important;
+  }
+
+  .bhaskar-running-ad-img {
+    width: 100% !important;
+    height: auto !important;
+    max-height: 85px !important;
+    display: block !important;
+    object-fit: contain !important;
+  }
+
+  /* Category Swipe Bar - Sleek App Navigation */
+  .bhaskar-cat-scroll {
+    padding: 8px 12px !important;
+    gap: 8px !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .bhaskar-cat-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  .bhaskar-cat-item {
+    font-size: 0.9rem !important;
+    font-weight: 700 !important;
+    padding: 4px 12px !important;
+    white-space: nowrap !important;
+    color: #475569 !important;
+    border-radius: 16px !important;
+  }
+
+  .bhaskar-cat-item.active {
+    color: #e11d48 !important;
+    background: #ffe4e6 !important;
+    border-bottom: none !important;
   }
 
   .bhaskar-trending-bar {
-    padding-bottom: 8px;
+    padding: 6px 12px 8px 12px !important;
+    border-bottom: 1px solid #f1f5f9 !important;
   }
 
-  /* Hero Story Card 1 */
+  /* Hero Story Card 1 (Dainik Bhaskar Full Width Feature) */
   .bhaskar-card-hero {
-    padding: 12px;
-    margin-bottom: 12px;
-    border-radius: var(--radius-sm);
-    width: 100%;
-    box-sizing: border-box;
-    overflow: hidden;
+    background: #ffffff !important;
+    border: none !important;
+    border-radius: 0 !important;
+    border-bottom: 8px solid #f1f5f9 !important;
+    box-shadow: none !important;
+    padding: 14px 14px 12px 14px !important;
+    margin: 0 !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
   }
 
   .bhaskar-hero-headline {
-    font-size: 1.2rem;
-    line-height: 1.38;
-    margin-bottom: 6px;
-    word-break: break-word;
+    font-size: 1.25rem !important;
+    font-weight: 800 !important;
+    line-height: 1.34 !important;
+    color: #0f172a !important;
+    margin-bottom: 6px !important;
+    word-break: break-word !important;
   }
 
-  .bhaskar-hero-subheadline {
-    font-size: 0.88rem;
-    line-height: 1.4;
-    margin-bottom: 8px;
-    word-break: break-word;
+  .bhaskar-hero-headline a {
+    color: #0f172a !important;
+    text-decoration: none !important;
+  }
+
+  .bhaskar-hero-sub {
+    font-size: 0.88rem !important;
+    line-height: 1.4 !important;
+    color: #475569 !important;
+    margin-bottom: 10px !important;
+    word-break: break-word !important;
   }
 
   .bhaskar-hero-media {
-    margin: 8px 0;
+    margin: 10px 0 !important;
+    width: 100% !important;
+  }
+
+  .bhaskar-hero-media figure {
+    margin: 0 !important;
+    border-radius: 8px !important;
+    overflow: hidden !important;
   }
 
   .bhaskar-hero-media img,
   .bhaskar-hero-media video {
-    max-height: 280px;
-    object-fit: cover;
+    width: 100% !important;
+    height: auto !important;
+    max-height: 280px !important;
+    object-fit: cover !important;
+    display: block !important;
   }
 
-  /* Split Cards (Cards 2+) - 100% Fit without Overflow */
+  .bhaskar-hero-video-box {
+    margin: 8px 0 !important;
+    border-radius: 8px !important;
+    aspect-ratio: 16 / 9 !important;
+  }
+
+  /* Continuous Pure White Feed Stream (Screenshot 1 & 2 Match) */
+  .bhaskar-feed-stream {
+    background: #ffffff !important;
+    width: 100% !important;
+  }
+
+  /* Split Cards: Clean List Items, NO Floating Boxes */
   .bhaskar-card-split {
     display: flex !important;
     flex-direction: row !important;
     align-items: flex-start !important;
     justify-content: space-between !important;
-    gap: 10px !important;
-    padding: 12px !important;
-    margin-bottom: 12px !important;
-    border-radius: var(--radius-sm) !important;
+    background: #ffffff !important;
+    border: none !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 14px 14px !important;
+    gap: 12px !important;
     width: 100% !important;
     box-sizing: border-box !important;
     overflow: hidden !important;
@@ -356,14 +414,19 @@ html, body {
   }
 
   .bhaskar-split-headline {
-    font-size: 0.98rem !important;
-    line-height: 1.35 !important;
-    margin-bottom: 4px !important;
+    font-size: 1.08rem !important;
+    font-weight: 700 !important;
+    line-height: 1.36 !important;
+    color: #0f172a !important;
+    margin-bottom: 6px !important;
+    letter-spacing: -0.2px !important;
     word-break: break-word !important;
     overflow-wrap: break-word !important;
   }
 
   .bhaskar-split-headline a {
+    color: #0f172a !important;
+    text-decoration: none !important;
     display: -webkit-box;
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
@@ -371,9 +434,10 @@ html, body {
   }
 
   .bhaskar-split-sub {
-    font-size: 0.82rem !important;
-    line-height: 1.35 !important;
-    margin-bottom: 6px !important;
+    font-size: 0.84rem !important;
+    line-height: 1.38 !important;
+    color: #64748b !important;
+    margin-bottom: 8px !important;
     word-break: break-word !important;
     overflow-wrap: break-word !important;
     display: -webkit-box;
@@ -383,50 +447,131 @@ html, body {
   }
 
   .bhaskar-split-right {
-    flex: 0 0 95px !important;
-    width: 95px !important;
-    max-width: 95px !important;
-    margin-left: 6px;
+    flex: 0 0 108px !important;
+    width: 108px !important;
+    max-width: 108px !important;
+    height: 80px !important;
+    margin-left: 6px !important;
   }
 
   .bhaskar-split-right .bhaskar-thumb-link {
-    width: 95px !important;
-    min-width: 95px !important;
-    max-width: 95px !important;
-    height: 72px !important;
-    border-radius: 6px;
+    width: 108px !important;
+    min-width: 108px !important;
+    max-width: 108px !important;
+    height: 80px !important;
+    border-radius: 6px !important;
+    overflow: hidden !important;
+    display: block !important;
+    position: relative !important;
+    background: #f1f5f9 !important;
+  }
+
+  .bhaskar-split-right .bhaskar-thumb-link img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    display: block !important;
   }
 
   .bhaskar-card-bottom-bar {
-    margin-top: 6px;
-    padding-top: 6px;
+    margin-top: 6px !important;
+    padding-top: 0 !important;
+    border-top: none !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
   }
 
   .bhaskar-tag-pill {
-    font-size: 0.78rem;
-    padding: 3px 8px;
+    font-size: 0.74rem !important;
+    font-weight: 600 !important;
+    padding: 2px 8px !important;
+    background: #f1f5f9 !important;
+    color: #475569 !important;
+    border-radius: 12px !important;
+    border: 1px solid #e2e8f0 !important;
+    text-decoration: none !important;
   }
 
   .bhaskar-share-btn {
-    font-size: 0.8rem;
-    padding: 3px 8px;
+    font-size: 0.78rem !important;
+    font-weight: 600 !important;
+    color: #16a34a !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    padding: 2px 6px !important;
+    text-decoration: none !important;
   }
 
   /* In-feed Google Follow Card */
   .bhaskar-infeed-google-card {
-    padding: 10px 12px;
-    gap: 8px;
-    box-sizing: border-box;
-    width: 100%;
+    margin: 10px 14px !important;
+    padding: 10px 14px !important;
+    gap: 8px !important;
+    box-sizing: border-box !important;
+    border-radius: 8px !important;
+    background: #fff8e6 !important;
+    border: 1px solid #fde68a !important;
   }
 
   .bhaskar-infeed-google-text {
-    font-size: 0.82rem;
+    font-size: 0.85rem !important;
+    font-weight: 700 !important;
   }
 
   .bhaskar-google-badge-btn {
-    font-size: 0.75rem;
-    padding: 4px 8px;
+    font-size: 0.78rem !important;
+    padding: 4px 10px !important;
+  }
+
+  /* Right Rail on Mobile: full width seamless */
+  .bhaskar-right-rail {
+    margin: 14px 14px 20px 14px !important;
+    width: auto !important;
+  }
+
+  /* Sticky Bottom Navigation Bar on Mobile (Exact Bhaskar) */
+  .bhaskar-mobile-bottom-nav {
+    display: flex !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    height: 56px !important;
+    background: #ffffff !important;
+    border-top: 1px solid #e2e8f0 !important;
+    box-shadow: 0 -3px 12px rgba(0,0,0,0.06) !important;
+    z-index: 99999 !important;
+    align-items: center !important;
+    justify-content: space-around !important;
+  }
+
+  .bhaskar-bottom-nav-item {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 3px !important;
+    color: #64748b !important;
+    font-size: 0.72rem !important;
+    font-weight: 700 !important;
+    text-decoration: none !important;
+    flex: 1 !important;
+    height: 100% !important;
+  }
+
+  .bhaskar-bottom-nav-item i {
+    font-size: 1.25rem !important;
+  }
+
+  .bhaskar-bottom-nav-item.active {
+    color: #f97316 !important;
+  }
+
+  .bhaskar-bottom-nav-item.active i {
+    color: #f97316 !important;
   }
 
   /* Right Rail Widgets on Mobile */

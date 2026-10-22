@@ -132,12 +132,18 @@ $categories = get_all_categories();
 <!-- =========================================================================
      Mobile Sticky Bottom Navigation Bar (Exact Dainik Bhaskar Mobile App/Web)
      ========================================================================= -->
+<?php
+$currentPageScript = basename($_SERVER['PHP_SELF'] ?? '');
+$currentCatParam = $_GET['cat'] ?? '';
+$isWatchTabActive = ($currentPageScript === 'category.php' && $currentCatParam === 'video');
+$isHomeTabActive = ($currentPageScript === 'index.php' || empty($currentPageScript) || $currentPageScript === '') && !$isWatchTabActive;
+?>
 <nav class="bhaskar-mobile-bottom-nav">
-    <a href="<?php echo SITE_URL; ?>/" class="bhaskar-bottom-nav-item active">
+    <a href="<?php echo SITE_URL; ?>/" class="bhaskar-bottom-nav-item <?php echo $isHomeTabActive ? 'active' : ''; ?>">
         <i class="fa-solid fa-house"></i>
         <span>पढ़ें</span>
     </a>
-    <a href="<?php echo SITE_URL; ?>/category.php?cat=video" class="bhaskar-bottom-nav-item">
+    <a href="<?php echo SITE_URL; ?>/category.php?cat=video" class="bhaskar-bottom-nav-item <?php echo $isWatchTabActive ? 'active' : ''; ?>">
         <i class="fa-regular fa-circle-play"></i>
         <span>देखें</span>
     </a>

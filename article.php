@@ -100,6 +100,21 @@ if ($pdo) {
             $article = $stmt->fetch();
         } catch (Exception $e) {}
     }
+
+    // 7. Check if the slug matches a Category or Category-News format (e.g. 'patna-news' -> 'patna')
+    if (!$article) {
+        $cleanCatSlug = preg_replace('/(-news|-khabar|-samachar)$/i', '', $slug);
+        try {
+            $catStmt = $pdo->prepare("SELECT slug FROM categories WHERE slug = :slug OR slug = :clean OR name LIKE :like LIMIT 1");
+            $catStmt->execute([':slug' => $slug, ':clean' => $cleanCatSlug, ':like' => "%{$cleanCatSlug}%"]);
+            $catRow = $catStmt->fetch();
+            if ($catRow) {
+                header("HTTP/1.1 301 Moved Permanently");
+                header("Location: " . get_category_url($catRow['slug']));
+                exit;
+            }
+        } catch (Exception $e) {}
+    }
 }
 
 if (!$article) {

@@ -67,61 +67,105 @@ require_once __DIR__ . '/includes/header.php';
           </span>
         </div>
 
-        <div class="bhaskar-news-feed-list">
+        <div class="bhaskar-news-feed-list bhaskar-feed-stream">
           <?php if (!empty($categoryNews)): ?>
-            <?php foreach ($categoryNews as $story): 
+            <?php 
+            $catIndex = 0;
+            foreach ($categoryNews as $story): 
+              $catIndex++;
               $storyUrl = get_article_url($story);
-              $storyMediaUrl = get_media_url($story['media_url'], $story['media_type'], $story['content'] ?? '');
-              if (strpos($storyMediaUrl, 'http') !== 0) {
-                  $storyMediaUrl = rtrim(BASE_URL, '/') . '/' . ltrim($storyMediaUrl, '/');
-              }
-            ?>
-              <article class="bhaskar-story-card">
-                
-                <div class="bhaskar-story-header">
-                  <h2 class="bhaskar-headline">
-                    <a href="<?= $storyUrl ?>">
-                      <?= htmlspecialchars($story['headline']) ?>
-                    </a>
-                  </h2>
+              $storyShareUrl = $storyUrl . (strpos($storyUrl, '?') !== false ? '&ref=wa' : '?ref=wa');
+              $catShareText = '*' . trim($story['headline']) . "*\n\n" . $storyShareUrl;
+              $isStoryVideo = in_array($story['media_type'] ?? '', ['video_embed', 'video_upload']) || preg_match('/\.(mp4|webm|mov|mkv|avi|3gp)$/i', $story['media_url'] ?? '');
 
-                  <?php if (!empty($story['subheadline'])): ?>
-                    <div class="bhaskar-subheadline">
-                      <?= htmlspecialchars($story['subheadline']) ?>
-                    </div>
+              // 1st Story: Featured Hero Presentation (if has media)
+              if ($catIndex === 1):
+            ?>
+              <article class="bhaskar-card-hero">
+                <h2 class="bhaskar-hero-headline">
+                  <a href="<?= $storyUrl ?>">
+                    <?= htmlspecialchars($story['headline']) ?>
+                  </a>
+                </h2>
+
+                <?php if (!empty($story['subheadline'])): ?>
+                  <p class="bhaskar-hero-sub">
+                    <?= htmlspecialchars($story['subheadline']) ?>
+                  </p>
+                <?php endif; ?>
+
+                <div class="bhaskar-hero-media">
+                  <?php if ($isStoryVideo): ?>
+                    <?= render_media_container($story['media_type'], $story['media_url'], $story['headline'], $story['content'] ?? '', $story['thumbnail_url'] ?? '') ?>
+                  <?php else: ?>
+                    <a href="<?= $storyUrl ?>">
+                      <?= render_media_container($story['media_type'], $story['media_url'], $story['headline'], $story['content'] ?? '', $story['thumbnail_url'] ?? '') ?>
+                    </a>
                   <?php endif; ?>
                 </div>
 
-                <?= render_media_container($story['media_type'], $story['media_url'], $story['headline'], $story['content'] ?? '', $story['thumbnail_url'] ?? '') ?>
+                <div class="bhaskar-card-bottom-bar">
+                  <span class="bhaskar-time-ago" style="font-size:0.8rem; color:#64748b;">
+                    <i class="fa-regular fa-clock"></i> <?= time_ago_hindi($story['created_at']) ?>
+                  </span>
 
-                <div class="bhaskar-story-footer">
-                  <div class="bhaskar-meta-info">
-                    <span><i class="fa-regular fa-clock" style="color: var(--theme-color);"></i> <?= time_ago_hindi($story['created_at']) ?></span>
-                    <span>•</span>
-                    <span><i class="fa-regular fa-eye"></i> <?= number_format($story['views']) ?> व्यूज</span>
-                  </div>
+                  <a href="https://api.whatsapp.com/send?text=<?= urlencode($catShareText) ?>" 
+                     target="_blank" 
+                     rel="noopener" 
+                     class="bhaskar-share-btn js-share-trigger"
+                     data-title="<?= htmlspecialchars($story['headline']) ?>"
+                     data-url="<?= htmlspecialchars($storyShareUrl) ?>"
+                     title="WhatsApp पर शेयर करें">
+                    <i class="fa-brands fa-whatsapp"></i> <span>शेयर</span>
+                  </a>
+                </div>
+              </article>
 
-                  <?php
-                  $storyShareUrl = $storyUrl . (strpos($storyUrl, '?') !== false ? '&ref=wa' : '?ref=wa');
-                  $catShareText = '*' . trim($story['headline']) . "*\n\n" . $storyShareUrl;
-                  ?>
-                  <div class="bhaskar-share-btns">
+            <?php else: ?>
+              <!-- Stories 2+: Dainik Bhaskar Split Cards (Headline Left, Thumbnail Right) -->
+              <article class="bhaskar-card-split">
+                <div class="bhaskar-split-left">
+                  <h3 class="bhaskar-split-headline">
+                    <a href="<?= $storyUrl ?>">
+                      <?= htmlspecialchars($story['headline']) ?>
+                    </a>
+                  </h3>
+                  
+                  <?php if (!empty($story['subheadline'])): ?>
+                    <p class="bhaskar-split-sub">
+                      <?= htmlspecialchars(mb_substr($story['subheadline'], 0, 75)) . (mb_strlen($story['subheadline']) > 75 ? '...' : '') ?>
+                    </p>
+                  <?php endif; ?>
+
+                  <div class="bhaskar-card-bottom-bar">
+                    <span class="bhaskar-time-ago" style="font-size:0.75rem; color:#64748b;">
+                      <i class="fa-regular fa-clock"></i> <?= time_ago_hindi($story['created_at']) ?>
+                    </span>
+
                     <a href="https://api.whatsapp.com/send?text=<?= urlencode($catShareText) ?>" 
                        target="_blank" 
                        rel="noopener" 
-                       class="share-icon-btn whatsapp js-share-trigger"
+                       class="bhaskar-share-btn js-share-trigger"
                        data-title="<?= htmlspecialchars($story['headline']) ?>"
                        data-url="<?= htmlspecialchars($storyShareUrl) ?>"
                        title="WhatsApp पर शेयर करें">
-                      <i class="fa-brands fa-whatsapp"></i>
+                      <i class="fa-brands fa-whatsapp"></i> <span>शेयर</span>
                     </a>
-                    <button type="button" class="share-icon-btn copy js-copy-link" data-url="<?= htmlspecialchars($storyUrl) ?>" title="लिंक कॉपी करें">
-                      <i class="fa-solid fa-link"></i>
-                    </button>
                   </div>
                 </div>
 
+                <div class="bhaskar-split-right">
+                  <a href="<?= $storyUrl ?>" class="bhaskar-thumb-link">
+                    <img src="<?= get_article_thumbnail_url($story) ?>" alt="<?= htmlspecialchars($story['headline']) ?>" loading="lazy" onerror="this.onerror=null; this.src='<?= ASSETS_URL ?>images/news_cover_default.jpg';">
+                    <?php if ($isStoryVideo): ?>
+                      <span class="bhaskar-thumb-play-circle"><i class="fa-solid fa-play"></i></span>
+                      <span class="bhaskar-thumb-duration-pill">0:47</span>
+                    <?php endif; ?>
+                  </a>
+                </div>
               </article>
+            <?php endif; ?>
+
             <?php endforeach; ?>
           <?php else: ?>
             <div style="background: #ffffff; padding: 40px; border-radius: var(--radius-md); text-align: center; border: 1px solid var(--gray-200);">

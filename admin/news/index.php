@@ -137,8 +137,12 @@ require_once __DIR__ . '/../includes/header.php';
         </div>
 
         <?php if (!empty($news_list)): ?>
-            <div style="overflow-x: auto;">
-                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.92rem;">
+            <div style="font-size:0.78rem; color:#6b7280; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+                <i class="fa-solid fa-arrows-left-right" style="color:var(--admin-theme);"></i> 
+                <span>मोबाइल पर टेबल को पूरा देखने के लिए बाएं-दाएं (Horizontal) स्क्रॉल करें।</span>
+            </div>
+            <div class="table-responsive" style="width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch; border:1px solid var(--admin-border); border-radius:8px;">
+                <table style="min-width: 820px; width: 100%; border-collapse: collapse; text-align: left; font-size: 0.92rem;">
                     <thead>
                         <tr style="border-bottom: 2px solid var(--admin-border); background: #f9fafb;">
                             <th style="padding: 12px 14px; width: 130px;">क्रम (Rank #)</th>
