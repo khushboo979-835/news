@@ -12,8 +12,8 @@ $siteSettings = get_site_settings($pdo);
 $pageTitle = 'दैनिक खबर - सच्ची और निष्पक्ष पत्रकारिता';
 $pageDescription = 'दैनिक खबर: देश, बिहार, पटना, राजनीति, क्राइम, चुनाव और अंतरराष्ट्रीय मुद्दों की ताज़ा खबरें।';
 
-// Fetch Stories ordered by priority_order ASC, created_at DESC
-$allStories = get_prioritized_news($pdo, 12);
+// Fetch Stories ordered by priority_order ASC, created_at DESC (Loads all published portal stories)
+$allStories = get_prioritized_news($pdo, 60);
 
 $heroStory = !empty($allStories) ? $allStories[0] : null;
 $feedStories = !empty($allStories) ? array_slice($allStories, 1) : [];

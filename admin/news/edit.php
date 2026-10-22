@@ -138,67 +138,61 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-        // 3. If NO new physical file uploaded:
-        if (!$newFileUploaded && empty($error)) {
-            if ($remove_media) {
-                // User explicitly wants to remove media
+        // 3. Media & Thumbnail Resolution
+        if ($remove_media) {
+            $firstImg = extract_first_image_from_content($content);
+            $media_type = 'image';
+            $media_url = $firstImg ?: 'news_cover_default.jpg';
+            $thumbnail_url = $media_url;
+        } elseif ($media_type === 'image') {
+            if ($newFileUploaded) {
+                // New image uploaded, already set in $media_url and $thumbnail_url
+            } elseif (!empty($direct_media_url) && !preg_match('/\.(mp4|webm|mov|mkv|avi|m4v)$/i', $direct_media_url) && !get_youtube_video_id($direct_media_url)) {
+                $media_url = $direct_media_url;
+                $thumbnail_url = $direct_media_url;
+            } elseif ($news['media_type'] !== 'image' || preg_match('/\.(mp4|webm|mov|mkv|avi|m4v)$/i', $media_url) || get_youtube_video_id($media_url)) {
+                // Admin switched from video to image! Clear old video and pick image from content or default cover
                 $firstImg = extract_first_image_from_content($content);
-                $media_type = 'image';
                 $media_url = $firstImg ?: 'news_cover_default.jpg';
                 $thumbnail_url = $media_url;
-            } elseif ($media_type === 'video_embed' || (!empty($enteredYtId) && $media_type !== 'image' && $media_type !== 'video_upload')) {
-                $media_type = 'video_embed';
-                $ytId = $enteredYtId ?: get_youtube_video_id($content) ?: get_youtube_video_id($news['media_url'] ?? '');
-                if ($ytId) {
-                    $media_url = "https://www.youtube.com/watch?v={$ytId}";
-                    if (!$thumbUploaded) {
-                        $thumbnail_url = "https://img.youtube.com/vi/{$ytId}/hqdefault.jpg";
-                    }
-                } elseif (!empty($video_embed_url)) {
-                    $media_url = $video_embed_url;
-                } else {
-                    $error = ($language === 'en') ? 'Please enter YouTube video link!' : 'कृपया यूट्यूब वीडियो का लिंक दर्ज करें!';
-                }
-            } elseif ($media_type === 'video_upload') {
-                if (!empty($direct_media_url)) {
-                    $media_url = $direct_media_url;
-                }
-                // Ensure video news always has a valid video poster
-                if (empty($thumbnail_url) || $thumbnail_url === 'news_cover_default.jpg' || $thumbnail_url === 'news_default.jpg') {
-                    if (!$thumbUploaded) {
-                        $thumbnail_url = 'video_default_cover.jpg';
-                    }
-                }
             } else {
-                // $media_type === 'image'
-                if (!empty($direct_media_url)) {
-                    $media_url = $direct_media_url;
-                    $thumbnail_url = $direct_media_url;
-                } elseif ($news['media_type'] !== 'image' && empty($media_url)) {
-                    $firstImg = extract_first_image_from_content($content);
-                    $media_url = $firstImg ?: 'news_cover_default.jpg';
+                // Retain existing image
+                if (empty($thumbnail_url)) {
                     $thumbnail_url = $media_url;
                 }
             }
-        }
-
-        // 4. Final safety checks for media & thumbnail URLs
-        if ($media_type === 'video_embed') {
-            $checkYt = get_youtube_video_id($media_url) ?: get_youtube_video_id($content);
-            if ($checkYt) {
-                $media_url = "https://www.youtube.com/watch?v={$checkYt}";
-                if (empty($thumbnail_url) || strpos($thumbnail_url, 'news_cover_default') !== false || strpos($thumbnail_url, 'news_default') !== false) {
-                    $thumbnail_url = "https://img.youtube.com/vi/{$checkYt}/hqdefault.jpg";
+        } elseif ($media_type === 'video_embed') {
+            $ytId = $enteredYtId ?: get_youtube_video_id($video_embed_url) ?: get_youtube_video_id($content);
+            if ($ytId) {
+                $media_url = "https://www.youtube.com/watch?v={$ytId}";
+                if (!$thumbUploaded) {
+                    $thumbnail_url = "https://img.youtube.com/vi/{$ytId}/hqdefault.jpg";
                 }
+            } elseif (!empty($video_embed_url)) {
+                $media_url = $video_embed_url;
+            } elseif ($news['media_type'] === 'video_embed' && !empty($news['media_url'])) {
+                $media_url = $news['media_url'];
+            } else {
+                $error = ($language === 'en') ? 'Please enter a valid YouTube video link!' : 'कृपया यूट्यूब वीडियो का लिंक दर्ज करें!';
             }
         } elseif ($media_type === 'video_upload') {
-            if (!$thumbUploaded && (empty($thumbnail_url) || $thumbnail_url === 'news_default.jpg' || $thumbnail_url === 'news_cover_default.jpg' || !file_exists(UPLOAD_DIR . $thumbnail_url))) {
-                $firstImg = extract_first_image_from_content($content);
-                $thumbnail_url = $firstImg ?: 'news_cover_default.jpg';
-            }
-        } elseif ($media_type === 'image') {
-            if (empty($thumbnail_url) || $thumbnail_url === 'news_default.jpg' || $thumbnail_url === 'news_patna_flood.jpg') {
-                $thumbnail_url = (!empty($media_url) && $media_url !== 'news_cover_default.jpg') ? $media_url : (extract_first_image_from_content($content) ?: 'news_cover_default.jpg');
+            if ($newFileUploaded) {
+                // New video file uploaded, $media_url is already the new mp4 filename
+                if (empty($thumbnail_url)) {
+                    $thumbnail_url = 'video_default_cover.jpg';
+                }
+            } elseif ($news['media_type'] === 'video_upload' && preg_match('/\.(mp4|webm|mov|mkv|avi|m4v)$/i', $news['media_url'])) {
+                $media_url = $news['media_url'];
+                if (empty($thumbnail_url)) {
+                    $thumbnail_url = 'video_default_cover.jpg';
+                }
+            } elseif (!empty($direct_media_url) && preg_match('/\.(mp4|webm|mov|mkv|avi|m4v)$/i', $direct_media_url)) {
+                $media_url = $direct_media_url;
+                if (empty($thumbnail_url)) {
+                    $thumbnail_url = 'video_default_cover.jpg';
+                }
+            } else {
+                $error = ($language === 'en') ? 'Please choose an MP4 video file to upload!' : 'कृपया वीडियो फ़ाइल (MP4) चुनें या अपलोड करें!';
             }
         }
 

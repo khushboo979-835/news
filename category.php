@@ -13,7 +13,14 @@ $stmt = $pdo->prepare("SELECT * FROM categories WHERE slug = :slug AND status = 
 $stmt->execute([':slug' => $catSlug]);
 $category = $stmt->fetch();
 
-if (!$category) {
+if ($catSlug === 'video' || $catSlug === 'videos') {
+    $category = [
+        'id' => 999,
+        'name' => 'वीडियो समाचार',
+        'slug' => 'video',
+        'icon' => 'fa-circle-play'
+    ];
+} elseif (!$category) {
     // Default to Top News if not found
     $stmt = $pdo->prepare("SELECT * FROM categories WHERE slug = 'top-news' LIMIT 1");
     $stmt->execute();
@@ -23,8 +30,8 @@ if (!$category) {
 $pageTitle = $category ? $category['name'] . ' समाचार' : 'समाचार';
 $pageDescription = 'दैनिक खबर: ' . ($category['name'] ?? 'समाचार') . ' की सभी ताज़ा एवं प्रमुख खबरें पढ़ें।';
 
-// Fetch News for Category
-$categoryNews = get_news_by_category_slug($pdo, $category['slug'], 12);
+// Fetch News for Category (Loads up to 50 news items)
+$categoryNews = get_news_by_category_slug($pdo, $category['slug'], 50);
 
 $pageOgUrl = get_category_url($category['slug'] ?? 'top-news');
 if (!empty($categoryNews) && !empty($categoryNews[0]['id'])) {

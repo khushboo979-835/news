@@ -137,7 +137,7 @@ $categories = get_all_categories();
         <i class="fa-solid fa-house"></i>
         <span>पढ़ें</span>
     </a>
-    <a href="<?php echo SITE_URL; ?>/category.php?cat=top-news" class="bhaskar-bottom-nav-item">
+    <a href="<?php echo SITE_URL; ?>/category.php?cat=video" class="bhaskar-bottom-nav-item">
         <i class="fa-regular fa-circle-play"></i>
         <span>देखें</span>
     </a>

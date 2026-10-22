@@ -6,51 +6,100 @@
 
 require_once __DIR__ . '/includes/functions.php';
 
-$slug = trim($_GET['slug'] ?? ($_GET['id'] ?? ''));
+$rawInput = trim($_GET['slug'] ?? ($_GET['id'] ?? ''));
 
-if (empty($slug)) {
+if (empty($rawInput)) {
     header("Location: " . BASE_URL . "/index.php");
     exit;
 }
 
-// 1. Try exact slug match
-$stmt = $pdo->prepare("
-    SELECT n.*, COALESCE(c.name, 'ताज़ा ख़बर') AS category_name, COALESCE(c.slug, 'general') AS category_slug 
-    FROM news n 
-    LEFT JOIN categories c ON n.category_id = c.id 
-    WHERE n.slug = :slug 
-    LIMIT 1
-");
-$stmt->execute([':slug' => $slug]);
-$article = $stmt->fetch();
+$article = null;
+$slug = $rawInput;
 
-// 2. If not found by slug, check numeric ID
-if (!$article && is_numeric($slug)) {
+if ($pdo) {
+    // 1. Try exact slug match
     $stmt = $pdo->prepare("
         SELECT n.*, COALESCE(c.name, 'ताज़ा ख़बर') AS category_name, COALESCE(c.slug, 'general') AS category_slug 
         FROM news n 
         LEFT JOIN categories c ON n.category_id = c.id 
-        WHERE n.id = :id_val
+        WHERE n.slug = :slug 
         LIMIT 1
     ");
-    $stmt->execute([':id_val' => (int)$slug]);
+    $stmt->execute([':slug' => $slug]);
     $article = $stmt->fetch();
-}
 
-// 3. If not found, check old_slugs history (for backwards compatibility with previously shared links)
-if (!$article) {
-    try {
+    // 2. If not found, try URL-decoded and case-insensitive trimmed slug
+    if (!$article) {
+        $decoded = trim(urldecode($slug));
         $stmt = $pdo->prepare("
             SELECT n.*, COALESCE(c.name, 'ताज़ा ख़बर') AS category_name, COALESCE(c.slug, 'general') AS category_slug 
             FROM news n 
             LEFT JOIN categories c ON n.category_id = c.id 
-            WHERE FIND_IN_SET(:old_slug, REPLACE(n.old_slugs, ' ', ''))
-               OR n.old_slugs LIKE :like_slug
+            WHERE LOWER(TRIM(n.slug)) = LOWER(:slug) 
             LIMIT 1
         ");
-        $stmt->execute([':old_slug' => $slug, ':like_slug' => "%{$slug}%"]);
+        $stmt->execute([':slug' => $decoded]);
         $article = $stmt->fetch();
-    } catch (Exception $e) {}
+    }
+
+    // 3. If not found, check numeric ID
+    if (!$article && is_numeric($slug)) {
+        $stmt = $pdo->prepare("
+            SELECT n.*, COALESCE(c.name, 'ताज़ा ख़बर') AS category_name, COALESCE(c.slug, 'general') AS category_slug 
+            FROM news n 
+            LEFT JOIN categories c ON n.category_id = c.id 
+            WHERE n.id = :id_val
+            LIMIT 1
+        ");
+        $stmt->execute([':id_val' => (int)$slug]);
+        $article = $stmt->fetch();
+    }
+
+    // 4. If slug has trailing numeric ID (e.g. 'anything-54')
+    if (!$article && preg_match('/-(\d+)$/', $slug, $mId)) {
+        $stmt = $pdo->prepare("
+            SELECT n.*, COALESCE(c.name, 'ताज़ा ख़बर') AS category_name, COALESCE(c.slug, 'general') AS category_slug 
+            FROM news n 
+            LEFT JOIN categories c ON n.category_id = c.id 
+            WHERE n.id = :id_val
+            LIMIT 1
+        ");
+        $stmt->execute([':id_val' => (int)$mId[1]]);
+        $article = $stmt->fetch();
+    }
+
+    // 5. If not found, check old_slugs history (for backwards compatibility with previously shared links)
+    if (!$article) {
+        try {
+            $stmt = $pdo->prepare("
+                SELECT n.*, COALESCE(c.name, 'ताज़ा ख़बर') AS category_name, COALESCE(c.slug, 'general') AS category_slug 
+                FROM news n 
+                LEFT JOIN categories c ON n.category_id = c.id 
+                WHERE FIND_IN_SET(:old_slug, REPLACE(n.old_slugs, ' ', ''))
+                   OR n.old_slugs LIKE :like_slug
+                LIMIT 1
+            ");
+            $stmt->execute([':old_slug' => $slug, ':like_slug' => "%{$slug}%"]);
+            $article = $stmt->fetch();
+        } catch (Exception $e) {}
+    }
+
+    // 6. Fuzzy prefix match (in case link was truncated by social app)
+    if (!$article && strlen($slug) > 8) {
+        $prefix = substr($slug, 0, min(30, strlen($slug)));
+        try {
+            $stmt = $pdo->prepare("
+                SELECT n.*, COALESCE(c.name, 'ताज़ा ख़बर') AS category_name, COALESCE(c.slug, 'general') AS category_slug 
+                FROM news n 
+                LEFT JOIN categories c ON n.category_id = c.id 
+                WHERE n.slug LIKE :prefix
+                ORDER BY n.created_at DESC
+                LIMIT 1
+            ");
+            $stmt->execute([':prefix' => "{$prefix}%"]);
+            $article = $stmt->fetch();
+        } catch (Exception $e) {}
+    }
 }
 
 if (!$article) {

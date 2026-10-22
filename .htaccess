@@ -26,6 +26,9 @@
     # 6. Clean E-Paper Link: /epaper -> epaper.php
     RewriteRule ^epaper/?$ epaper.php [L,QSA]
 
+    # Legacy News Detail link compatibility: detail.php, news.php, view.php -> article.php
+    RewriteRule ^(detail|news|view)\.php$ article.php [L,QSA]
+
     # 7. Clean Static Share Card URL for WhatsApp & Social Crawlers: /share-card/123.jpg
     # If pre-cached card exists, serve directly from disk
     RewriteCond %{DOCUMENT_ROOT}/uploads/cards/card_$1.jpg -f

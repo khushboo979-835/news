@@ -735,20 +735,23 @@ function render_media_container($mediaType, $mediaUrl, $headline = '', $content 
         }
         $videoSrc = get_video_file_url($videoFile);
         
+        $localPath = UPLOAD_DIR . $videoFile;
+        if (!file_exists($localPath) && strpos($videoFile, 'http') !== 0) {
+            // If physical video file is missing on disk, fallback to article image or cover
+            $firstImg = extract_first_image_from_content($content);
+            $fallbackImg = $firstImg ?: (!empty($posterUrl) ? $posterUrl : ASSETS_URL . 'images/video_default_cover.jpg');
+            return '
+            <figure class="bhaskar-media-figure" style="margin:16px 0 20px 0; width:100%; border-radius:12px; overflow:hidden; background:#0f172a; box-shadow:0 4px 16px rgba(0,0,0,0.08);">
+                <img src="' . htmlspecialchars($fallbackImg) . '" alt="' . $escapedHeadline . '" class="bhaskar-media-elem" style="width:100%; max-height:520px; object-fit:cover; display:block;">
+            </figure>';
+        }
+        
         return '
         <div class="bhaskar-video-container js-video-player-wrap" style="position:relative; width:100%; border-radius:10px; overflow:hidden; background:#000000; margin:16px 0; box-shadow:0 4px 16px rgba(0,0,0,0.15); text-align:center;">
             <video' . $posterAttr . ' class="bhaskar-media-elem bhaskar-video-elem" controls playsinline webkit-playsinline preload="metadata" style="width:100%; max-height:520px; display:block; margin:0 auto; outline:none; background:#000000;">
                 <source src="' . htmlspecialchars($videoSrc) . '" type="video/mp4">
-                आपका ब्राउज़र वीडियो चलाने में असमर्थ है।
+                 आपका ब्राउज़र वीडियो चलाने में असमर्थ है।
             </video>
-            <div class="bhaskar-video-play-overlay js-video-play-btn" style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; background:rgba(0,0,0,0.28); cursor:pointer; z-index:3; transition:all 0.25s ease;" title="वीडियो देखने के लिए टच करें">
-                <div style="width:68px; height:68px; border-radius:50%; background:rgba(229,57,53,0.94); border:3px solid #ffffff; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 24px rgba(0,0,0,0.6); transition:transform 0.2s;">
-                    <i class="fa-solid fa-play" style="color:#ffffff; font-size:1.7rem; margin-left:4px;"></i>
-                </div>
-                <span style="margin-top:10px; color:#ffffff; font-size:0.85rem; font-weight:800; text-shadow:0 2px 6px rgba(0,0,0,0.9); background:rgba(0,0,0,0.65); padding:4px 14px; border-radius:20px; letter-spacing:0.3px;">
-                    <i class="fa-solid fa-circle-play" style="color:#f87171;"></i> वीडियो प्ले करें (Tap to Play)
-                </span>
-            </div>
         </div>';
     } else {
         // Image: Dainik Bhaskar modern news photography presentation
@@ -793,7 +796,7 @@ function get_main_story($pdo_conn = null) {
 /**
  * Fetch Top Prioritized News Stream
  */
-function get_prioritized_news($pdo_conn = null, $limit = 10, $exclude_ids = []) {
+function get_prioritized_news($pdo_conn = null, $limit = 50, $exclude_ids = []) {
     global $pdo;
     $db = $pdo_conn ?: $pdo;
     if (!$db) return [];
@@ -804,9 +807,9 @@ function get_prioritized_news($pdo_conn = null, $limit = 10, $exclude_ids = []) 
             $excludeClause = "AND n.id NOT IN ($placeholders)";
         }
         $sql = "
-            SELECT n.*, c.name AS category_name, c.slug AS category_slug 
+            SELECT n.*, COALESCE(c.name, 'ताज़ा ख़बर') AS category_name, COALESCE(c.slug, 'general') AS category_slug 
             FROM news n 
-            JOIN categories c ON n.category_id = c.id 
+            LEFT JOIN categories c ON n.category_id = c.id 
             WHERE 1=1 $excludeClause 
             ORDER BY n.priority_order ASC, n.created_at DESC 
             LIMIT :limit
@@ -823,25 +826,51 @@ function get_prioritized_news($pdo_conn = null, $limit = 10, $exclude_ids = []) 
 /**
  * Fetch News by Category Slug
  */
-function get_news_by_category_slug($pdo_conn = null, $catSlug = '', $limit = 12, $offset = 0) {
+function get_news_by_category_slug($pdo_conn = null, $catSlug = '', $limit = 50, $offset = 0) {
     global $pdo;
     $db = $pdo_conn ?: $pdo;
     if (!$db) return [];
     try {
+        if ($catSlug === 'video' || $catSlug === 'videos') {
+            $sql = "
+                SELECT n.*, COALESCE(c.name, 'वीडियो') AS category_name, COALESCE(c.slug, 'video') AS category_slug 
+                FROM news n 
+                LEFT JOIN categories c ON n.category_id = c.id 
+                WHERE (n.media_type IN ('video_upload', 'video_embed') OR n.media_url LIKE '%.mp4%' OR n.media_url LIKE '%youtu%')
+                ORDER BY n.priority_order ASC, n.created_at DESC 
+                LIMIT :limit OFFSET :offset
+            ";
+            $stmt = $db->prepare($sql);
+            $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+            $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
+            $stmt->execute();
+            $res = $stmt->fetchAll();
+            if (!empty($res)) return $res;
+            return get_prioritized_news($db, $limit);
+        }
+
         $sql = "
-            SELECT n.*, c.name AS category_name, c.slug AS category_slug 
+            SELECT n.*, COALESCE(c.name, 'ताज़ा ख़बर') AS category_name, COALESCE(c.slug, 'general') AS category_slug 
             FROM news n 
-            JOIN categories c ON n.category_id = c.id 
-            WHERE c.slug = :slug AND c.status = 1 
+            LEFT JOIN categories c ON n.category_id = c.id 
+            WHERE (c.slug = :slug OR (c.slug IS NULL AND :slug2 = 'top-news'))
             ORDER BY n.priority_order ASC, n.created_at DESC 
             LIMIT :limit OFFSET :offset
         ";
         $stmt = $db->prepare($sql);
         $stmt->bindValue(':slug', $catSlug, PDO::PARAM_STR);
+        $stmt->bindValue(':slug2', $catSlug, PDO::PARAM_STR);
         $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
         $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
         $stmt->execute();
-        return $stmt->fetchAll();
+        $results = $stmt->fetchAll();
+        // If specific category has fewer than 6 news, append latest stories so page is rich
+        if (count($results) < 6) {
+            $existingIds = array_column($results, 'id');
+            $moreStories = get_prioritized_news($db, 20, $existingIds);
+            $results = array_merge($results, $moreStories);
+        }
+        return $results;
     } catch (PDOException $e) {
         return [];
     }
@@ -856,9 +885,9 @@ function get_trending_news($pdo_conn = null, $limit = 5) {
     if (!$db) return [];
     try {
         $stmt = $db->prepare("
-            SELECT n.*, c.name AS category_name, c.slug AS category_slug 
+            SELECT n.*, COALESCE(c.name, 'ताज़ा ख़बर') AS category_name, COALESCE(c.slug, 'general') AS category_slug 
             FROM news n 
-            JOIN categories c ON n.category_id = c.id 
+            LEFT JOIN categories c ON n.category_id = c.id 
             ORDER BY n.views DESC, n.created_at DESC 
             LIMIT :limit
         ");
