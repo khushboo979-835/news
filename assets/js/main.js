@@ -209,4 +209,119 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
   }, true);
+
+  // =========================================================================
+  // 8. Dainik Bhaskar Inline Auto-Play & Scroll-Aware Auto-Pause
+  // =========================================================================
+  function formatBhaskarDuration(seconds) {
+    if (isNaN(seconds) || seconds <= 0) return '0:47';
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return m + ':' + (s < 10 ? '0' : '') + s;
+  }
+
+  const autoVideoWrappers = document.querySelectorAll('.js-autovideo-wrapper');
+  if (autoVideoWrappers.length > 0 && 'IntersectionObserver' in window) {
+    const videoScrollObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        const wrap = entry.target;
+        const video = wrap.querySelector('video');
+        const playBtn = wrap.querySelector('.js-toggle-play');
+        if (!video) return;
+
+        if (entry.isIntersecting && entry.intersectionRatio >= 0.45) {
+          // Scrolled into view: auto-play inline (muted for browser policy compliance)
+          video.muted = true;
+          const playPromise = video.play();
+          if (playPromise !== undefined) {
+            playPromise.then(() => {
+              if (playBtn) {
+                playBtn.classList.add('is-playing');
+                playBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+              }
+            }).catch(() => {
+              // Browser autoplay policy prevented or user paused
+            });
+          }
+        } else if (!entry.isIntersecting || entry.intersectionRatio < 0.2) {
+          // Scrolled out of view ("jaise upar kare page ko automatic pause ho jaye")
+          video.pause();
+          if (playBtn) {
+            playBtn.classList.remove('is-playing');
+            playBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+          }
+        }
+      });
+    }, {
+      threshold: [0.15, 0.5]
+    });
+
+    autoVideoWrappers.forEach(wrap => {
+      videoScrollObserver.observe(wrap);
+
+      const vid = wrap.querySelector('video');
+      if (vid) {
+        vid.addEventListener('loadedmetadata', function() {
+          const durEl = wrap.querySelector('.js-video-duration');
+          if (durEl && this.duration && !isNaN(this.duration)) {
+            durEl.textContent = formatBhaskarDuration(this.duration);
+          }
+        });
+      }
+    });
+  }
+
+  // Play / Pause Toggle for Dainik Bhaskar Hero Video
+  document.addEventListener('click', (e) => {
+    const toggleBtn = e.target.closest('.js-toggle-play');
+    const videoClick = e.target.closest('.bhaskar-autovideo');
+
+    if (toggleBtn || videoClick) {
+      const wrap = (toggleBtn || videoClick).closest('.js-autovideo-wrapper');
+      if (!wrap) return;
+      e.preventDefault();
+      e.stopPropagation();
+
+      const video = wrap.querySelector('video');
+      const btn = wrap.querySelector('.js-toggle-play');
+      if (!video) return;
+
+      if (video.paused) {
+        video.play().then(() => {
+          if (btn) {
+            btn.classList.add('is-playing');
+            btn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+          }
+        }).catch(() => {});
+      } else {
+        video.pause();
+        if (btn) {
+          btn.classList.remove('is-playing');
+          btn.innerHTML = '<i class="fa-solid fa-play"></i>';
+        }
+      }
+    }
+  });
+
+  // Sound Mute / Unmute Toggle for Dainik Bhaskar Hero Video
+  document.addEventListener('click', (e) => {
+    const soundBtn = e.target.closest('.js-toggle-sound');
+    if (soundBtn) {
+      const wrap = soundBtn.closest('.js-autovideo-wrapper');
+      if (!wrap) return;
+      e.preventDefault();
+      e.stopPropagation();
+
+      const video = wrap.querySelector('video');
+      if (!video) return;
+
+      if (video.muted) {
+        video.muted = false;
+        soundBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
+      } else {
+        video.muted = true;
+        soundBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
+      }
+    }
+  });
 });

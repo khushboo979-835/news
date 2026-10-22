@@ -448,25 +448,27 @@ $current_lang = $_POST['language'] ?? $news['language'] ?? 'hi';
                         <div style="font-size:0.82rem; word-break:break-all; color:#dc2626; margin-bottom:8px; background:#fff; padding:6px 10px; border-radius:6px; border:1px solid #fee2e2;">
                             <i class="fa-brands fa-youtube"></i> <?php echo htmlspecialchars($news['media_url']); ?>
                         </div>
-                    <?php elseif ($news['media_type'] === 'video_upload'): ?>
+                    <?php elseif ($news['media_type'] === 'video_upload'): 
+                        $videoSrc = get_video_file_url($news['media_url']);
+                    ?>
                         <div style="margin-bottom:8px; background:#000000; border-radius:6px; overflow:hidden; text-align:center;">
-                            <video id="currentNewsVideoPlayer" src="<?php echo get_video_file_url($news['media_url']); ?>" controls playsinline crossorigin="anonymous" style="width:100%; max-height:220px; display:block; margin:0 auto; outline:none; background:#000000;"></video>
+                            <video id="currentNewsVideoPlayer" controls playsinline preload="metadata" style="width:100%; max-height:220px; display:block; margin:0 auto; outline:none; background:#000000;">
+                                <source src="<?php echo htmlspecialchars($videoSrc); ?>" type="video/mp4">
+                                <source src="<?php echo ASSETS_URL; ?>videos/news_sample.mp4" type="video/mp4">
+                                आपका ब्राउज़र वीडियो चलाने में असमर्थ है।
+                            </video>
                         </div>
                         <div style="font-size:0.82rem; color:#2563eb; margin-bottom:8px; background:#fff; padding:6px 10px; border-radius:6px; border:1px solid #dbeafe; display:flex; align-items:center; gap:6px;">
                             <i class="fa-solid fa-circle-check" style="color:#16a34a;"></i> <span><strong>सक्रिय वीडियो:</strong> <?php echo htmlspecialchars($news['media_url']); ?></span>
                         </div>
                         <?php 
-                        $hasVideoThumb = !empty($news['thumbnail_url']) && strpos($news['thumbnail_url'], 'thumb_video_') !== false;
-                        $posterImgSrc = $hasVideoThumb ? get_media_url($news['thumbnail_url'], 'image') : '';
+                        $posterImgSrc = !empty($news['thumbnail_url']) ? get_media_url($news['thumbnail_url'], 'image') : ASSETS_URL . 'images/video_default_cover.jpg';
                         ?>
                         <div id="videoAutoPosterBox" style="margin-top:10px; padding-top:8px; border-top:1px dashed #cbd5e1;">
                             <span style="font-size:0.8rem; font-weight:700; color:#166534; display:block; margin-bottom:4px;">
                                 <i class="fa-solid fa-circle-play"></i> वीडियो का सक्रिय पोस्टर (WhatsApp शेयर फ्रेम):
                             </span>
-                            <img id="currentVideoPosterImg" src="<?php echo htmlspecialchars($posterImgSrc); ?>" alt="Video Poster" style="max-height:100px; border-radius:6px; border:1.5px solid #86efac; display:<?php echo $hasVideoThumb ? 'block' : 'none'; ?>;">
-                            <div id="posterGeneratingNotice" style="font-size:0.8rem; color:#0284c7; padding:4px 0; display:<?php echo $hasVideoThumb ? 'none' : 'block'; ?>;">
-                                <i class="fa-solid fa-wand-magic-sparkles"></i> वीडियो से पोस्टर तैयार किया जा रहा है...
-                            </div>
+                            <img id="currentVideoPosterImg" src="<?php echo htmlspecialchars($posterImgSrc); ?>" alt="Video Poster" style="max-height:100px; border-radius:6px; border:1.5px solid #86efac; display:block;">
                         </div>
                     <?php else: ?>
                         <div style="margin-bottom:8px;">
