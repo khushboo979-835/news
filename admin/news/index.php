@@ -22,6 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 // Filters
 $category_filter = isset($_GET['category']) ? (int)$_GET['category'] : 0;
 $lang_filter = isset($_GET['lang']) && in_array($_GET['lang'], ['hi', 'en']) ? $_GET['lang'] : '';
+$status_filter = isset($_GET['status']) && in_array($_GET['status'], ['published', 'draft', 'archived']) ? $_GET['status'] : '';
 $search_query = isset($_GET['q']) ? trim($_GET['q']) : '';
 
 // Build Query
@@ -39,6 +40,11 @@ if ($category_filter > 0) {
 if (!empty($lang_filter)) {
     $sql .= " AND n.language = ? ";
     $params[] = $lang_filter;
+}
+
+if (!empty($status_filter)) {
+    $sql .= " AND n.status = ? ";
+    $params[] = $status_filter;
 }
 
 if (!empty($search_query)) {
@@ -97,6 +103,14 @@ require_once __DIR__ . '/../includes/header.php';
             </select>
         </div>
         <div>
+            <select name="status" style="padding: 10px 14px; border: 1px solid var(--admin-border); border-radius: 6px; font-family: inherit; background: #fff; font-weight:600;">
+                <option value="">-- सभी स्थितियां (All Statuses) --</option>
+                <option value="published" <?php echo $status_filter === 'published' ? 'selected' : ''; ?>>🟢 प्रकाशित (Published)</option>
+                <option value="draft" <?php echo $status_filter === 'draft' ? 'selected' : ''; ?>>🟡 ड्राफ्ट (Draft)</option>
+                <option value="archived" <?php echo $status_filter === 'archived' ? 'selected' : ''; ?>>⚪ आर्काइव (Archived)</option>
+            </select>
+        </div>
+        <div>
             <select name="category" style="padding: 10px 14px; border: 1px solid var(--admin-border); border-radius: 6px; font-family: inherit; background: #fff;">
                 <option value="0">-- सभी श्रेणियां (All Categories) --</option>
                 <?php foreach ($all_categories as $cat): ?>
@@ -109,7 +123,7 @@ require_once __DIR__ . '/../includes/header.php';
         <button type="submit" class="btn btn-secondary">
             <i class="fa-solid fa-filter"></i> फ़िल्टर करें
         </button>
-        <?php if ($category_filter > 0 || !empty($lang_filter) || !empty($search_query)): ?>
+        <?php if ($category_filter > 0 || !empty($lang_filter) || !empty($status_filter) || !empty($search_query)): ?>
             <a href="<?php echo SITE_URL; ?>/admin/news/index.php" class="btn" style="background:#f3f4f6; color:#4b5563;">
                 <i class="fa-solid fa-rotate-left"></i> रीसेट
             </a>
@@ -148,6 +162,7 @@ require_once __DIR__ . '/../includes/header.php';
                             <th style="padding: 12px 14px; width: 130px;">क्रम (Rank #)</th>
                             <th style="padding: 12px 14px; width: 80px;">मीडिया</th>
                             <th style="padding: 12px 14px;">मुख्य शीर्षक (Headline)</th>
+                            <th style="padding: 12px 14px;">स्थिति</th>
                             <th style="padding: 12px 14px;">भाषा</th>
                             <th style="padding: 12px 14px;">श्रेणी</th>
                             <th style="padding: 12px 14px; text-align:center;">व्यूज</th>
@@ -186,6 +201,23 @@ require_once __DIR__ . '/../includes/header.php';
                                         <div style="font-size: 0.8rem; color: #6b7280; margin-top: 3px;">
                                             <?php echo htmlspecialchars(mb_substr($news['subheadline'], 0, 80)) . (mb_strlen($news['subheadline']) > 80 ? '...' : ''); ?>
                                         </div>
+                                    <?php endif; ?>
+                                </td>
+                                <td style="padding: 12px 14px; white-space:nowrap;">
+                                    <?php 
+                                    $st = $news['status'] ?? 'published';
+                                    if ($st === 'draft'): ?>
+                                        <span style="display:inline-flex; align-items:center; gap:4px; font-size:0.78rem; padding:3px 8px; background:#fef3c7; color:#b45309; border:1px solid #fde68a; border-radius:12px; font-weight:700;">
+                                            <i class="fa-solid fa-file-pen"></i> ड्राफ्ट
+                                        </span>
+                                    <?php elseif ($st === 'archived'): ?>
+                                        <span style="display:inline-flex; align-items:center; gap:4px; font-size:0.78rem; padding:3px 8px; background:#f3f4f6; color:#4b5563; border:1px solid #e5e7eb; border-radius:12px; font-weight:700;">
+                                            <i class="fa-solid fa-box-archive"></i> आर्काइव
+                                        </span>
+                                    <?php else: ?>
+                                        <span style="display:inline-flex; align-items:center; gap:4px; font-size:0.78rem; padding:3px 8px; background:#ecfdf5; color:#047857; border:1px solid #a7f3d0; border-radius:12px; font-weight:700;">
+                                            <i class="fa-solid fa-circle-check"></i> प्रकाशित
+                                        </span>
                                     <?php endif; ?>
                                 </td>
                                 <td style="padding: 12px 14px;">

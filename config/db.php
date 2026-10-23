@@ -41,6 +41,25 @@ try {
                 $pdo->exec("ALTER TABLE `news` ADD COLUMN `thumbnail_url` VARCHAR(500) NULL DEFAULT NULL AFTER `media_url`");
             }
 
+            // Add video_duration column if not present
+            $checkDur = $pdo->query("SHOW COLUMNS FROM `news` LIKE 'video_duration'");
+            if ($checkDur && $checkDur->rowCount() === 0) {
+                $pdo->exec("ALTER TABLE `news` ADD COLUMN `video_duration` VARCHAR(20) NULL DEFAULT '0:47' AFTER `thumbnail_url`");
+            }
+
+            // Add status column (published, draft, archived) if not present
+            $checkStatus = $pdo->query("SHOW COLUMNS FROM `news` LIKE 'status'");
+            if ($checkStatus && $checkStatus->rowCount() === 0) {
+                $pdo->exec("ALTER TABLE `news` ADD COLUMN `status` ENUM('published', 'draft', 'archived') NOT NULL DEFAULT 'published' AFTER `priority_order`");
+            }
+
+            // Add published_at column if not present
+            $checkPubAt = $pdo->query("SHOW COLUMNS FROM `news` LIKE 'published_at'");
+            if ($checkPubAt && $checkPubAt->rowCount() === 0) {
+                $pdo->exec("ALTER TABLE `news` ADD COLUMN `published_at` DATETIME NULL AFTER `status`");
+                $pdo->exec("UPDATE `news` SET `published_at` = `created_at` WHERE `published_at` IS NULL");
+            }
+
             // Self-repair: Ensure physical default image on server is clean Dainik Khabar card, NOT flood photo
             $uploadDefault = defined('UPLOAD_DIR') ? UPLOAD_DIR . 'news_default.jpg' : __DIR__ . '/../uploads/news_default.jpg';
             $cleanDefault = __DIR__ . '/../assets/images/news_cover_default.jpg';

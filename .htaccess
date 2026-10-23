@@ -42,10 +42,18 @@
     RewriteRule ^share-card/default\.jpg$ share_card.php [L,QSA]
 </IfModule>
 
-# Media Headers for WhatsApp, Facebook and Social Scrapers
+# Media Headers for WhatsApp, Facebook and Social Scrapers (Ensures WhatsApp/2.x & facebookexternalhit are never blocked)
+<IfModule mod_rewrite.c>
+    # Explicitly allow social crawlers direct access to images and share cards
+    RewriteCond %{HTTP_USER_AGENT} (facebookexternalhit|WhatsApp|Twitterbot|TelegramBot|Googlebot) [NC]
+    RewriteCond %{REQUEST_URI} \.(jpg|jpeg|png|webp|gif|mp4)$ [NC]
+    RewriteRule ^ - [L]
+</IfModule>
+
 <IfModule mod_headers.c>
     <FilesMatch "\.(jpg|jpeg|png|gif|webp|svg|mp4)$">
         Header set Access-Control-Allow-Origin "*"
+        Header set Cache-Control "public, max-age=86400"
     </FilesMatch>
 </IfModule>
 

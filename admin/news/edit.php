@@ -138,20 +138,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
+        // Helper to safely delete old upload without touching system templates
+        $safeUnlinkUpload = function($filename) {
+            if (empty($filename)) return;
+            $protected = ['news_cover_default.jpg', 'news_default.jpg', 'video_default_cover.jpg', 'logo.png', 'top_banner_ad.png'];
+            $base = basename($filename);
+            if (!in_array($base, $protected) && file_exists(UPLOAD_DIR . $base)) {
+                @unlink(UPLOAD_DIR . $base);
+            }
+        };
+
         // 3. Media & Thumbnail Resolution
         if ($remove_media) {
+            // Delete old custom file if present
+            $safeUnlinkUpload($news['media_url']);
+            if (!empty($news['thumbnail_url']) && $news['thumbnail_url'] !== $news['media_url']) {
+                $safeUnlinkUpload($news['thumbnail_url']);
+            }
             $firstImg = extract_first_image_from_content($content);
             $media_type = 'image';
             $media_url = $firstImg ?: 'news_cover_default.jpg';
             $thumbnail_url = $media_url;
         } elseif ($media_type === 'image') {
             if ($newFileUploaded) {
-                // New image uploaded, already set in $media_url and $thumbnail_url
+                // Delete old file if replaced with a new upload
+                if (!empty($news['media_url']) && $news['media_url'] !== $media_url) {
+                    $safeUnlinkUpload($news['media_url']);
+                }
             } elseif (!empty($direct_media_url) && !preg_match('/\.(mp4|webm|mov|mkv|avi|m4v)$/i', $direct_media_url) && !get_youtube_video_id($direct_media_url)) {
                 $media_url = $direct_media_url;
                 $thumbnail_url = $direct_media_url;
             } elseif ($news['media_type'] !== 'image' || preg_match('/\.(mp4|webm|mov|mkv|avi|m4v)$/i', $media_url) || get_youtube_video_id($media_url)) {
                 // Admin switched from video to image! Clear old video and pick image from content or default cover
+                $safeUnlinkUpload($news['media_url']);
                 $firstImg = extract_first_image_from_content($content);
                 $media_url = $firstImg ?: 'news_cover_default.jpg';
                 $thumbnail_url = $media_url;
@@ -164,6 +183,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif ($media_type === 'video_embed') {
             $ytId = $enteredYtId ?: get_youtube_video_id($video_embed_url) ?: get_youtube_video_id($content);
             if ($ytId) {
+                // Clean standard YouTube watch link
                 $media_url = "https://www.youtube.com/watch?v={$ytId}";
                 if (!$thumbUploaded) {
                     $thumbnail_url = "https://img.youtube.com/vi/{$ytId}/hqdefault.jpg";
@@ -177,7 +197,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         } elseif ($media_type === 'video_upload') {
             if ($newFileUploaded) {
-                // New video file uploaded, $media_url is already the new mp4 filename
+                if (!empty($news['media_url']) && $news['media_url'] !== $media_url) {
+                    $safeUnlinkUpload($news['media_url']);
+                }
                 if (empty($thumbnail_url)) {
                     $thumbnail_url = 'video_default_cover.jpg';
                 }
@@ -225,6 +247,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $pdo->exec("ALTER TABLE `news` ADD COLUMN `old_slugs` TEXT NULL AFTER `slug`");
                 }
 
+                $status = ($_POST['action'] ?? 'publish') === 'draft' ? 'draft' : 'published';
+                $published_at = ($status === 'published') 
+                    ? ($news['published_at'] ?: date('Y-m-d H:i:s')) 
+                    : null;
+
                 $stmt = $pdo->prepare("UPDATE news SET 
                                         category_id = ?, 
                                         language = ?, 
@@ -237,7 +264,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                         media_url = ?, 
                                         thumbnail_url = ?, 
                                         priority_order = ?, 
-                                        is_breaking = ? 
+                                        is_breaking = ?,
+                                        status = ?,
+                                        published_at = ?
                                         WHERE id = ?");
                 $stmt->execute([
                     $category_id,
@@ -252,6 +281,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $thumbnail_url,
                     $priority_order,
                     $is_breaking,
+                    $status,
+                    $published_at,
                     $id
                 ]);
 
@@ -553,9 +584,14 @@ $current_lang = $_POST['language'] ?? $news['language'] ?? 'hi';
 
                 <hr style="margin: 20px 0; border: none; border-top: 1px solid var(--admin-border);">
 
-                <button type="submit" id="submitBtn" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 12px; font-size:1rem; font-weight:700;">
-                    <i class="fa-solid fa-floppy-disk"></i> परिवर्तन सहेजें (Update News)
-                </button>
+                <div style="display:flex; gap:10px; margin-top:10px;">
+                    <button type="submit" name="action" value="draft" class="btn" style="flex:1; justify-content:center; padding:12px; font-size:0.95rem; font-weight:700; background:#fef3c7; color:#92400e; border:1.5px solid #fde68a; border-radius:8px; cursor:pointer;">
+                        <i class="fa-solid fa-file-pen"></i> ड्राफ्ट सहेजें (Save Draft)
+                    </button>
+                    <button type="submit" name="action" value="publish" id="submitBtn" class="btn btn-primary" style="flex:1.2; justify-content:center; padding:12px; font-size:0.95rem; font-weight:700; border-radius:8px;">
+                        <i class="fa-solid fa-floppy-disk"></i> प्रकाशित / अपडेट करें (Publish & Update)
+                    </button>
+                </div>
             </div>
         </div>
     </div>

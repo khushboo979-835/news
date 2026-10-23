@@ -194,8 +194,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (empty($error) && $pdo) {
             try {
-                $stmt = $pdo->prepare("INSERT INTO news (category_id, language, headline, subheadline, slug, content, media_type, media_url, thumbnail_url, priority_order, is_breaking, views) 
-                                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)");
+                $status = ($_POST['action'] ?? 'publish') === 'draft' ? 'draft' : 'published';
+                $published_at = ($status === 'published') ? date('Y-m-d H:i:s') : null;
+
+                $stmt = $pdo->prepare("INSERT INTO news (category_id, language, headline, subheadline, slug, content, media_type, media_url, thumbnail_url, priority_order, is_breaking, status, published_at, views) 
+                                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)");
                 $stmt->execute([
                     $category_id,
                     $language,
@@ -207,7 +210,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $media_url,
                     $thumbnail_url,
                     $priority_order,
-                    $is_breaking
+                    $is_breaking,
+                    $status,
+                    $published_at
                 ]);
 
                 $new_news_id = $pdo->lastInsertId();
@@ -441,9 +446,14 @@ $selected_lang = $_POST['language'] ?? 'hi';
 
                 <hr style="margin: 20px 0; border: none; border-top: 1px solid var(--admin-border);">
 
-                <button type="submit" id="submitBtn" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 12px; font-size: 1rem; font-weight:700;">
-                    <i class="fa-solid fa-paper-plane"></i> समाचार प्रकाशित करें (Publish News)
-                </button>
+                <div style="display:flex; gap:10px; margin-top:10px;">
+                    <button type="submit" name="action" value="draft" class="btn" style="flex:1; justify-content:center; padding:12px; font-size:0.95rem; font-weight:700; background:#fef3c7; color:#92400e; border:1.5px solid #fde68a; border-radius:8px; cursor:pointer;">
+                        <i class="fa-solid fa-file-pen"></i> ड्राफ्ट सहेजें (Save Draft)
+                    </button>
+                    <button type="submit" name="action" value="publish" id="submitBtn" class="btn btn-primary" style="flex:1.2; justify-content:center; padding:12px; font-size:0.95rem; font-weight:700; border-radius:8px;">
+                        <i class="fa-solid fa-paper-plane"></i> प्रकाशित करें (Publish Now)
+                    </button>
+                </div>
             </div>
         </div>
     </div>

@@ -892,7 +892,7 @@ function get_prioritized_news($pdo_conn = null, $limit = 50, $exclude_ids = []) 
             SELECT n.*, COALESCE(c.name, 'ताज़ा ख़बर') AS category_name, COALESCE(c.slug, 'general') AS category_slug 
             FROM news n 
             LEFT JOIN categories c ON n.category_id = c.id 
-            WHERE 1=1 $excludeClause 
+            WHERE (n.status = 'published' OR n.status IS NULL) $excludeClause 
             ORDER BY n.priority_order ASC, n.created_at DESC 
             LIMIT :limit
         ";
@@ -918,7 +918,8 @@ function get_news_by_category_slug($pdo_conn = null, $catSlug = '', $limit = 50,
                 SELECT n.*, COALESCE(c.name, 'वीडियो') AS category_name, COALESCE(c.slug, 'video') AS category_slug 
                 FROM news n 
                 LEFT JOIN categories c ON n.category_id = c.id 
-                WHERE (n.media_type IN ('video_upload', 'video_embed') OR n.media_url LIKE '%.mp4%' OR n.media_url LIKE '%youtu%')
+                WHERE (n.status = 'published' OR n.status IS NULL) 
+                  AND (n.media_type IN ('video_upload', 'video_embed') OR n.media_url LIKE '%.mp4%' OR n.media_url LIKE '%youtu%')
                 ORDER BY n.priority_order ASC, n.created_at DESC 
                 LIMIT :limit OFFSET :offset
             ";
@@ -935,7 +936,8 @@ function get_news_by_category_slug($pdo_conn = null, $catSlug = '', $limit = 50,
             SELECT n.*, COALESCE(c.name, 'ताज़ा ख़बर') AS category_name, COALESCE(c.slug, 'general') AS category_slug 
             FROM news n 
             LEFT JOIN categories c ON n.category_id = c.id 
-            WHERE (c.slug = :slug OR (c.slug IS NULL AND :slug2 = 'top-news'))
+            WHERE (n.status = 'published' OR n.status IS NULL)
+              AND (c.slug = :slug OR (c.slug IS NULL AND :slug2 = 'top-news'))
             ORDER BY n.priority_order ASC, n.created_at DESC 
             LIMIT :limit OFFSET :offset
         ";
@@ -970,6 +972,7 @@ function get_trending_news($pdo_conn = null, $limit = 5) {
             SELECT n.*, COALESCE(c.name, 'ताज़ा ख़बर') AS category_name, COALESCE(c.slug, 'general') AS category_slug 
             FROM news n 
             LEFT JOIN categories c ON n.category_id = c.id 
+            WHERE (n.status = 'published' OR n.status IS NULL)
             ORDER BY n.views DESC, n.created_at DESC 
             LIMIT :limit
         ");
