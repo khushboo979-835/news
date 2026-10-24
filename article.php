@@ -142,19 +142,30 @@ if ($slug !== $article['slug']) {
 increment_views($pdo, $article['id']);
 $article['views']++;
 
-$pageTitle = $article['headline'];
-$pageDescription = !empty($article['subheadline']) ? $article['subheadline'] : get_excerpt($article['content'], 160);
-
-// Resolve Article Media Image URL for Open Graph & WhatsApp / Facebook Link Sharing
-// Dynamic Direct Absolute Image URLs (Zero black box, instant preview on WhatsApp)
 $isVideo = is_video_article($article);
 $articleVidSource = get_article_video_url($article);
 $ytId = get_youtube_video_id($articleVidSource) ?: get_youtube_video_id($article['content'] ?? '');
 
+$pageTitle = ($isVideo ? '📹 वीडियो: ' : '') . $article['headline'];
+$pageDescription = !empty($article['subheadline']) ? $article['subheadline'] : get_excerpt($article['content'], 160);
+
+// Resolve Article Media Image URL for Open Graph & WhatsApp / Facebook Link Sharing
+// Dynamic Direct Absolute Image URLs (Zero black box, instant preview on WhatsApp)
+
 $thumbFile = trim($article['thumbnail_url'] ?? ($article['featured_image'] ?? ''));
 $full_image_url = '';
 
-if (!empty($thumbFile) && !in_array($thumbFile, ['news_default.jpg', 'news_cover_default.jpg', 'video_default_cover.jpg', 'news_patna_flood.jpg'])) {
+if ($isVideo && !$ytId) {
+    $cleanVidBase = preg_replace('/\.(mp4|webm|mov|mkv|avi|3gp)$/i', '', basename($articleVidSource ?: $article['media_url']));
+    $cardThumb = 'thumb_video_' . str_replace('news_', '', $cleanVidBase) . '.jpg';
+    if (file_exists(UPLOAD_DIR . $cardThumb)) {
+        $full_image_url = UPLOAD_URL . $cardThumb;
+    } elseif (file_exists(__DIR__ . '/assets/images/' . $cardThumb)) {
+        $full_image_url = ASSETS_URL . 'images/' . $cardThumb;
+    }
+}
+
+if (empty($full_image_url) && !empty($thumbFile) && !in_array($thumbFile, ['news_default.jpg', 'news_cover_default.jpg', 'video_default_cover.jpg', 'news_patna_flood.jpg'])) {
     if (strpos($thumbFile, 'http://') === 0 || strpos($thumbFile, 'https://') === 0) {
         $full_image_url = $thumbFile;
     } else {
@@ -167,7 +178,7 @@ if (!empty($thumbFile) && !in_array($thumbFile, ['news_default.jpg', 'news_cover
             $full_image_url = UPLOAD_URL . $tb;
         }
     }
-} elseif ($ytId) {
+} elseif (empty($full_image_url) && $ytId) {
     $full_image_url = "https://img.youtube.com/vi/{$ytId}/hqdefault.jpg";
 } elseif (!empty($article['media_url']) && !in_array($article['media_url'], ['news_default.jpg', 'news_cover_default.jpg', 'video_default_cover.jpg', 'news_patna_flood.jpg']) && !preg_match('/\.(mp4|webm|mov|mkv|avi|3gp)$/i', $article['media_url'])) {
     if (strpos($article['media_url'], 'http://') === 0 || strpos($article['media_url'], 'https://') === 0) {
@@ -333,12 +344,14 @@ require_once __DIR__ . '/includes/header.php';
 
               <!-- Top Social Share Bar -->
               <div class="db-share-actions">
-                <a href="https://api.whatsapp.com/send?text=<?= urlencode('*' . trim($article['headline']) . "*\n\n" . $waShareUrl) ?>" 
+                <?php $waShareText = ($isVideo ? '📹 *वीडियो:* ' : '*') . trim($article['headline']) . ($isVideo ? '' : '*') . "\n\n" . $waShareUrl; ?>
+                <a href="https://api.whatsapp.com/send?text=<?= urlencode($waShareText) ?>" 
                    target="_blank" 
                    rel="noopener" 
                    class="db-share-btn db-wa js-share-trigger" 
-                   data-title="<?= htmlspecialchars($article['headline']) ?>" 
+                   data-title="<?= htmlspecialchars(($isVideo ? '📹 वीडियो: ' : '') . $article['headline']) ?>" 
                    data-url="<?= htmlspecialchars($waShareUrl) ?>" 
+                   data-is-video="<?= $isVideo ? '1' : '0' ?>"
                    title="WhatsApp पर शेयर करें">
                   <i class="fa-brands fa-whatsapp"></i>
                 </a>

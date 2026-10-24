@@ -566,9 +566,7 @@ $current_lang = $_POST['language'] ?? $news['language'] ?? 'hi';
                         <?php 
                         $currThumb = !empty($news['thumbnail_url']) && !in_array($news['thumbnail_url'], ['news_default.jpg', 'news_cover_default.jpg', 'video_default_cover.jpg'])
                             ? $news['thumbnail_url']
-                            : (!empty($news['featured_image']) && !in_array($news['featured_image'], ['news_default.jpg', 'news_cover_default.jpg', 'video_default_cover.jpg'])
-                                ? $news['featured_image']
-                                : (extract_first_image_from_content($news['content']) ?: get_contextual_fallback_image($news['headline'], '', $news['id'])));
+                            : get_video_poster_url($videoFileName, $news['featured_image'] ?? '');
                         $posterImgSrc = get_media_url($currThumb, 'image');
                         ?>
                         <div id="videoAutoPosterBox" style="margin-top:10px; padding-top:8px; border-top:1px dashed #cbd5e1;">

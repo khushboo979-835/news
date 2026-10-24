@@ -543,6 +543,41 @@ function get_video_file_url($videoFile) {
 }
 
 /**
+ * Resolves the cleanest video poster image for <video poster="...">
+ * Guarantees zero flash / zero mismatch between poster and playback.
+ */
+function get_video_poster_url($videoFile, $fallback = '') {
+    $videoFile = trim($videoFile ?? '');
+    $base = basename($videoFile);
+    $cleanName = preg_replace('/\.(mp4|webm|mov|mkv|avi|3gp)$/i', '', $base);
+
+    // 1. Check clean frame (native video frame without overlay)
+    $cleanFrame = 'thumb_' . $cleanName . '.jpg';
+    if (file_exists(UPLOAD_DIR . $cleanFrame)) {
+        return UPLOAD_URL . $cleanFrame;
+    }
+    if (file_exists(__DIR__ . '/../assets/images/' . $cleanFrame)) {
+        return ASSETS_URL . 'images/' . $cleanFrame;
+    }
+
+    // 2. Check video card frame
+    $cardFrame = 'thumb_video_' . str_replace('news_', '', $cleanName) . '.jpg';
+    if (file_exists(UPLOAD_DIR . $cardFrame)) {
+        return UPLOAD_URL . $cardFrame;
+    }
+    if (file_exists(__DIR__ . '/../assets/images/' . $cardFrame)) {
+        return ASSETS_URL . 'images/' . $cardFrame;
+    }
+
+    // 3. Check fallback
+    if (!empty($fallback) && !in_array($fallback, ['news_default.jpg', 'news_cover_default.jpg', 'video_default_cover.jpg'])) {
+        return get_media_url($fallback, 'image');
+    }
+
+    return file_exists(UPLOAD_DIR . 'news_cover_default.jpg') ? (UPLOAD_URL . 'news_cover_default.jpg') : (ASSETS_URL . 'images/news_cover_default.jpg');
+}
+
+/**
  * Smart Topic-Aware Editorial Fallback Image Resolver
  * Ensures every article has a distinct, beautiful, relevant news cover image
  * instead of the plain logo card when physical uploaded files are missing.

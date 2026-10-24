@@ -102,6 +102,20 @@ try {
                         @chmod($tvPath, 0644);
                     }
                 }
+
+                // Self-repair: Ensure physical video thumbnail frames exist
+                $targetThumbs = [
+                    'thumb_news_1792757175_6994.jpg',
+                    'thumb_video_1792757175_6994.jpg'
+                ];
+                foreach ($targetThumbs as $tt) {
+                    $ttPath = $uDir . $tt;
+                    $ttSrc = __DIR__ . '/../assets/images/' . $tt;
+                    if ((!file_exists($ttPath) || filesize($ttPath) < 1000) && file_exists($ttSrc)) {
+                        @copy($ttSrc, $ttPath);
+                        @chmod($ttPath, 0644);
+                    }
+                }
             }
 
             // Auto-heal news articles whose media_url is news_default.jpg or empty
@@ -188,9 +202,9 @@ try {
                     `media_type` = 'video_upload', 
                     `media_url` = 'news_1792757175_6994.mp4', 
                     `video_url` = 'news_1792757175_6994.mp4', 
-                    `thumbnail_url` = 'news_patna_police.jpg', 
-                    `featured_image` = 'news_patna_police.jpg',
-                    `video_duration` = '0:47'
+                    `thumbnail_url` = 'thumb_video_1792757175_6994.jpg', 
+                    `featured_image` = 'thumb_video_1792757175_6994.jpg',
+                    `video_duration` = '1:17'
                 WHERE `id` = 29 OR `slug` LIKE '%aalm%' OR `headline` LIKE '%आलमगंज%'");
 
                 $pdo->exec("UPDATE `news` SET `media_type` = 'video_upload' WHERE (`media_url` LIKE '%.mp4%' OR `video_url` LIKE '%.mp4%') AND `media_type` != 'video_upload'");

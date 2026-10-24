@@ -57,7 +57,9 @@ require_once __DIR__ . '/includes/header.php';
         <?php if ($heroStory): 
           $heroUrl = get_article_url($heroStory);
           $heroShareUrl = $heroUrl . (strpos($heroUrl, '?') !== false ? '&ref=wa' : '?ref=wa');
-          $heroShareText = '*' . trim($heroStory['headline']) . "*\n\n" . $heroShareUrl;
+          $heroIsVideo = is_video_article($heroStory);
+          $videoPrefix = $heroIsVideo ? "📹 *वीडियो:* " : "*";
+          $heroShareText = $videoPrefix . trim($heroStory['headline']) . ($heroIsVideo ? "" : "*") . "\n\n" . $heroShareUrl;
           $shareMsg = urlencode($heroShareText);
         ?>
           <!-- HERO CARD 1: Big Signature Card (Exact Bhaskar Screenshot 1 & 3) -->
@@ -88,7 +90,7 @@ require_once __DIR__ . '/includes/header.php';
                 <?php if ($ytHeroId): ?>
                   <?= render_media_container('video_embed', $heroVidSource, $heroStory['headline'], $heroStory['content'] ?? '', $heroStory['thumbnail_url'] ?? '', $heroDuration, $heroUrl, $heroVidSource) ?>
                 <?php else: 
-                  $heroPoster = get_article_thumbnail_url($heroStory);
+                  $heroPoster = get_video_poster_url($heroVidSource, $heroStory['thumbnail_url'] ?? '');
                   $heroVideoSrc = get_video_file_url($heroVidSource);
                 ?>
                   <div class="bhaskar-hero-video-box js-autovideo-wrapper" data-video-id="<?= (int)$heroStory['id'] ?>">

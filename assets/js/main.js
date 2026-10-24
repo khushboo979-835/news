@@ -22,14 +22,24 @@ function closeSearchModal() {
 
 // Universal WhatsApp & Social Share (Clean Dainik Bhaskar Style)
 function handleRichMediaShare(shareBtn) {
-  const title = (shareBtn.getAttribute('data-title') || document.title).trim();
+  let title = (shareBtn.getAttribute('data-title') || document.title).trim();
+  const isVideo = shareBtn.getAttribute('data-is-video') === '1' 
+               || !!shareBtn.closest('.bhaskar-hero-video-box') 
+               || !!shareBtn.closest('.bhaskar-video-card-facade')
+               || (document.querySelector('.db-hero-media-wrapper .bhaskar-video-card-facade') !== null);
+
+  if (isVideo && !title.includes('वीडियो:')) {
+    title = '📹 *वीडियो:* ' + title.replace(/^\*+|\*+$/g, '');
+  } else if (!title.startsWith('*')) {
+    title = `*${title}*`;
+  }
   let url = shareBtn.getAttribute('data-url') || window.location.href;
   if (!url.includes('ref=')) {
     url += (url.includes('?') ? '&' : '?') + 'ref=wa';
   }
 
   // Clean professional message format matching Dainik Bhaskar: *Headline* + URL
-  const shareMessage = `*${title}*\n\n${url}`;
+  const shareMessage = `${title}\n\n${url}`;
   const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareMessage)}`;
 
   const isWhatsAppBtn = shareBtn.classList.contains('db-wa') || 
