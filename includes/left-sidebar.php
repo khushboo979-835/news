@@ -48,6 +48,14 @@ $bhaskarCategories = [
       </span>
       <span class="bhaskar-nav-text">यूट्यूब चैनल</span>
     </a>
+
+    <!-- WhatsApp Official Channel -->
+    <a href="https://whatsapp.com/channel/0029VaNp44PGk1Fz5icz5U2s" target="_blank" rel="noopener" class="bhaskar-nav-item" style="color: #16a34a; font-weight: 700;">
+      <span class="bhaskar-nav-icon" style="color: #25D366;">
+        <i class="fa-brands fa-whatsapp"></i>
+      </span>
+      <span class="bhaskar-nav-text">व्हाट्सएप चैनल</span>
+    </a>
   </nav>
 
   <!-- Left Sidebar Footer Quick Badges -->

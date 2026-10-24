@@ -795,9 +795,23 @@ function render_media_container($mediaType, $mediaUrl, $headline = '', $content 
     // Check if mediaUrl OR content has a YouTube URL or iframe embed regardless of mediaType
     $ytId = get_youtube_video_id($mediaUrl) ?: get_youtube_video_id($content);
     if ($ytId) {
+        $ytMaxRes = "https://img.youtube.com/vi/{$ytId}/maxresdefault.jpg";
+        $ytHq = "https://img.youtube.com/vi/{$ytId}/hqdefault.jpg";
+        $facadePoster = (!empty($thumbnailUrl) && !in_array($thumbnailUrl, ['news_default.jpg', 'news_cover_default.jpg', 'video_default_cover.jpg']))
+            ? get_media_url($thumbnailUrl, 'image')
+            : $ytMaxRes;
+
         return '
-        <div class="bhaskar-video-wrapper" style="position:relative; width:100%; aspect-ratio:16/9; background:#0f172a; border-radius:10px; overflow:hidden; margin:16px 0; box-shadow:0 4px 15px rgba(0,0,0,0.12);">
-            <iframe src="https://www.youtube-nocookie.com/embed/' . $ytId . '?rel=0" title="' . $escapedHeadline . '" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position:absolute; top:0; left:0; width:100%; height:100%; border:0;"></iframe>
+        <div class="bhaskar-video-facade js-video-facade" data-yt-id="' . htmlspecialchars($ytId, ENT_QUOTES, 'UTF-8') . '" data-headline="' . $escapedHeadline . '" style="position:relative; width:100%; aspect-ratio:16/9; background:#0f172a; border-radius:10px; overflow:hidden; margin:16px 0; box-shadow:0 4px 18px rgba(0,0,0,0.16); cursor:pointer;">
+            <img src="' . htmlspecialchars($facadePoster) . '" alt="' . $escapedHeadline . '" class="bhaskar-facade-thumb" onerror="this.onerror=null; this.src=\'' . $ytHq . '\';" style="width:100%; height:100%; object-fit:cover; display:block;">
+            <div class="bhaskar-facade-overlay" style="position:absolute; top:0; left:0; width:100%; height:100%; background:linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.5) 100%); display:flex; align-items:center; justify-content:center;">
+                <button type="button" class="bhaskar-facade-play-btn" aria-label="वीडियो चलाएं" style="width:68px; height:68px; border-radius:50%; background:#dc2626; border:3px solid #ffffff; color:#ffffff; font-size:24px; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 22px rgba(220,38,38,0.7); cursor:pointer; padding:0; outline:none; transition:transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);">
+                    <i class="fa-solid fa-play" style="margin-left:4px;"></i>
+                </button>
+                <div style="position:absolute; bottom:12px; right:12px; background:rgba(0,0,0,0.8); color:#ffffff; font-size:0.75rem; font-weight:700; padding:4px 9px; border-radius:4px; display:flex; align-items:center; gap:6px; backdrop-filter:blur(4px); box-shadow:0 2px 6px rgba(0,0,0,0.3);">
+                    <i class="fa-brands fa-youtube" style="color:#ef4444; font-size:0.9rem;"></i> वीडियो देखें
+                </div>
+            </div>
         </div>';
     }
 
@@ -806,11 +820,14 @@ function render_media_container($mediaType, $mediaUrl, $headline = '', $content 
             // Direct video URL was supplied as embed
             $videoSrc = htmlspecialchars($mediaUrl, ENT_QUOTES, 'UTF-8');
             return '
-            <div class="bhaskar-video-wrapper" style="width:100%; background:#0f172a; border-radius:10px; overflow:hidden; margin:16px 0; text-align:center; box-shadow:0 4px 15px rgba(0,0,0,0.12);">
-                <video' . $posterAttr . ' class="bhaskar-media-elem" controls playsinline webkit-playsinline preload="metadata" style="width:100%; max-height:520px; display:block; margin:0 auto; outline:none;">
+            <div class="bhaskar-video-container js-video-player-wrap" style="position:relative; width:100%; aspect-ratio:16/9; background:#0f172a; border-radius:10px; overflow:hidden; margin:16px 0; text-align:center; box-shadow:0 4px 15px rgba(0,0,0,0.12);">
+                <video' . $posterAttr . ' class="bhaskar-media-elem" controls playsinline webkit-playsinline preload="metadata" style="width:100%; height:100%; object-fit:contain; display:block; margin:0 auto; outline:none; background:#000000;">
                     <source src="' . $videoSrc . '" type="video/mp4">
                     आपका ब्राउज़र वीडियो चलाने में असमर्थ है।
                 </video>
+                <button type="button" class="bhaskar-facade-play-btn js-video-play-btn" aria-label="प्ले वीडियो" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:68px; height:68px; border-radius:50%; background:#dc2626; border:3px solid #ffffff; color:#ffffff; font-size:24px; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 22px rgba(220,38,38,0.7); cursor:pointer; z-index:3; padding:0; outline:none;">
+                    <i class="fa-solid fa-play" style="margin-left:4px;"></i>
+                </button>
             </div>';
         } else {
             $embedUrl = htmlspecialchars($mediaUrl, ENT_QUOTES, 'UTF-8');
@@ -828,12 +845,15 @@ function render_media_container($mediaType, $mediaUrl, $headline = '', $content 
         $sampleSrc = ASSETS_URL . 'videos/news_sample.mp4';
         
         return '
-        <div class="bhaskar-video-container js-video-player-wrap" style="position:relative; width:100%; border-radius:12px; overflow:hidden; background:#000000; margin:16px 0; box-shadow:0 4px 18px rgba(0,0,0,0.18); text-align:center;">
-            <video' . $posterAttr . ' class="bhaskar-media-elem bhaskar-video-elem" controls playsinline webkit-playsinline preload="metadata" style="width:100%; max-height:540px; display:block; margin:0 auto; outline:none; background:#000000;">
+        <div class="bhaskar-video-container js-video-player-wrap" style="position:relative; width:100%; aspect-ratio:16/9; border-radius:12px; overflow:hidden; background:#000000; margin:16px 0; box-shadow:0 4px 18px rgba(0,0,0,0.18); text-align:center;">
+            <video' . $posterAttr . ' class="bhaskar-media-elem bhaskar-video-elem" controls playsinline webkit-playsinline preload="metadata" style="width:100%; height:100%; object-fit:contain; display:block; margin:0 auto; outline:none; background:#000000;">
                 <source src="' . htmlspecialchars($videoSrc) . '" type="video/mp4">
                 <source src="' . htmlspecialchars($sampleSrc) . '" type="video/mp4">
                  आपका ब्राउज़र वीडियो चलाने में असमर्थ है।
             </video>
+            <button type="button" class="bhaskar-facade-play-btn js-video-play-btn" aria-label="प्ले वीडियो" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:68px; height:68px; border-radius:50%; background:#dc2626; border:3px solid #ffffff; color:#ffffff; font-size:24px; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 22px rgba(220,38,38,0.7); cursor:pointer; z-index:3; padding:0; outline:none;">
+                <i class="fa-solid fa-play" style="margin-left:4px;"></i>
+            </button>
         </div>';
     } else {
         // Image: Dainik Bhaskar modern news photography presentation (Zero black letterboxes, 16:9 editorial fit)

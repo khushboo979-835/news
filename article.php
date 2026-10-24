@@ -314,7 +314,7 @@ require_once __DIR__ . '/includes/header.php';
                 <span>बिहार और देश की हर ब्रेकिंग खबर सीधे अपने फोन पर पाएं</span>
               </div>
             </div>
-            <a href="https://whatsapp.com/channel/0029Vb5VvJ46RGJHfG4Q0n3k" target="_blank" rel="noopener" class="db-wa-join-pill">
+            <a href="https://whatsapp.com/channel/0029VaNp44PGk1Fz5icz5U2s" target="_blank" rel="noopener" class="db-wa-join-pill">
               फॉलो करें <i class="fa-solid fa-arrow-right"></i>
             </a>
           </div>

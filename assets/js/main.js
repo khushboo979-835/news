@@ -324,4 +324,18 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
   });
+
+  // 9. Dainik Bhaskar Facade Video Player (Zero Flicker, Click-to-Play YouTube Player)
+  document.addEventListener('click', function(e) {
+    const facade = e.target.closest('.js-video-facade');
+    if (facade) {
+      e.preventDefault();
+      e.stopPropagation();
+      const ytId = facade.getAttribute('data-yt-id');
+      const headline = facade.getAttribute('data-headline') || 'News Video';
+      if (ytId) {
+        facade.innerHTML = '<iframe src="https://www.youtube-nocookie.com/embed/' + encodeURIComponent(ytId) + '?autoplay=1&rel=0&modestbranding=1" title="' + headline.replace(/"/g, '&quot;') + '" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position:absolute; top:0; left:0; width:100%; height:100%; border:0;"></iframe>';
+      }
+    }
+  });
 });

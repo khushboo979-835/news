@@ -49,7 +49,7 @@ $categories = get_all_categories();
                     <a href="https://twitter.com" target="_blank" rel="noopener" aria-label="Twitter / X"><i class="fa-brands fa-x-twitter"></i></a>
                     <a href="https://youtube.com/@dainikkhabar-9?si=jGcOkLeYtPnrLzNS" target="_blank" rel="noopener" aria-label="YouTube"><i class="fa-brands fa-youtube" style="color: #e53935;"></i></a>
                     <a href="https://instagram.com" target="_blank" rel="noopener" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
-                    <a href="https://whatsapp.com" target="_blank" rel="noopener" aria-label="WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>
+                    <a href="https://whatsapp.com/channel/0029VaNp44PGk1Fz5icz5U2s" target="_blank" rel="noopener" aria-label="दैनिक खबर WhatsApp चैनल" title="दैनिक खबर WhatsApp चैनल"><i class="fa-brands fa-whatsapp" style="color: #25D366;"></i></a>
                 </div>
             </div>
 

@@ -38,6 +38,13 @@ if (!is_dir($cardsDir)) {
 $cacheKey = $article ? ('card_' . (int)$article['id'] . '.jpg') : 'card_default.jpg';
 $cacheFile = $cardsDir . $cacheKey;
 
+// Support manual cache busting / refresh
+if (isset($_GET['refresh']) || isset($_GET['nocache']) || isset($_GET['v'])) {
+    if (file_exists($cacheFile)) {
+        @unlink($cacheFile);
+    }
+}
+
 // If cached version exists and is fresh, serve immediately
 if (file_exists($cacheFile) && filesize($cacheFile) > 1000) {
     header('Content-Type: image/jpeg');
@@ -162,8 +169,24 @@ $canvas = imagecreatetruecolor($canvasW, $canvasH);
 $bgDark = imagecolorallocate($canvas, 15, 23, 42);
 imagefilledrectangle($canvas, 0, 0, $canvasW, $canvasH, $bgDark);
 
-// Load News Image
+// Load News Image with multi-tier fallback
 $newsImg = load_image_resource($sourceImgPath);
+if (!$newsImg) {
+    $fallbacks = [
+        $isVideo ? (__DIR__ . '/assets/images/video_default_cover.jpg') : null,
+        $isVideo ? (UPLOAD_DIR . 'video_default_cover.jpg') : null,
+        __DIR__ . '/assets/images/news_cover_default.jpg',
+        UPLOAD_DIR . 'news_cover_default.jpg',
+        __DIR__ . '/assets/images/news_durga_puja_pandal.jpg'
+    ];
+    foreach (array_filter($fallbacks) as $fb) {
+        if (file_exists($fb)) {
+            $newsImg = load_image_resource($fb);
+            if ($newsImg) break;
+        }
+    }
+}
+
 if ($newsImg) {
     $srcW = imagesx($newsImg);
     $srcH = imagesy($newsImg);
@@ -190,6 +213,16 @@ if ($newsImg) {
         imagecopyresampled($canvas, $newsImg, 0, 0, $cropX, $cropY, $canvasW, $imageH, $cropW, $cropH);
     }
     imagedestroy($newsImg);
+} else {
+    // Rich gradient fallback if all local files are unreachable
+    for ($y = 0; $y < $imageH; $y++) {
+        $ratio = $y / $imageH;
+        $r = (int)(30 * (1 - $ratio) + 15 * $ratio);
+        $g = (int)(41 * (1 - $ratio) + 23 * $ratio);
+        $b = (int)(59 * (1 - $ratio) + 42 * $ratio);
+        $lineColor = imagecolorallocate($canvas, $r, $g, $b);
+        imageline($canvas, 0, $y, $canvasW, $y, $lineColor);
+    }
 }
 
 // 4. If Video: stamp centered broadcast play badge

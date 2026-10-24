@@ -148,9 +148,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         };
 
-        // 3. Media & Thumbnail Resolution
-        if ($remove_media) {
-            // Delete old custom file if present
+        // 3. Media & Thumbnail Resolution (Priority: New Upload > Remove Media > Retain)
+        if ($newFileUploaded) {
+            // New upload takes ABSOLUTE priority over remove_media flag
+            if (!empty($news['media_url']) && $news['media_url'] !== $media_url) {
+                $safeUnlinkUpload($news['media_url']);
+            }
+            if (!empty($news['thumbnail_url']) && $news['thumbnail_url'] !== $news['media_url'] && $news['thumbnail_url'] !== $thumbnail_url) {
+                $safeUnlinkUpload($news['thumbnail_url']);
+            }
+            $remove_media = 0;
+            // Purge cached social cards so new image reflects immediately on WhatsApp
+            @unlink(UPLOAD_DIR . 'cards/card_' . (int)$id . '.jpg');
+        } elseif ($remove_media) {
+            // User explicitly checked "फ़ोटो/मीडिया हटाएं" and did NOT upload a new file
             $safeUnlinkUpload($news['media_url']);
             if (!empty($news['thumbnail_url']) && $news['thumbnail_url'] !== $news['media_url']) {
                 $safeUnlinkUpload($news['thumbnail_url']);
@@ -159,13 +170,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $media_type = 'image';
             $media_url = $firstImg ?: 'news_cover_default.jpg';
             $thumbnail_url = $media_url;
+            @unlink(UPLOAD_DIR . 'cards/card_' . (int)$id . '.jpg');
         } elseif ($media_type === 'image') {
-            if ($newFileUploaded) {
-                // Delete old file if replaced with a new upload
-                if (!empty($news['media_url']) && $news['media_url'] !== $media_url) {
-                    $safeUnlinkUpload($news['media_url']);
-                }
-            } elseif (!empty($direct_media_url) && !preg_match('/\.(mp4|webm|mov|mkv|avi|m4v)$/i', $direct_media_url) && !get_youtube_video_id($direct_media_url)) {
+            if (!empty($direct_media_url) && !preg_match('/\.(mp4|webm|mov|mkv|avi|m4v)$/i', $direct_media_url) && !get_youtube_video_id($direct_media_url)) {
                 $media_url = $direct_media_url;
                 $thumbnail_url = $direct_media_url;
             } elseif ($news['media_type'] !== 'image' || preg_match('/\.(mp4|webm|mov|mkv|avi|m4v)$/i', $media_url) || get_youtube_video_id($media_url)) {
@@ -176,9 +183,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $thumbnail_url = $media_url;
             } else {
                 // Retain existing image
-                if (empty($thumbnail_url)) {
-                    $thumbnail_url = $media_url;
-                }
+                $media_url = $news['media_url'];
+                $thumbnail_url = !empty($news['thumbnail_url']) ? $news['thumbnail_url'] : $media_url;
             }
         } elseif ($media_type === 'video_embed') {
             $ytId = $enteredYtId ?: get_youtube_video_id($video_embed_url) ?: get_youtube_video_id($content);
@@ -196,14 +202,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $error = ($language === 'en') ? 'Please enter a valid YouTube video link!' : 'कृपया यूट्यूब वीडियो का लिंक दर्ज करें!';
             }
         } elseif ($media_type === 'video_upload') {
-            if ($newFileUploaded) {
-                if (!empty($news['media_url']) && $news['media_url'] !== $media_url) {
-                    $safeUnlinkUpload($news['media_url']);
-                }
-                if (empty($thumbnail_url)) {
-                    $thumbnail_url = 'video_default_cover.jpg';
-                }
-            } elseif ($news['media_type'] === 'video_upload' && preg_match('/\.(mp4|webm|mov|mkv|avi|m4v)$/i', $news['media_url'])) {
+            if ($news['media_type'] === 'video_upload' && preg_match('/\.(mp4|webm|mov|mkv|avi|m4v)$/i', $news['media_url'])) {
                 $media_url = $news['media_url'];
                 if (empty($thumbnail_url)) {
                     $thumbnail_url = 'video_default_cover.jpg';
@@ -468,12 +467,21 @@ $current_lang = $_POST['language'] ?? $news['language'] ?? 'hi';
                     <label style="display:block; font-weight:700; font-size:0.85rem; color:#334155; margin-bottom:8px;">
                         <i class="fa-solid fa-eye"></i> मौजूदा मीडिया (Current Media):
                     </label>
-                    <?php if ($news['media_type'] === 'video_embed'): 
+                    <?php 
+                    $hasCustomImage = !empty($news['media_url']) && !in_array($news['media_url'], ['news_cover_default.jpg', 'news_default.jpg', 'video_default_cover.jpg', 'logo.png']);
+                    if ($news['media_type'] === 'video_embed'): 
                         $ytId = get_youtube_video_id($news['media_url']);
                     ?>
                         <?php if ($ytId): ?>
                             <div style="margin-bottom:8px; border-radius:6px; overflow:hidden;">
                                 <iframe width="100%" height="180" src="https://www.youtube-nocookie.com/embed/<?php echo htmlspecialchars($ytId); ?>" frameborder="0" allowfullscreen style="border-radius:6px; border:none; display:block;"></iframe>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px; padding:6px 10px; background:#fef2f2; border:1px solid #fee2e2; border-radius:6px;">
+                                <img src="https://img.youtube.com/vi/<?php echo htmlspecialchars($ytId); ?>/hqdefault.jpg" alt="YouTube Thumbnail" style="width:64px; height:42px; object-fit:cover; border-radius:4px;">
+                                <div style="font-size:0.8rem; color:#b91c1c;">
+                                    <strong><i class="fa-brands fa-youtube"></i> यूट्यूब थंबनेल सक्रिय है</strong><br>
+                                    <span style="color:#64748b; font-size:0.75rem;">WhatsApp और वेबसाइट पर यही थंबनेल स्वतः दिखेगा।</span>
+                                </div>
                             </div>
                         <?php endif; ?>
                         <div style="font-size:0.82rem; word-break:break-all; color:#dc2626; margin-bottom:8px; background:#fff; padding:6px 10px; border-radius:6px; border:1px solid #fee2e2;">
@@ -502,20 +510,25 @@ $current_lang = $_POST['language'] ?? $news['language'] ?? 'hi';
                             <img id="currentVideoPosterImg" src="<?php echo htmlspecialchars($posterImgSrc); ?>" alt="Video Poster" style="max-height:100px; border-radius:6px; border:1.5px solid #86efac; display:block;">
                         </div>
                     <?php else: ?>
-                        <div style="margin-bottom:8px;">
-                            <img src="<?php echo get_media_url($news['media_url'], $news['media_type']); ?>" alt="" onerror="this.onerror=null; this.src='<?php echo ASSETS_URL; ?>images/news_cover_default.jpg';" style="width:100%; height:130px; object-fit:contain; background:#0f172a; border-radius:6px;">
-                        </div>
-                        <?php if (!empty($news['thumbnail_url'])): ?>
-                            <div style="margin-top:10px; padding-top:8px; border-top:1px dashed #cbd5e1;">
-                                <span style="font-size:0.8rem; font-weight:700; color:#475569; display:block; margin-bottom:4px;">
-                                    <i class="fa-solid fa-image"></i> मौजूदा थंबनेल / पोस्टर (WhatsApp व कार्ड्स):
-                                </span>
-                                <img src="<?php echo get_media_url($news['thumbnail_url'], 'image'); ?>" alt="Thumbnail" onerror="this.onerror=null; this.src='<?php echo ASSETS_URL; ?>images/news_cover_default.jpg';" style="height:70px; border-radius:6px; border:1px solid #cbd5e1; object-fit:cover; display:block;">
+                        <?php if ($hasCustomImage): ?>
+                            <div style="margin-bottom:8px; border-radius:6px; overflow:hidden; border:1px solid #e2e8f0; background:#0f172a;">
+                                <img src="<?php echo get_media_url($news['media_url'], $news['media_type']); ?>" alt="" onerror="this.onerror=null; this.src='<?php echo ASSETS_URL; ?>images/news_cover_default.jpg';" style="width:100%; max-height:160px; object-fit:cover; display:block;">
+                            </div>
+                            <div style="font-size:0.8rem; color:#059669; margin-bottom:8px; background:#ecfdf5; padding:6px 10px; border-radius:6px; border:1px solid #a7f3d0; display:flex; align-items:center; gap:6px;">
+                                <i class="fa-solid fa-circle-check"></i> <span><strong>सक्रिय मुख्य फ़ोटो:</strong> <?php echo htmlspecialchars($news['media_url']); ?></span>
+                            </div>
+                        <?php else: ?>
+                            <div style="padding:14px; background:#f1f5f9; border:1.5px dashed #cbd5e1; border-radius:6px; color:#64748b; font-size:0.85rem; margin-bottom:8px; display:flex; align-items:center; gap:10px;">
+                                <i class="fa-solid fa-image-slash" style="font-size:1.6rem; color:#94a3b8;"></i>
+                                <div>
+                                    <strong style="color:#475569; display:block;">कोई मुख्य फ़ोटो नहीं जुड़ी है</strong>
+                                    <span style="font-size:0.78rem;">नीचे "नई फ़ोटो बदलें" से फ़ाइल चुनें या डिफ़ॉल्ट ब्रांडिंग रहेगी।</span>
+                                </div>
                             </div>
                         <?php endif; ?>
                     <?php endif; ?>
                     
-                    <label style="display:flex; align-items:center; gap:6px; font-size:0.82rem; color:#64748b; font-weight:600; cursor:pointer; margin-top:10px; border-top:1px dashed #e2e8f0; padding-top:8px;">
+                    <label style="display:flex; align-items:center; gap:6px; font-size:0.82rem; color:#dc2626; font-weight:600; cursor:pointer; margin-top:10px; border-top:1px dashed #e2e8f0; padding-top:8px;">
                         <input type="checkbox" id="removeMediaCheckbox" name="remove_media" value="1" style="accent-color:#dc2626;">
                         <span>फ़ोटो/मीडिया हटाएं (केवल तब चुनें जब कोई फ़ोटो न रखनी हो)</span>
                     </label>
