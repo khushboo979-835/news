@@ -86,39 +86,9 @@ require_once __DIR__ . '/includes/header.php';
               $ytHeroId = $isHeroVideo ? (get_youtube_video_id($heroStory['media_url'] ?? '') ?: get_youtube_video_id($heroStory['content'] ?? '')) : null;
               ?>
               <?php if ($isHeroVideo): ?>
-                <?php if ($ytHeroId): ?>
-                  <div class="bhaskar-video-wrapper" style="position:relative; width:100%; aspect-ratio:16/9; background:#0f172a; border-radius:10px; overflow:hidden; margin:12px 0 16px 0; box-shadow:0 4px 15px rgba(0,0,0,0.12);">
-                    <iframe src="https://www.youtube-nocookie.com/embed/<?= $ytHeroId ?>?rel=0" title="<?= htmlspecialchars($heroStory['headline']) ?>" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position:absolute; top:0; left:0; width:100%; height:100%; border:0;"></iframe>
-                  </div>
-                <?php else: 
-                  $heroPoster = get_article_thumbnail_url($heroStory);
-                  $heroVideoSrc = get_video_file_url($heroStory['media_url']);
-                ?>
-                  <div class="bhaskar-hero-video-box js-autovideo-wrapper" data-video-id="<?= $heroStory['id'] ?>">
-                    <video class="bhaskar-autovideo" playsinline webkit-playsinline muted loop preload="metadata" poster="<?= htmlspecialchars($heroPoster) ?>">
-                      <source src="<?= htmlspecialchars($heroVideoSrc) ?>" type="video/mp4">
-                      <source src="<?= ASSETS_URL ?>videos/news_sample.mp4" type="video/mp4">
-                      आपका ब्राउज़र वीडियो चलाने में असमर्थ है।
-                    </video>
-                    
-                    <!-- Center Play / Pause Toggle Button -->
-                    <button type="button" class="bhaskar-video-playpause-btn js-toggle-play" aria-label="प्ले/पॉज़ वीडियो">
-                      <i class="fa-solid fa-play"></i>
-                    </button>
-
-                    <!-- Bottom-Left Mute / Unmute Button -->
-                    <button type="button" class="bhaskar-video-sound-btn js-toggle-sound" aria-label="ध्वनि चालू/बंद">
-                      <i class="fa-solid fa-volume-xmark"></i>
-                    </button>
-
-                    <!-- Bottom-Right Duration Badge (Bhaskar Spec) -->
-                    <div class="bhaskar-video-duration-pill js-video-duration">
-                      0:47
-                    </div>
-                  </div>
-                <?php endif; ?>
+                <?= render_media_container($heroStory['media_type'], $heroStory['media_url'], $heroStory['headline'], $heroStory['content'] ?? '', $heroStory['thumbnail_url'] ?? '', $heroStory['video_duration'] ?? '0:47', $heroUrl) ?>
               <?php else: ?>
-                <a href="<?= $heroUrl ?>">
+                <a href="<?= $heroUrl ?>" style="display:block;">
                   <?= render_media_container($heroStory['media_type'], $heroStory['media_url'], $heroStory['headline'], $heroStory['content'] ?? '', $heroStory['thumbnail_url'] ?? '') ?>
                 </a>
               <?php endif; ?>

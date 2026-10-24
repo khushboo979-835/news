@@ -52,24 +52,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             @mkdir(UPLOAD_DIR, 0777, true);
         }
 
-        // 1. Process auto-captured video frame or dedicated thumbnail
+        // 1. Process dedicated thumbnail upload or auto-captured video frame
         $thumbUploaded = false;
-        $autoVideoThumb = $_POST['auto_video_thumb'] ?? '';
-        if ($media_type === 'video_upload' && !empty($autoVideoThumb) && strpos($autoVideoThumb, 'data:image/') === 0) {
-            $parts = explode(',', $autoVideoThumb);
-            if (count($parts) === 2) {
-                $decoded = base64_decode($parts[1]);
-                if ($decoded !== false && strlen($decoded) > 500) {
-                    $tFilename = 'thumb_video_' . $news_id . '_' . time() . '.jpg';
-                    if (file_put_contents(UPLOAD_DIR . $tFilename, $decoded)) {
-                        @chmod(UPLOAD_DIR . $tFilename, 0644);
-                        $thumbnail_url = $tFilename;
-                        $thumbUploaded = true;
-                    }
-                }
-            }
-        }
-        if (!$thumbUploaded && isset($_FILES['thumbnail_file']) && $_FILES['thumbnail_file']['error'] !== UPLOAD_ERR_NO_FILE) {
+        if (isset($_FILES['thumbnail_file']) && $_FILES['thumbnail_file']['error'] !== UPLOAD_ERR_NO_FILE) {
             if ($_FILES['thumbnail_file']['error'] === UPLOAD_ERR_OK) {
                 $tFile = $_FILES['thumbnail_file'];
                 $tExt = strtolower(pathinfo($tFile['name'], PATHINFO_EXTENSION));
@@ -80,6 +65,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         @chmod(UPLOAD_DIR . $tFilename, 0644);
                         $thumbnail_url = $tFilename;
                         $thumbUploaded = true;
+                    }
+                }
+            }
+        }
+        if (!$thumbUploaded) {
+            $autoVideoThumb = $_POST['auto_video_thumb'] ?? '';
+            if ($media_type === 'video_upload' && !empty($autoVideoThumb) && strpos($autoVideoThumb, 'data:image/') === 0) {
+                $parts = explode(',', $autoVideoThumb);
+                if (count($parts) === 2) {
+                    $decoded = base64_decode($parts[1]);
+                    if ($decoded !== false && strlen($decoded) > 500) {
+                        $tFilename = 'thumb_video_' . (int)$id . '_' . time() . '.jpg';
+                        if (file_put_contents(UPLOAD_DIR . $tFilename, $decoded)) {
+                            @chmod(UPLOAD_DIR . $tFilename, 0644);
+                            $thumbnail_url = $tFilename;
+                            $thumbUploaded = true;
+                        }
                     }
                 }
             }
@@ -583,8 +585,19 @@ $current_lang = $_POST['language'] ?? $news['language'] ?? 'hi';
                             <i class="fa-solid fa-play"></i> चुनी गई नई वीडियो का प्रीव्यू
                         </div>
                     </div>
+                    <!-- Video Dedicated Poster / Thumbnail Input (Like Bhaskar) -->
+                    <div style="margin-top:14px; padding:12px; background:#f0fdf4; border:1.5px dashed #86efac; border-radius:8px;">
+                        <label style="display:block; font-weight:700; margin-bottom:6px; font-size:0.85rem; color:#166534;">
+                            <i class="fa-solid fa-image"></i> वीडियो का मुख्य कवर फ़ोटो / पोस्टर (Thumbnail for WhatsApp & Feed):
+                        </label>
+                        <input type="file" id="videoThumbnailFile" name="thumbnail_file" accept="image/*,.jpg,.jpeg,.png,.webp,.gif,.jfif" style="width:100%; font-size:0.85rem; padding:8px; border:1px solid #86efac; border-radius:6px; background:#ffffff;">
+                        <small style="color:#15803d; font-size:0.75rem; display:block; margin-top:4px;">
+                            💡 अगर आप फ़ोटो नहीं चुनते हैं, तो वीडियो का फ़्रेम स्वतः थंबनेल बन जाएगा।
+                        </small>
+                    </div>
+
                     <input type="hidden" name="auto_video_thumb" id="autoVideoThumb" value="">
-                    <small style="color:#64748b; font-size:0.78rem; display:block; margin-top:4px;">सपोर्टेड: MP4, WebM, MOV (वीडियो चुनते ही उसका असली पोस्टर स्वतः तैयार हो जाएगा)</small>
+                    <small style="color:#64748b; font-size:0.78rem; display:block; margin-top:4px;">सपोर्टेड: MP4, WebM, MOV</small>
 
                     <!-- Auto Video Poster Live Preview for WhatsApp -->
                     <div id="autoVideoThumbContainer" style="display:none; margin-top:14px; background:#f0fdf4; padding:12px; border-radius:8px; border:1.5px solid #86efac; text-align:center;">

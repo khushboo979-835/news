@@ -142,6 +142,13 @@ try {
                 $pdo->exec("UPDATE `news` SET `thumbnail_url` = 'news_cover_default.jpg' WHERE `thumbnail_url` = 'news_default.jpg'");
                 $pdo->exec("UPDATE `news` SET `media_url` = 'news_cover_default.jpg' WHERE `media_url` = 'news_patna_flood.jpg' AND `slug` NOT LIKE '%ganga-water-level%'");
                 $pdo->exec("UPDATE `news` SET `thumbnail_url` = 'news_cover_default.jpg' WHERE `thumbnail_url` = 'news_patna_flood.jpg' AND `slug` NOT LIKE '%ganga-water-level%'");
+
+                // 4. Auto-heal video articles: ensure thumbnail_url is set to authentic news photo (Zero black screen)
+                $pdo->exec("UPDATE `news` SET `thumbnail_url` = 'news_patna_police.jpg' WHERE (`slug` LIKE '%aalm%' OR `headline` LIKE '%आलमगंज%') AND (`thumbnail_url` IS NULL OR `thumbnail_url` = '' OR `thumbnail_url` = 'video_default_cover.jpg' OR `thumbnail_url` = 'news_cover_default.jpg')");
+                
+                // Clear any cached share cards for updated video stories
+                $card29 = (defined('UPLOAD_DIR') ? UPLOAD_DIR : __DIR__ . '/../uploads/') . 'cards/card_29.jpg';
+                if (file_exists($card29)) @unlink($card29);
             } catch (Exception $eAutoFix) {
                 // silent
             }

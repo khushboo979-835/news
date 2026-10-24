@@ -675,7 +675,7 @@ function get_article_thumbnail_url($article) {
 
     // 4. Video Upload: resolve dedicated video poster or high-res video graphic
     if (($article['media_type'] ?? '') === 'video_upload' || preg_match('/\.(mp4|webm|mov|mkv|avi)$/i', $article['media_url'] ?? '')) {
-        if (!empty($article['thumbnail_url']) && !in_array($article['thumbnail_url'], ['news_default.jpg', 'news_cover_default.jpg', 'news_patna_flood.jpg'])) {
+        if (!empty($article['thumbnail_url']) && !in_array($article['thumbnail_url'], ['news_default.jpg', 'news_cover_default.jpg', 'news_patna_flood.jpg', 'video_default_cover.jpg'])) {
             $tb = basename($article['thumbnail_url']);
             if (file_exists(UPLOAD_DIR . $tb)) {
                 return UPLOAD_URL . $tb;
@@ -687,7 +687,19 @@ function get_article_thumbnail_url($article) {
                 return $article['thumbnail_url'];
             }
         }
-        return ASSETS_URL . 'images/video_default_cover.jpg';
+        // Fallback A: Check if content has an inline image
+        $contentImg = extract_first_image_from_content($article['content'] ?? '');
+        if ($contentImg && !in_array($contentImg, ['news_default.jpg', 'news_cover_default.jpg', 'news_patna_flood.jpg'])) {
+            $cBase = basename($contentImg);
+            if (file_exists(UPLOAD_DIR . $cBase)) {
+                return UPLOAD_URL . $cBase;
+            }
+            if (strpos($contentImg, 'http') === 0) {
+                return $contentImg;
+            }
+        }
+        // Fallback B: Intelligent topic/category-aware news photo (e.g. Police photo for police/crime news)
+        return get_contextual_fallback_image($headline, $category, $id);
     }
 
     // 5. YouTube Embed in article content
@@ -768,11 +780,10 @@ function clean_article_content_html($html) {
 }
 
 /**
- * Render Aspect-Ratio-Safe Media Container (Zero Distortion / Zero Cropping)
+ * Render Aspect-Ratio-Safe Media Container (Exact Dainik Bhaskar Card Layout - Image 2)
  */
-function render_media_container($mediaType, $mediaUrl, $headline = '', $content = '', $thumbnailUrl = '') {
+function render_media_container($mediaType, $mediaUrl, $headline = '', $content = '', $thumbnailUrl = '', $duration = '0:47', $storyUrl = '') {
     $escapedHeadline = htmlspecialchars($headline, ENT_QUOTES, 'UTF-8');
-    $fallbackLogo = ASSETS_URL . 'images/logo.png';
     $mediaUrl = trim($mediaUrl ?? '');
 
     // Auto-detect format mismatch
@@ -782,96 +793,72 @@ function render_media_container($mediaType, $mediaUrl, $headline = '', $content 
         $mediaType = 'video_upload';
     }
 
-    // Resolve poster for video playback: use dedicated video poster or fallback graphic
-    $posterUrl = '';
-    if (!empty($thumbnailUrl) && !in_array($thumbnailUrl, ['news_default.jpg', 'news_cover_default.jpg', 'news_patna_flood.jpg'])) {
-        $posterUrl = get_media_url($thumbnailUrl, 'image');
-    }
-    if (empty($posterUrl) || strpos($posterUrl, 'news_cover_default') !== false) {
-        $posterUrl = ASSETS_URL . 'images/video_default_cover.jpg';
-    }
-    $posterAttr = !empty($posterUrl) ? ' poster="' . htmlspecialchars($posterUrl) . '"' : '';
-
-    // Check if mediaUrl OR content has a YouTube URL or iframe embed regardless of mediaType
     $ytId = get_youtube_video_id($mediaUrl) ?: get_youtube_video_id($content);
-    if ($ytId) {
-        $ytMaxRes = "https://img.youtube.com/vi/{$ytId}/maxresdefault.jpg";
-        $ytHq = "https://img.youtube.com/vi/{$ytId}/hqdefault.jpg";
-        $facadePoster = (!empty($thumbnailUrl) && !in_array($thumbnailUrl, ['news_default.jpg', 'news_cover_default.jpg', 'video_default_cover.jpg']))
-            ? get_media_url($thumbnailUrl, 'image')
-            : $ytMaxRes;
+    $isVideo = ($mediaType === 'video_upload' || $mediaType === 'video_embed' || !empty($ytId));
 
-        return '
-        <div class="bhaskar-video-facade js-video-facade" data-yt-id="' . htmlspecialchars($ytId, ENT_QUOTES, 'UTF-8') . '" data-headline="' . $escapedHeadline . '" style="position:relative; width:100%; aspect-ratio:16/9; background:#0f172a; border-radius:10px; overflow:hidden; margin:16px 0; box-shadow:0 4px 18px rgba(0,0,0,0.16); cursor:pointer;">
-            <img src="' . htmlspecialchars($facadePoster) . '" alt="' . $escapedHeadline . '" class="bhaskar-facade-thumb" onerror="this.onerror=null; this.src=\'' . $ytHq . '\';" style="width:100%; height:100%; object-fit:cover; display:block;">
-            <div class="bhaskar-facade-overlay" style="position:absolute; top:0; left:0; width:100%; height:100%; background:linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.5) 100%); display:flex; align-items:center; justify-content:center;">
-                <button type="button" class="bhaskar-facade-play-btn" aria-label="वीडियो चलाएं" style="width:68px; height:68px; border-radius:50%; background:#dc2626; border:3px solid #ffffff; color:#ffffff; font-size:24px; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 22px rgba(220,38,38,0.7); cursor:pointer; padding:0; outline:none; transition:transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);">
-                    <i class="fa-solid fa-play" style="margin-left:4px;"></i>
-                </button>
-                <div style="position:absolute; bottom:12px; right:12px; background:rgba(0,0,0,0.8); color:#ffffff; font-size:0.75rem; font-weight:700; padding:4px 9px; border-radius:4px; display:flex; align-items:center; gap:6px; backdrop-filter:blur(4px); box-shadow:0 2px 6px rgba(0,0,0,0.3);">
-                    <i class="fa-brands fa-youtube" style="color:#ef4444; font-size:0.9rem;"></i> वीडियो देखें
-                </div>
-            </div>
-        </div>';
+    // Resolve high-res visual poster image (Zero black screen)
+    $posterImg = '';
+    if (!empty($thumbnailUrl) && !in_array($thumbnailUrl, ['news_default.jpg', 'news_cover_default.jpg', 'news_patna_flood.jpg', 'video_default_cover.jpg'])) {
+        $posterImg = get_media_url($thumbnailUrl, 'image');
     }
 
-    if ($mediaType === 'video_embed') {
-        if (preg_match('/\.(mp4|webm|mov|m4v|ogv)$/i', $mediaUrl)) {
-            // Direct video URL was supplied as embed
-            $videoSrc = htmlspecialchars($mediaUrl, ENT_QUOTES, 'UTF-8');
-            return '
-            <div class="bhaskar-video-container js-video-player-wrap" style="position:relative; width:100%; aspect-ratio:16/9; background:#0f172a; border-radius:10px; overflow:hidden; margin:16px 0; text-align:center; box-shadow:0 4px 15px rgba(0,0,0,0.12);">
-                <video' . $posterAttr . ' class="bhaskar-media-elem" controls playsinline webkit-playsinline preload="metadata" style="width:100%; height:100%; object-fit:contain; display:block; margin:0 auto; outline:none; background:#000000;">
-                    <source src="' . $videoSrc . '" type="video/mp4">
-                    आपका ब्राउज़र वीडियो चलाने में असमर्थ है।
-                </video>
-                <button type="button" class="bhaskar-facade-play-btn js-video-play-btn" aria-label="प्ले वीडियो" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:68px; height:68px; border-radius:50%; background:#dc2626; border:3px solid #ffffff; color:#ffffff; font-size:24px; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 22px rgba(220,38,38,0.7); cursor:pointer; z-index:3; padding:0; outline:none;">
-                    <i class="fa-solid fa-play" style="margin-left:4px;"></i>
-                </button>
-            </div>';
-        } else {
-            $embedUrl = htmlspecialchars($mediaUrl, ENT_QUOTES, 'UTF-8');
-            return '
-            <div class="bhaskar-video-wrapper" style="position:relative; width:100%; aspect-ratio:16/9; background:#0f172a; border-radius:10px; overflow:hidden; margin:16px 0;">
-                <iframe src="' . $embedUrl . '" title="' . $escapedHeadline . '" allowfullscreen style="position:absolute; top:0; left:0; width:100%; height:100%; border:0;"></iframe>
-            </div>';
+    if (empty($posterImg) && $ytId) {
+        $posterImg = "https://img.youtube.com/vi/{$ytId}/hqdefault.jpg";
+    }
+
+    if (empty($posterImg) && !empty($content)) {
+        $cImg = extract_first_image_from_content($content);
+        if ($cImg && !in_array($cImg, ['news_default.jpg', 'news_cover_default.jpg'])) {
+            $posterImg = get_media_url($cImg, 'image');
         }
-    } elseif ($mediaType === 'video_upload' || preg_match('/\.(mp4|webm|mov|mkv|avi|m4v|3gp)$/i', $mediaUrl)) {
-        $videoFile = $mediaUrl;
-        if (strpos($videoFile, 'uploads/') === 0) {
-            $videoFile = substr($videoFile, 8);
+    }
+
+    if (empty($posterImg) || strpos($posterImg, 'video_default_cover.jpg') !== false || strpos($posterImg, 'news_cover_default.jpg') !== false) {
+        $posterImg = get_contextual_fallback_image($headline);
+    }
+
+    // CASE 1: Video (YouTube or Uploaded MP4) - EXACT DAINIK BHASKAR CARD (Image 2)
+    if ($isVideo) {
+        $videoSrc = '';
+        if (!$ytId) {
+            $videoFile = $mediaUrl;
+            if (strpos($videoFile, 'uploads/') === 0) {
+                $videoFile = substr($videoFile, 8);
+            }
+            $videoSrc = get_video_file_url($videoFile);
         }
-        $videoSrc = get_video_file_url($videoFile);
-        $sampleSrc = ASSETS_URL . 'videos/news_sample.mp4';
-        
+
+        $formattedDuration = !empty($duration) ? htmlspecialchars($duration) : '0:47';
+        $escapedPoster = htmlspecialchars($posterImg, ENT_QUOTES, 'UTF-8');
+
         return '
-        <div class="bhaskar-video-container js-video-player-wrap" style="position:relative; width:100%; aspect-ratio:16/9; border-radius:12px; overflow:hidden; background:#000000; margin:16px 0; box-shadow:0 4px 18px rgba(0,0,0,0.18); text-align:center;">
-            <video' . $posterAttr . ' class="bhaskar-media-elem bhaskar-video-elem" controls playsinline webkit-playsinline preload="metadata" style="width:100%; height:100%; object-fit:contain; display:block; margin:0 auto; outline:none; background:#000000;">
-                <source src="' . htmlspecialchars($videoSrc) . '" type="video/mp4">
-                <source src="' . htmlspecialchars($sampleSrc) . '" type="video/mp4">
-                 आपका ब्राउज़र वीडियो चलाने में असमर्थ है।
-            </video>
-            <button type="button" class="bhaskar-facade-play-btn js-video-play-btn" aria-label="प्ले वीडियो" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:68px; height:68px; border-radius:50%; background:#dc2626; border:3px solid #ffffff; color:#ffffff; font-size:24px; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 22px rgba(220,38,38,0.7); cursor:pointer; z-index:3; padding:0; outline:none;">
-                <i class="fa-solid fa-play" style="margin-left:4px;"></i>
+        <div class="bhaskar-video-card-facade js-bhaskar-video-facade" 
+             data-yt-id="' . htmlspecialchars($ytId ?? '', ENT_QUOTES, 'UTF-8') . '" 
+             data-video-src="' . htmlspecialchars($videoSrc, ENT_QUOTES, 'UTF-8') . '" 
+             data-headline="' . $escapedHeadline . '">
+            
+            <img src="' . $escapedPoster . '" alt="' . $escapedHeadline . '" class="bhaskar-facade-thumb-img" loading="lazy" onerror="this.onerror=null; this.src=\'' . ASSETS_URL . 'images/news_cover_default.jpg\';">
+            <div class="bhaskar-facade-gradient-overlay"></div>
+
+            <button type="button" class="bhaskar-video-play-disc" aria-label="वीडियो चलाएं">
+                <i class="fa-solid fa-play"></i>
             </button>
+
+            <span class="bhaskar-video-duration-tag">' . $formattedDuration . '</span>
         </div>';
-    } else {
-        // Image: Dainik Bhaskar modern news photography presentation (Zero black letterboxes, 16:9 editorial fit)
-        $imgSrc = get_media_url($mediaUrl, 'image', $content, $thumbnailUrl);
-        if (empty($imgSrc) || strpos($imgSrc, 'news_cover_default.jpg') !== false) {
-            $imgSrc = get_contextual_fallback_image($headline);
-        }
-        return '
-        <figure class="bhaskar-media-figure" style="margin:12px 0 16px 0; width:100%; border-radius:8px; overflow:hidden; background:#f8fafc; box-shadow:0 2px 10px rgba(0,0,0,0.06);">
-            <div style="width:100%; aspect-ratio:16/9; overflow:hidden; background:#f1f5f9; position:relative;">
-                <img src="' . htmlspecialchars($imgSrc) . '" alt="' . $escapedHeadline . '" class="bhaskar-media-elem" loading="eager" style="width:100%; height:100%; object-fit:cover; display:block;">
-            </div>
-            <figcaption style="padding:6px 12px; background:#ffffff; font-size:0.78rem; color:#64748b; border-top:1px solid #f1f5f9; font-weight:600; text-align:left; display:flex; align-items:center; gap:6px;">
-                <i class="fa-solid fa-camera" style="color:var(--theme-color); font-size:0.75rem;"></i>
-                <span>' . $escapedHeadline . ' (फ़ाइल फ़ोटो)</span>
-            </figcaption>
-        </figure>';
     }
+
+    // CASE 2: Image News Article
+    return '
+    <figure class="bhaskar-media-figure" style="margin:12px 0 16px 0; width:100%; border-radius:8px; overflow:hidden; background:#f8fafc; box-shadow:0 2px 10px rgba(0,0,0,0.06);">
+        <div style="width:100%; aspect-ratio:16/9; overflow:hidden; background:#f1f5f9; position:relative;">
+            <img src="' . htmlspecialchars($posterImg) . '" alt="' . $escapedHeadline . '" class="bhaskar-media-elem" loading="eager" onerror="this.onerror=null; this.src=\'' . ASSETS_URL . 'images/news_cover_default.jpg\';" style="width:100%; height:100%; object-fit:cover; display:block;">
+        </div>
+        <figcaption style="padding:6px 12px; background:#ffffff; font-size:0.78rem; color:#64748b; border-top:1px solid #f1f5f9; font-weight:600; text-align:left; display:flex; align-items:center; gap:6px;">
+            <i class="fa-solid fa-camera" style="color:var(--theme-color); font-size:0.75rem;"></i>
+            <span>' . $escapedHeadline . '</span>
+        </figcaption>
+    </figure>';
 }
 
 /**

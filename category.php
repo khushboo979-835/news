@@ -90,9 +90,9 @@ require_once __DIR__ . '/includes/header.php';
 
                 <div class="bhaskar-hero-media">
                   <?php if ($isStoryVideo): ?>
-                    <?= render_media_container($story['media_type'], $story['media_url'], $story['headline'], $story['content'] ?? '', $story['thumbnail_url'] ?? '') ?>
+                    <?= render_media_container($story['media_type'], $story['media_url'], $story['headline'], $story['content'] ?? '', $story['thumbnail_url'] ?? '', $story['video_duration'] ?? '0:47', $storyUrl) ?>
                   <?php else: ?>
-                    <a href="<?= $storyUrl ?>">
+                    <a href="<?= $storyUrl ?>" style="display:block;">
                       <?= render_media_container($story['media_type'], $story['media_url'], $story['headline'], $story['content'] ?? '', $story['thumbnail_url'] ?? '') ?>
                     </a>
                   <?php endif; ?>

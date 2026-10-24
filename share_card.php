@@ -71,7 +71,7 @@ if ($article) {
         $sourceImgPath = "https://img.youtube.com/vi/{$ytId}/hqdefault.jpg";
     } elseif ($mediaType === 'video_upload' || preg_match('/\.(mp4|webm|mov|mkv|avi)$/i', $mediaUrl)) {
         $isVideo = true;
-        if (!empty($thumbUrl)) {
+        if (!empty($thumbUrl) && !in_array($thumbUrl, ['news_default.jpg', 'news_cover_default.jpg', 'video_default_cover.jpg', 'news_patna_flood.jpg'])) {
             $tb = basename($thumbUrl);
             if (file_exists(UPLOAD_DIR . $tb)) {
                 $sourceImgPath = UPLOAD_DIR . $tb;
@@ -79,6 +79,28 @@ if ($article) {
                 $sourceImgPath = __DIR__ . '/assets/images/' . $tb;
             } elseif (strpos($thumbUrl, 'http') === 0) {
                 $sourceImgPath = $thumbUrl;
+            }
+        }
+        if (!$sourceImgPath) {
+            $contentImg = extract_first_image_from_content($article['content'] ?? '');
+            if ($contentImg && !in_array($contentImg, ['news_default.jpg', 'news_cover_default.jpg', 'news_patna_flood.jpg'])) {
+                $cBase = basename($contentImg);
+                if (file_exists(UPLOAD_DIR . $cBase)) {
+                    $sourceImgPath = UPLOAD_DIR . $cBase;
+                } elseif (strpos($contentImg, 'http') === 0) {
+                    $sourceImgPath = $contentImg;
+                }
+            }
+        }
+        if (!$sourceImgPath) {
+            $ctxImg = get_contextual_fallback_image($article['headline'] ?? '', $article['category_name'] ?? '', $article['id'] ?? 0);
+            $ctxBase = basename($ctxImg);
+            if (file_exists(UPLOAD_DIR . $ctxBase)) {
+                $sourceImgPath = UPLOAD_DIR . $ctxBase;
+            } elseif (file_exists(__DIR__ . '/assets/images/' . $ctxBase)) {
+                $sourceImgPath = __DIR__ . '/assets/images/' . $ctxBase;
+            } else {
+                $sourceImgPath = $ctxImg;
             }
         }
         if (!$sourceImgPath) {
@@ -239,6 +261,24 @@ if ($isVideo) {
             imagedestroy($playBadge);
         }
     }
+
+    // Stamp Duration Badge in bottom-right corner (Exact Dainik Bhaskar Image 2 Spec)
+    $durationText = !empty($article['video_duration']) ? $article['video_duration'] : '0:47';
+    $badgeW = 86;
+    $badgeH = 36;
+    $badgeX = $canvasW - $badgeW - 24;
+    $badgeY = $imageH - $badgeH - 18;
+
+    $pillBg = imagecolorallocatealpha($canvas, 10, 10, 12, 25);
+    imagefilledrectangle($canvas, $badgeX, $badgeY, $badgeX + $badgeW, $badgeY + $badgeH, $pillBg);
+
+    $pillBorder = imagecolorallocatealpha($canvas, 255, 255, 255, 95);
+    imagerectangle($canvas, $badgeX, $badgeY, $badgeX + $badgeW, $badgeY + $badgeH, $pillBorder);
+
+    $whiteText = imagecolorallocate($canvas, 255, 255, 255);
+    $textX = $badgeX + round(($badgeW - (strlen($durationText) * 9)) / 2);
+    $textY = $badgeY + round(($badgeH - 15) / 2);
+    imagestring($canvas, 5, $textX, $textY, $durationText, $whiteText);
 }
 
 // 5. Stamp Dainik Bhaskar style white branded footer at y = 535
