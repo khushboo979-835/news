@@ -20,6 +20,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $priority_order = (int)($_POST['priority_order'] ?? 1);
     $is_breaking = isset($_POST['is_breaking']) ? 1 : 0;
     $video_embed_url = trim($_POST['video_embed_url'] ?? '');
+    $video_duration = trim($_POST['video_duration'] ?? '0:47');
+    if (empty($video_duration)) $video_duration = '0:47';
 
     if (empty($headline) || empty($content)) {
         $error = ($language === 'en') ? 'Please enter headline and news content!' : 'कृपया मुख्य शीर्षक (Headline) और समाचार का पूरा विवरण (Content) दर्ज करें!';
@@ -177,15 +179,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $checkYt = get_youtube_video_id($media_url) ?: get_youtube_video_id($content);
             if ($checkYt) {
                 $media_url = "https://www.youtube.com/watch?v={$checkYt}";
-                if (empty($thumbnail_url) || strpos($thumbnail_url, 'news_cover_default') !== false || strpos($thumbnail_url, 'news_default') !== false) {
+                if (empty($thumbnail_url) || strpos($thumbnail_url, 'news_cover_default') !== false || strpos($thumbnail_url, 'news_default') !== false || strpos($thumbnail_url, 'video_default_cover') !== false) {
                     $thumbnail_url = "https://img.youtube.com/vi/{$checkYt}/hqdefault.jpg";
                 }
             }
         } elseif ($media_type === 'video_upload') {
-            if (!$thumbUploaded && (empty($thumbnail_url) || $thumbnail_url === 'news_default.jpg' || $thumbnail_url === 'news_cover_default.jpg')) {
-                $thumbnail_url = 'video_default_cover.jpg';
+            if (!$thumbUploaded && (empty($thumbnail_url) || in_array($thumbnail_url, ['news_default.jpg', 'news_cover_default.jpg', 'video_default_cover.jpg']))) {
+                // Auto fallback to content image or authentic contextual photo (Zero black screen)
+                $firstImg = extract_first_image_from_content($content);
+                $thumbnail_url = $firstImg ?: get_contextual_fallback_image($headline, '', 0);
             }
-        } elseif (empty($thumbnail_url) || $thumbnail_url === 'news_default.jpg' || $thumbnail_url === 'news_patna_flood.jpg') {
+        } elseif (empty($thumbnail_url) || $thumbnail_url === 'news_default.jpg' || $thumbnail_url === 'news_patna_flood.jpg' || $thumbnail_url === 'video_default_cover.jpg') {
             if ($media_type === 'image' && !empty($media_url) && $media_url !== 'news_cover_default.jpg') {
                 $thumbnail_url = $media_url;
             } else {
@@ -194,13 +198,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
+        // Keep featured_image and video_url synchronized
+        $featured_image = $thumbnail_url;
+        $video_url = ($media_type === 'video_embed' || $media_type === 'video_upload') ? $media_url : null;
+
         if (empty($error) && $pdo) {
             try {
+                // Self-check column availability
+                try {
+                    $pdo->exec("ALTER TABLE `news` ADD COLUMN `thumbnail_url` VARCHAR(500) NULL DEFAULT NULL AFTER `media_url`");
+                } catch (Exception $e) {}
+                try {
+                    $pdo->exec("ALTER TABLE `news` ADD COLUMN `featured_image` VARCHAR(500) NULL DEFAULT NULL AFTER `thumbnail_url`");
+                } catch (Exception $e) {}
+                try {
+                    $pdo->exec("ALTER TABLE `news` ADD COLUMN `video_url` VARCHAR(500) NULL DEFAULT NULL AFTER `featured_image`");
+                } catch (Exception $e) {}
+                try {
+                    $pdo->exec("ALTER TABLE `news` ADD COLUMN `video_duration` VARCHAR(20) NULL DEFAULT '0:47' AFTER `video_url`");
+                } catch (Exception $e) {}
+
                 $status = ($_POST['action'] ?? 'publish') === 'draft' ? 'draft' : 'published';
                 $published_at = ($status === 'published') ? date('Y-m-d H:i:s') : null;
 
-                $stmt = $pdo->prepare("INSERT INTO news (category_id, language, headline, subheadline, slug, content, media_type, media_url, thumbnail_url, priority_order, is_breaking, status, published_at, views) 
-                                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)");
+                $stmt = $pdo->prepare("INSERT INTO news (category_id, language, headline, subheadline, slug, content, media_type, media_url, thumbnail_url, featured_image, video_url, video_duration, priority_order, is_breaking, status, published_at, views) 
+                                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)");
                 $stmt->execute([
                     $category_id,
                     $language,
@@ -211,6 +233,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $media_type,
                     $media_url,
                     $thumbnail_url,
+                    $featured_image,
+                    $video_url,
+                    $video_duration,
                     $priority_order,
                     $is_breaking,
                     $status,
@@ -457,6 +482,17 @@ $selected_lang = $_POST['language'] ?? 'hi';
                     </div>
                 </div>
 
+                <!-- COMMON VIDEO DURATION / BADGE PANEL (For YouTube or Video Upload) -->
+                <div id="videoMetaPanel" style="display:none; margin-bottom: 18px; padding:12px; background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:8px;">
+                    <label style="display:block; font-weight:700; margin-bottom:4px; font-size:0.85rem; color:#1e293b;">
+                        <i class="fa-solid fa-clock" style="color:var(--admin-theme);"></i> वीडियो की अवधि (Video Duration, उदा. 0:47, 1:20):
+                    </label>
+                    <input type="text" id="videoDurationInput" name="video_duration" value="<?php echo htmlspecialchars($_POST['video_duration'] ?? '0:47'); ?>" placeholder="उदा. 0:47 या 1:20" style="width:100%; padding:8px 12px; border:1.5px solid #cbd5e1; border-radius:6px; font-size:0.88rem;">
+                    <small style="color:#64748b; font-size:0.75rem; display:block; margin-top:4px;">
+                        दैनिक भास्कर स्टाइल: वीडियो कार्ड के कोने में यह अवधि बैज दिखेगा।
+                    </small>
+                </div>
+
                 <hr style="margin: 20px 0; border: none; border-top: 1px solid var(--admin-border);">
 
                 <div style="display:flex; gap:10px; margin-top:10px;">
@@ -555,6 +591,11 @@ function selectMediaTab(tab) {
             veInput.focus();
             if (veInput.value) updateYouTubePreview(veInput.value);
         }
+    }
+
+    const metaPanel = document.getElementById('videoMetaPanel');
+    if (metaPanel) {
+        metaPanel.style.display = (tab === 'video_embed' || tab === 'video_upload') ? 'block' : 'none';
     }
 }
 

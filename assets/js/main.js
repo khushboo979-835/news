@@ -326,27 +326,35 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // 9. Dainik Bhaskar Facade Video Player (Zero Flicker, Click-to-Play for YouTube & MP4)
+  window.playArticleVideo = function(target) {
+    const facade = typeof target === 'string' 
+      ? document.getElementById(target) 
+      : (target ? (target.closest('.js-bhaskar-video-facade, .js-video-facade') || target) : null);
+    if (!facade) return;
+    const ytId = facade.getAttribute('data-yt-id');
+    const videoSrc = facade.getAttribute('data-video-src');
+    const headline = facade.getAttribute('data-headline') || 'News Video';
+
+    if (ytId) {
+      facade.innerHTML = '<iframe src="https://www.youtube-nocookie.com/embed/' + encodeURIComponent(ytId) + '?autoplay=1&rel=0&modestbranding=1" title="' + headline.replace(/"/g, '&quot;') + '" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position:absolute; top:0; left:0; width:100%; height:100%; border:0;"></iframe>';
+    } else if (videoSrc) {
+      facade.innerHTML = '<video controls autoplay playsinline webkit-playsinline style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:contain; background:#000000; outline:none;"><source src="' + encodeURI(videoSrc) + '" type="video/mp4">आपका ब्राउज़र वीडियो चलाने में असमर्थ है।</video>';
+      const vid = facade.querySelector('video');
+      if (vid) {
+        vid.play().catch(function() {
+          vid.muted = true;
+          vid.play();
+        });
+      }
+    }
+  };
+
   document.addEventListener('click', function(e) {
     const facade = e.target.closest('.js-bhaskar-video-facade, .js-video-facade');
     if (facade) {
       e.preventDefault();
       e.stopPropagation();
-      const ytId = facade.getAttribute('data-yt-id');
-      const videoSrc = facade.getAttribute('data-video-src');
-      const headline = facade.getAttribute('data-headline') || 'News Video';
-
-      if (ytId) {
-        facade.innerHTML = '<iframe src="https://www.youtube-nocookie.com/embed/' + encodeURIComponent(ytId) + '?autoplay=1&rel=0&modestbranding=1" title="' + headline.replace(/"/g, '&quot;') + '" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position:absolute; top:0; left:0; width:100%; height:100%; border:0;"></iframe>';
-      } else if (videoSrc) {
-        facade.innerHTML = '<video controls autoplay playsinline webkit-playsinline style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:contain; background:#000000; outline:none;"><source src="' + encodeURI(videoSrc) + '" type="video/mp4">आपका ब्राउज़र वीडियो चलाने में असमर्थ है।</video>';
-        const vid = facade.querySelector('video');
-        if (vid) {
-          vid.play().catch(function() {
-            vid.muted = true;
-            vid.play();
-          });
-        }
-      }
+      window.playArticleVideo(facade);
     }
   });
 });

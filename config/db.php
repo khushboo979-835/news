@@ -41,10 +41,22 @@ try {
                 $pdo->exec("ALTER TABLE `news` ADD COLUMN `thumbnail_url` VARCHAR(500) NULL DEFAULT NULL AFTER `media_url`");
             }
 
+            // Add featured_image column if not present (alias / synonym for thumbnail_url)
+            $checkFeatured = $pdo->query("SHOW COLUMNS FROM `news` LIKE 'featured_image'");
+            if ($checkFeatured && $checkFeatured->rowCount() === 0) {
+                $pdo->exec("ALTER TABLE `news` ADD COLUMN `featured_image` VARCHAR(500) NULL DEFAULT NULL AFTER `thumbnail_url`");
+            }
+
+            // Add video_url column if not present (alias / synonym for media_url on videos)
+            $checkVidUrl = $pdo->query("SHOW COLUMNS FROM `news` LIKE 'video_url'");
+            if ($checkVidUrl && $checkVidUrl->rowCount() === 0) {
+                $pdo->exec("ALTER TABLE `news` ADD COLUMN `video_url` VARCHAR(500) NULL DEFAULT NULL AFTER `featured_image`");
+            }
+
             // Add video_duration column if not present
             $checkDur = $pdo->query("SHOW COLUMNS FROM `news` LIKE 'video_duration'");
             if ($checkDur && $checkDur->rowCount() === 0) {
-                $pdo->exec("ALTER TABLE `news` ADD COLUMN `video_duration` VARCHAR(20) NULL DEFAULT '0:47' AFTER `thumbnail_url`");
+                $pdo->exec("ALTER TABLE `news` ADD COLUMN `video_duration` VARCHAR(20) NULL DEFAULT '0:47' AFTER `video_url`");
             }
 
             // Add status column (published, draft, archived) if not present
@@ -143,12 +155,42 @@ try {
                 $pdo->exec("UPDATE `news` SET `media_url` = 'news_cover_default.jpg' WHERE `media_url` = 'news_patna_flood.jpg' AND `slug` NOT LIKE '%ganga-water-level%'");
                 $pdo->exec("UPDATE `news` SET `thumbnail_url` = 'news_cover_default.jpg' WHERE `thumbnail_url` = 'news_patna_flood.jpg' AND `slug` NOT LIKE '%ganga-water-level%'");
 
-                // 4. Auto-heal video articles: ensure thumbnail_url is set to authentic news photo (Zero black screen)
-                $pdo->exec("UPDATE `news` SET `thumbnail_url` = 'news_patna_police.jpg' WHERE (`slug` LIKE '%aalm%' OR `headline` LIKE '%आलमगंज%') AND (`thumbnail_url` IS NULL OR `thumbnail_url` = '' OR `thumbnail_url` = 'video_default_cover.jpg' OR `thumbnail_url` = 'news_cover_default.jpg')");
-                
-                // Clear any cached share cards for updated video stories
-                $card29 = (defined('UPLOAD_DIR') ? UPLOAD_DIR : __DIR__ . '/../uploads/') . 'cards/card_29.jpg';
-                if (file_exists($card29)) @unlink($card29);
+                // 4. Auto-heal YouTube articles: extract YouTube ID and set thumbnail_url & featured_image to hqdefault.jpg
+                $stmtYtAll = $pdo->query("SELECT id, media_url, content FROM `news` WHERE media_type = 'video_embed' OR media_url LIKE '%youtu%' OR content LIKE '%youtu%' LIMIT 100");
+                $ytAllRows = $stmtYtAll ? $stmtYtAll->fetchAll() : [];
+                if (!empty($ytAllRows)) {
+                    $updYtAll = $pdo->prepare("UPDATE `news` SET `thumbnail_url` = :thumb, `featured_image` = :feat, `video_url` = :vid WHERE `id` = :id");
+                    $ytPattern = '/(?:youtube(?:-nocookie)?\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?|shorts|live)\/|.*[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/i';
+                    foreach ($ytAllRows as $yar) {
+                        $yid = null;
+                        if (preg_match($ytPattern, $yar['media_url'], $my)) {
+                            $yid = $my[1];
+                        } elseif (preg_match($ytPattern, $yar['content'], $my)) {
+                            $yid = $my[1];
+                        }
+                        if ($yid) {
+                            $thumb = "https://img.youtube.com/vi/{$yid}/hqdefault.jpg";
+                            $vidWatch = "https://www.youtube.com/watch?v={$yid}";
+                            $updYtAll->execute([
+                                ':thumb' => $thumb,
+                                ':feat'  => $thumb,
+                                ':vid'   => $vidWatch,
+                                ':id'    => $yar['id']
+                            ]);
+                        }
+                    }
+                }
+
+                // 5. Auto-heal video articles: ensure thumbnail_url is set to authentic news photo (Zero black screen)
+                $pdo->exec("UPDATE `news` SET `thumbnail_url` = 'news_patna_police.jpg' WHERE (`media_type` IN ('video_upload', 'video_embed') OR `media_url` LIKE '%.mp4%') AND (`thumbnail_url` IS NULL OR `thumbnail_url` = '' OR `thumbnail_url` = 'video_default_cover.jpg' OR `thumbnail_url` = 'news_cover_default.jpg' OR `thumbnail_url` = 'news_default.jpg')");
+                $pdo->exec("UPDATE `news` SET `featured_image` = `thumbnail_url` WHERE `featured_image` IS NULL OR `featured_image` = '' OR `featured_image` = 'video_default_cover.jpg'");
+                $pdo->exec("UPDATE `news` SET `video_url` = `media_url` WHERE (`media_type` IN ('video_upload', 'video_embed') OR `media_url` LIKE '%.mp4%' OR `media_url` LIKE '%youtu%') AND (`video_url` IS NULL OR `video_url` = '')");
+
+                // Clear any cached share cards
+                $cardsDir = (defined('UPLOAD_DIR') ? UPLOAD_DIR : __DIR__ . '/../uploads/') . 'cards/';
+                if (is_dir($cardsDir)) {
+                    @array_map('unlink', glob($cardsDir . '*.jpg'));
+                }
             } catch (Exception $eAutoFix) {
                 // silent
             }

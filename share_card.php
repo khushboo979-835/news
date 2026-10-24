@@ -104,7 +104,7 @@ if ($article) {
             }
         }
         if (!$sourceImgPath) {
-            $sourceImgPath = __DIR__ . '/assets/images/video_default_cover.jpg';
+            $sourceImgPath = __DIR__ . '/assets/images/news_patna_police.jpg';
         }
     } else {
         // Standard Image News
@@ -195,8 +195,7 @@ imagefilledrectangle($canvas, 0, 0, $canvasW, $canvasH, $bgDark);
 $newsImg = load_image_resource($sourceImgPath);
 if (!$newsImg) {
     $fallbacks = [
-        $isVideo ? (__DIR__ . '/assets/images/video_default_cover.jpg') : null,
-        $isVideo ? (UPLOAD_DIR . 'video_default_cover.jpg') : null,
+        $isVideo ? (__DIR__ . '/assets/images/news_patna_police.jpg') : null,
         __DIR__ . '/assets/images/news_cover_default.jpg',
         UPLOAD_DIR . 'news_cover_default.jpg',
         __DIR__ . '/assets/images/news_durga_puja_pandal.jpg'

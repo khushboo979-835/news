@@ -41,6 +41,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $remove_media = isset($_POST['remove_media']) ? 1 : 0;
     $video_embed_url = trim($_POST['video_embed_url'] ?? '');
     $direct_media_url = trim($_POST['direct_media_url'] ?? '');
+    $video_duration = trim($_POST['video_duration'] ?? ($news['video_duration'] ?? '0:47'));
+    if (empty($video_duration)) $video_duration = '0:47';
     
     $media_url = $news['media_url'];
     $thumbnail_url = $news['thumbnail_url'] ?? '';
@@ -130,8 +132,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $newFileUploaded = true;
                         if ($media_type === 'image') {
                             $thumbnail_url = $new_filename;
-                        } elseif ($media_type === 'video_upload' && empty($thumbnail_url)) {
-                            $thumbnail_url = 'video_default_cover.jpg';
+                        } elseif ($media_type === 'video_upload' && (empty($thumbnail_url) || $thumbnail_url === 'video_default_cover.jpg')) {
+                            $firstImg = extract_first_image_from_content($content);
+                            $thumbnail_url = $firstImg ?: get_contextual_fallback_image($headline, '', $id);
                         }
                     } else {
                         $error = ($language === 'en') ? 'Failed to upload file. Check folder permissions.' : 'फ़ाइल अपलोड करने में समस्या हुई। कृपया फ़ाइल साइज़ चेक करें।';
@@ -193,7 +196,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($ytId) {
                 // Clean standard YouTube watch link
                 $media_url = "https://www.youtube.com/watch?v={$ytId}";
-                if (!$thumbUploaded) {
+                if (!$thumbUploaded || empty($thumbnail_url) || $thumbnail_url === 'video_default_cover.jpg' || $thumbnail_url === 'news_default.jpg') {
                     $thumbnail_url = "https://img.youtube.com/vi/{$ytId}/hqdefault.jpg";
                 }
             } elseif (!empty($video_embed_url)) {
@@ -206,18 +209,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif ($media_type === 'video_upload') {
             if ($news['media_type'] === 'video_upload' && preg_match('/\.(mp4|webm|mov|mkv|avi|m4v)$/i', $news['media_url'])) {
                 $media_url = $news['media_url'];
-                if (empty($thumbnail_url)) {
-                    $thumbnail_url = 'video_default_cover.jpg';
+                if (empty($thumbnail_url) || $thumbnail_url === 'video_default_cover.jpg') {
+                    $firstImg = extract_first_image_from_content($content);
+                    $thumbnail_url = $firstImg ?: get_contextual_fallback_image($headline, '', $id);
                 }
             } elseif (!empty($direct_media_url) && preg_match('/\.(mp4|webm|mov|mkv|avi|m4v)$/i', $direct_media_url)) {
                 $media_url = $direct_media_url;
-                if (empty($thumbnail_url)) {
-                    $thumbnail_url = 'video_default_cover.jpg';
+                if (empty($thumbnail_url) || $thumbnail_url === 'video_default_cover.jpg') {
+                    $firstImg = extract_first_image_from_content($content);
+                    $thumbnail_url = $firstImg ?: get_contextual_fallback_image($headline, '', $id);
                 }
             } else {
                 $error = ($language === 'en') ? 'Please choose an MP4 video file to upload!' : 'कृपया वीडियो फ़ाइल (MP4) चुनें या अपलोड करें!';
             }
         }
+
+        // Synced featured_image and video_url
+        $featured_image = $thumbnail_url;
+        $video_url = ($media_type === 'video_embed' || $media_type === 'video_upload') ? $media_url : null;
 
         // 5. Clean URL / Slug processing
         $customSlug = trim($_POST['slug'] ?? '');
@@ -248,6 +257,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $pdo->exec("ALTER TABLE `news` ADD COLUMN `old_slugs` TEXT NULL AFTER `slug`");
                 }
 
+                // Ensure columns exist in table
+                try {
+                    $pdo->exec("ALTER TABLE `news` ADD COLUMN `thumbnail_url` VARCHAR(500) NULL DEFAULT NULL AFTER `media_url`");
+                } catch (Exception $e) {}
+                try {
+                    $pdo->exec("ALTER TABLE `news` ADD COLUMN `featured_image` VARCHAR(500) NULL DEFAULT NULL AFTER `thumbnail_url`");
+                } catch (Exception $e) {}
+                try {
+                    $pdo->exec("ALTER TABLE `news` ADD COLUMN `video_url` VARCHAR(500) NULL DEFAULT NULL AFTER `featured_image`");
+                } catch (Exception $e) {}
+                try {
+                    $pdo->exec("ALTER TABLE `news` ADD COLUMN `video_duration` VARCHAR(20) NULL DEFAULT '0:47' AFTER `video_url`");
+                } catch (Exception $e) {}
+
                 $status = ($_POST['action'] ?? 'publish') === 'draft' ? 'draft' : 'published';
                 $published_at = ($status === 'published') 
                     ? ($news['published_at'] ?: date('Y-m-d H:i:s')) 
@@ -264,6 +287,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                         media_type = ?, 
                                         media_url = ?, 
                                         thumbnail_url = ?, 
+                                        featured_image = ?,
+                                        video_url = ?,
+                                        video_duration = ?,
                                         priority_order = ?, 
                                         is_breaking = ?,
                                         status = ?,
@@ -280,6 +306,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $media_type,
                     $media_url,
                     $thumbnail_url,
+                    $featured_image,
+                    $video_url,
+                    $video_duration,
                     $priority_order,
                     $is_breaking,
                     $status,
@@ -503,7 +532,10 @@ $current_lang = $_POST['language'] ?? $news['language'] ?? 'hi';
                             <i class="fa-solid fa-circle-check" style="color:#16a34a;"></i> <span><strong>सक्रिय वीडियो:</strong> <?php echo htmlspecialchars($news['media_url']); ?></span>
                         </div>
                         <?php 
-                        $posterImgSrc = !empty($news['thumbnail_url']) ? get_media_url($news['thumbnail_url'], 'image') : ASSETS_URL . 'images/video_default_cover.jpg';
+                        $currThumb = !empty($news['thumbnail_url']) && !in_array($news['thumbnail_url'], ['news_default.jpg', 'news_cover_default.jpg', 'video_default_cover.jpg'])
+                            ? $news['thumbnail_url']
+                            : (extract_first_image_from_content($news['content']) ?: get_contextual_fallback_image($news['headline'], '', $news['id']));
+                        $posterImgSrc = get_media_url($currThumb, 'image');
                         ?>
                         <div id="videoAutoPosterBox" style="margin-top:10px; padding-top:8px; border-top:1px dashed #cbd5e1;">
                             <span style="font-size:0.8rem; font-weight:700; color:#166534; display:block; margin-bottom:4px;">
@@ -608,6 +640,17 @@ $current_lang = $_POST['language'] ?? $news['language'] ?? 'hi';
                     </div>
                 </div>
 
+                <!-- COMMON VIDEO DURATION / BADGE PANEL (For YouTube or Video Upload) -->
+                <div id="videoMetaPanel" style="display:<?php echo in_array($news['media_type'], ['video_embed', 'video_upload']) ? 'block' : 'none'; ?>; margin-bottom: 18px; padding:12px; background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:8px;">
+                    <label style="display:block; font-weight:700; margin-bottom:4px; font-size:0.85rem; color:#1e293b;">
+                        <i class="fa-solid fa-clock" style="color:var(--admin-theme);"></i> वीडियो की अवधि (Video Duration, उदा. 0:47, 1:20):
+                    </label>
+                    <input type="text" id="videoDurationInput" name="video_duration" value="<?php echo htmlspecialchars($news['video_duration'] ?? '0:47'); ?>" placeholder="उदा. 0:47 या 1:20" style="width:100%; padding:8px 12px; border:1.5px solid #cbd5e1; border-radius:6px; font-size:0.88rem;">
+                    <small style="color:#64748b; font-size:0.75rem; display:block; margin-top:4px;">
+                        दैनिक भास्कर स्टाइल: वीडियो कार्ड के कोने में यह अवधि बैज दिखेगा।
+                    </small>
+                </div>
+
                 <hr style="margin: 20px 0; border: none; border-top: 1px solid var(--admin-border);">
 
                 <div style="display:flex; gap:10px; margin-top:10px;">
@@ -706,6 +749,11 @@ function selectMediaTab(tab) {
             veInput.focus();
             if (veInput.value) updateYouTubePreview(veInput.value);
         }
+    }
+
+    const metaPanel = document.getElementById('videoMetaPanel');
+    if (metaPanel) {
+        metaPanel.style.display = (tab === 'video_embed' || tab === 'video_upload') ? 'block' : 'none';
     }
 }
 

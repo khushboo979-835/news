@@ -641,21 +641,22 @@ function get_article_thumbnail_url($article) {
         return "https://img.youtube.com/vi/{$ytId}/hqdefault.jpg";
     }
 
-    // 2. Explicit Dedicated Thumbnail (Must physically exist on disk or be remote URL)
-    if (!empty($article['thumbnail_url']) && !in_array($article['thumbnail_url'], ['news_default.jpg', 'news_cover_default.jpg', 'news_patna_flood.jpg'])) {
-        $ytThumbId = get_youtube_video_id($article['thumbnail_url']);
+    // 2. Explicit Dedicated Thumbnail or Featured Image
+    $thumbCandidate = !empty($article['thumbnail_url']) ? $article['thumbnail_url'] : ($article['featured_image'] ?? '');
+    if (!empty($thumbCandidate) && !in_array($thumbCandidate, ['news_default.jpg', 'news_cover_default.jpg', 'news_patna_flood.jpg', 'video_default_cover.jpg'])) {
+        $ytThumbId = get_youtube_video_id($thumbCandidate);
         if ($ytThumbId) {
             return "https://img.youtube.com/vi/{$ytThumbId}/hqdefault.jpg";
         }
-        $thumbFile = basename($article['thumbnail_url']);
+        $thumbFile = basename($thumbCandidate);
         if (file_exists(UPLOAD_DIR . $thumbFile)) {
             return UPLOAD_URL . $thumbFile;
         }
         if (file_exists(__DIR__ . '/../assets/images/' . $thumbFile)) {
             return ASSETS_URL . 'images/' . $thumbFile;
         }
-        if (strpos($article['thumbnail_url'], 'http://') === 0 || strpos($article['thumbnail_url'], 'https://') === 0) {
-            return $article['thumbnail_url'];
+        if (strpos($thumbCandidate, 'http://') === 0 || strpos($thumbCandidate, 'https://') === 0) {
+            return $thumbCandidate;
         }
     }
 
@@ -675,16 +676,17 @@ function get_article_thumbnail_url($article) {
 
     // 4. Video Upload: resolve dedicated video poster or high-res video graphic
     if (($article['media_type'] ?? '') === 'video_upload' || preg_match('/\.(mp4|webm|mov|mkv|avi)$/i', $article['media_url'] ?? '')) {
-        if (!empty($article['thumbnail_url']) && !in_array($article['thumbnail_url'], ['news_default.jpg', 'news_cover_default.jpg', 'news_patna_flood.jpg', 'video_default_cover.jpg'])) {
-            $tb = basename($article['thumbnail_url']);
+        $vidThumb = !empty($article['thumbnail_url']) ? $article['thumbnail_url'] : ($article['featured_image'] ?? '');
+        if (!empty($vidThumb) && !in_array($vidThumb, ['news_default.jpg', 'news_cover_default.jpg', 'news_patna_flood.jpg', 'video_default_cover.jpg'])) {
+            $tb = basename($vidThumb);
             if (file_exists(UPLOAD_DIR . $tb)) {
                 return UPLOAD_URL . $tb;
             }
             if (file_exists(__DIR__ . '/../assets/images/' . $tb)) {
                 return ASSETS_URL . 'images/' . $tb;
             }
-            if (strpos($article['thumbnail_url'], 'http') === 0) {
-                return $article['thumbnail_url'];
+            if (strpos($vidThumb, 'http') === 0) {
+                return $vidThumb;
             }
         }
         // Fallback A: Check if content has an inline image

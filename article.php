@@ -146,15 +146,69 @@ $pageTitle = $article['headline'];
 $pageDescription = !empty($article['subheadline']) ? $article['subheadline'] : get_excerpt($article['content'], 160);
 
 // Resolve Article Media Image URL for Open Graph & WhatsApp / Facebook Link Sharing
-// Clean static 1200x630 Card URL matching Dainik Bhaskar layout with branded footer
-$pageOgImage = rtrim(BASE_URL, '/') . '/share-card/' . (int)$article['id'] . '.jpg';
+// Dynamic Direct Absolute Image URLs (Zero black box, instant preview on WhatsApp)
+$ytId = get_youtube_video_id($article['media_url'] ?? '') ?: get_youtube_video_id($article['content'] ?? '');
+$isVideo = ($article['media_type'] === 'video_upload' || $article['media_type'] === 'video_embed' || !empty($ytId));
+
+$thumbFile = trim($article['thumbnail_url'] ?? ($article['featured_image'] ?? ''));
+$full_image_url = '';
+
+if (!empty($thumbFile) && !in_array($thumbFile, ['news_default.jpg', 'news_cover_default.jpg', 'video_default_cover.jpg', 'news_patna_flood.jpg'])) {
+    if (strpos($thumbFile, 'http://') === 0 || strpos($thumbFile, 'https://') === 0) {
+        $full_image_url = $thumbFile;
+    } else {
+        $tb = basename($thumbFile);
+        if (file_exists(UPLOAD_DIR . $tb)) {
+            $full_image_url = UPLOAD_URL . $tb;
+        } elseif (file_exists(__DIR__ . '/assets/images/' . $tb)) {
+            $full_image_url = ASSETS_URL . 'images/' . $tb;
+        } else {
+            $full_image_url = UPLOAD_URL . $tb;
+        }
+    }
+} elseif ($ytId) {
+    $full_image_url = "https://img.youtube.com/vi/{$ytId}/hqdefault.jpg";
+} elseif (!empty($article['media_url']) && !in_array($article['media_url'], ['news_default.jpg', 'news_cover_default.jpg', 'video_default_cover.jpg', 'news_patna_flood.jpg']) && !preg_match('/\.(mp4|webm|mov|mkv|avi|3gp)$/i', $article['media_url'])) {
+    if (strpos($article['media_url'], 'http://') === 0 || strpos($article['media_url'], 'https://') === 0) {
+        $full_image_url = $article['media_url'];
+    } else {
+        $mb = basename($article['media_url']);
+        if (file_exists(UPLOAD_DIR . $mb)) {
+            $full_image_url = UPLOAD_URL . $mb;
+        } elseif (file_exists(__DIR__ . '/assets/images/' . $mb)) {
+            $full_image_url = ASSETS_URL . 'images/' . $mb;
+        } else {
+            $full_image_url = UPLOAD_URL . $mb;
+        }
+    }
+}
+
+if (empty($full_image_url) || strpos($full_image_url, 'video_default_cover.jpg') !== false) {
+    $contentImg = extract_first_image_from_content($article['content'] ?? '');
+    if ($contentImg && !in_array($contentImg, ['news_default.jpg', 'news_cover_default.jpg', 'video_default_cover.jpg'])) {
+        $full_image_url = get_media_url($contentImg, 'image');
+    }
+}
+
+if (empty($full_image_url) || strpos($full_image_url, 'video_default_cover.jpg') !== false) {
+    $full_image_url = get_contextual_fallback_image($article['headline'] ?? '', $article['category_name'] ?? '', $article['id'] ?? 0);
+}
+
+// Ensure absolute URL
+if (strpos($full_image_url, '//') === 0) {
+    $full_image_url = 'https:' . $full_image_url;
+} elseif (strpos($full_image_url, 'http://') !== 0 && strpos($full_image_url, 'https://') !== 0) {
+    $full_image_url = rtrim(BASE_URL, '/') . '/' . ltrim($full_image_url, '/');
+}
+$full_image_url = preg_replace('/^http:\/\/(dainikkhabr\.com)/i', 'https://$1', $full_image_url);
+
+$pageOgImage = $full_image_url;
 $pageOgUrl = get_article_url($article);
 $pageOgType = 'article';
 $pageArticlePublished = $article['created_at'];
 $pageArticleSection = $article['category_name'];
 
 // If video article, provide og:video tags and video.other type
-$ytId = get_youtube_video_id($article['media_url'] ?? '') ?: get_youtube_video_id($article['content'] ?? '');
 if ($ytId) {
     $pageOgType = 'video.other';
 } elseif ($article['media_type'] === 'video_upload' || preg_match('/\.(mp4|webm|mov|mkv|avi)$/i', $article['media_url'] ?? '')) {
@@ -302,7 +356,15 @@ require_once __DIR__ . '/includes/header.php';
 
           <!-- Hero Media Presentation (Image or Video) -->
           <div class="db-hero-media-wrapper">
-            <?= render_media_container($article['media_type'], $article['media_url'], $article['headline'], $article['content'], $article['thumbnail_url'] ?? '') ?>
+            <?= render_media_container(
+                $article['media_type'], 
+                $article['media_url'], 
+                $article['headline'], 
+                $article['content'], 
+                $article['thumbnail_url'] ?? '', 
+                $article['video_duration'] ?? '0:47', 
+                $currentUrl
+            ) ?>
           </div>
 
           <!-- WhatsApp Channel Join CTA Bar (Bhaskar Mobile Pattern) -->
