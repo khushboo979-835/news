@@ -79,14 +79,41 @@ require_once __DIR__ . '/includes/header.php';
             <!-- Media Container with Dainik Bhaskar Autoplay & Time Badge -->
             <div class="bhaskar-hero-media">
               <?php 
-              $isHeroVideo = in_array($heroStory['media_type'] ?? '', ['video_upload', 'video_embed']);
-              if (!$isHeroVideo && !empty($heroStory['media_url']) && preg_match('/\.(mp4|webm|mov|mkv|avi|3gp)$/i', $heroStory['media_url'])) {
-                  $isHeroVideo = true;
-              }
-              $ytHeroId = $isHeroVideo ? (get_youtube_video_id($heroStory['media_url'] ?? '') ?: get_youtube_video_id($heroStory['content'] ?? '')) : null;
+              $isHeroVideo = is_video_article($heroStory);
+              $heroVidSource = get_article_video_url($heroStory);
+              $ytHeroId = get_youtube_video_id($heroVidSource) ?: get_youtube_video_id($heroStory['content'] ?? '');
+              $heroDuration = !empty($heroStory['video_duration']) ? htmlspecialchars($heroStory['video_duration']) : '0:47';
               ?>
               <?php if ($isHeroVideo): ?>
-                <?= render_media_container($heroStory['media_type'], $heroStory['media_url'], $heroStory['headline'], $heroStory['content'] ?? '', $heroStory['thumbnail_url'] ?? '', $heroStory['video_duration'] ?? '0:47', $heroUrl) ?>
+                <?php if ($ytHeroId): ?>
+                  <?= render_media_container('video_embed', $heroVidSource, $heroStory['headline'], $heroStory['content'] ?? '', $heroStory['thumbnail_url'] ?? '', $heroDuration, $heroUrl, $heroVidSource) ?>
+                <?php else: 
+                  $heroPoster = get_article_thumbnail_url($heroStory);
+                  $heroVideoSrc = get_video_file_url($heroVidSource);
+                ?>
+                  <div class="bhaskar-hero-video-box js-autovideo-wrapper" data-video-id="<?= (int)$heroStory['id'] ?>">
+                    <video class="bhaskar-autovideo" controls playsinline webkit-playsinline muted loop preload="metadata" poster="<?= htmlspecialchars($heroPoster) ?>">
+                      <source src="<?= htmlspecialchars($heroVideoSrc) ?>" type="video/mp4">
+                      <source src="<?= ASSETS_URL ?>videos/news_sample.mp4" type="video/mp4">
+                      आपका ब्राउज़र वीडियो चलाने में असमर्थ है।
+                    </video>
+                    
+                    <!-- Center Play / Pause Toggle Button -->
+                    <button type="button" class="bhaskar-video-playpause-btn js-toggle-play" aria-label="प्ले/पॉज़ वीडियो">
+                      <i class="fa-solid fa-play"></i>
+                    </button>
+
+                    <!-- Bottom-Left Mute / Unmute Button -->
+                    <button type="button" class="bhaskar-video-sound-btn js-toggle-sound" aria-label="ध्वनि चालू/बंद">
+                      <i class="fa-solid fa-volume-xmark"></i>
+                    </button>
+
+                    <!-- Bottom-Right Duration Badge (Bhaskar Spec) -->
+                    <div class="bhaskar-video-duration-pill js-video-duration">
+                      <?= $heroDuration ?>
+                    </div>
+                  </div>
+                <?php endif; ?>
               <?php else: ?>
                 <a href="<?= $heroUrl ?>" style="display:block;">
                   <?= render_media_container($heroStory['media_type'], $heroStory['media_url'], $heroStory['headline'], $heroStory['content'] ?? '', $heroStory['thumbnail_url'] ?? '') ?>
@@ -169,11 +196,11 @@ require_once __DIR__ . '/includes/header.php';
                 <a href="<?= $storyUrl ?>" class="bhaskar-thumb-link">
                   <img src="<?= get_article_thumbnail_url($story) ?>" alt="<?= htmlspecialchars($story['headline']) ?>" loading="lazy" onerror="this.onerror=null; this.src='<?= ASSETS_URL ?>images/news_cover_default.jpg';">
                   <?php 
-                  $isStoryVideo = in_array($story['media_type'] ?? '', ['video_embed', 'video_upload']) || preg_match('/\.(mp4|webm|mov|mkv|avi|3gp)$/i', $story['media_url'] ?? '');
+                  $isStoryVideo = is_video_article($story);
                   if ($isStoryVideo): 
                   ?>
                     <span class="bhaskar-thumb-play-circle"><i class="fa-solid fa-play"></i></span>
-                    <span class="bhaskar-thumb-duration-pill">0:47</span>
+                    <span class="bhaskar-thumb-duration-pill"><?= htmlspecialchars($story['video_duration'] ?? '0:47') ?></span>
                   <?php endif; ?>
                 </a>
               </div>

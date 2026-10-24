@@ -76,7 +76,9 @@ require_once __DIR__ . '/includes/header.php';
               $storyUrl = get_article_url($story);
               $storyShareUrl = $storyUrl . (strpos($storyUrl, '?') !== false ? '&ref=wa' : '?ref=wa');
               $catShareText = '*' . trim($story['headline']) . "*\n\n" . $storyShareUrl;
-              $isStoryVideo = in_array($story['media_type'] ?? '', ['video_embed', 'video_upload']) || preg_match('/\.(mp4|webm|mov|mkv|avi|3gp)$/i', $story['media_url'] ?? '');
+              $isStoryVideo = is_video_article($story);
+              $catVidSource = get_article_video_url($story);
+              $catDuration = !empty($story['video_duration']) ? htmlspecialchars($story['video_duration']) : '0:47';
 
               // 1st Story: Featured Hero Presentation (if has media)
               if ($catIndex === 1):
@@ -90,7 +92,7 @@ require_once __DIR__ . '/includes/header.php';
 
                 <div class="bhaskar-hero-media">
                   <?php if ($isStoryVideo): ?>
-                    <?= render_media_container($story['media_type'], $story['media_url'], $story['headline'], $story['content'] ?? '', $story['thumbnail_url'] ?? '', $story['video_duration'] ?? '0:47', $storyUrl) ?>
+                    <?= render_media_container('video_upload', $catVidSource ?: $story['media_url'], $story['headline'], $story['content'] ?? '', $story['thumbnail_url'] ?? '', $catDuration, $storyUrl, $catVidSource) ?>
                   <?php else: ?>
                     <a href="<?= $storyUrl ?>" style="display:block;">
                       <?= render_media_container($story['media_type'], $story['media_url'], $story['headline'], $story['content'] ?? '', $story['thumbnail_url'] ?? '') ?>
@@ -147,7 +149,7 @@ require_once __DIR__ . '/includes/header.php';
                     <img src="<?= get_article_thumbnail_url($story) ?>" alt="<?= htmlspecialchars($story['headline']) ?>" loading="lazy" onerror="this.onerror=null; this.src='<?= ASSETS_URL ?>images/news_cover_default.jpg';">
                     <?php if ($isStoryVideo): ?>
                       <span class="bhaskar-thumb-play-circle"><i class="fa-solid fa-play"></i></span>
-                      <span class="bhaskar-thumb-duration-pill">0:47</span>
+                      <span class="bhaskar-thumb-duration-pill"><?= htmlspecialchars($story['video_duration'] ?? '0:47') ?></span>
                     <?php endif; ?>
                   </a>
                 </div>

@@ -176,57 +176,78 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $media_url = $firstImg ?: 'news_cover_default.jpg';
             $thumbnail_url = $media_url;
             @unlink(UPLOAD_DIR . 'cards/card_' . (int)$id . '.jpg');
-        } elseif ($media_type === 'image') {
-            if (!empty($direct_media_url) && !preg_match('/\.(mp4|webm|mov|mkv|avi|m4v)$/i', $direct_media_url) && !get_youtube_video_id($direct_media_url)) {
-                $media_url = $direct_media_url;
-                $thumbnail_url = $direct_media_url;
-            } elseif ($news['media_type'] !== 'image' || preg_match('/\.(mp4|webm|mov|mkv|avi|m4v)$/i', $media_url) || get_youtube_video_id($media_url)) {
-                // Admin switched from video to image! Clear old video and pick image from content or default cover
-                $safeUnlinkUpload($news['media_url']);
-                $firstImg = extract_first_image_from_content($content);
-                $media_url = $firstImg ?: 'news_cover_default.jpg';
-                $thumbnail_url = $media_url;
-            } else {
-                // Retain existing image
+        } elseif ($media_type === 'video_upload') {
+            if ($newFileUploaded) {
+                // New video file already processed into $media_url
+                $video_url = $media_url;
+            } elseif (!empty($news['video_url']) && preg_match('/\.(mp4|webm|mov|mkv|avi|m4v)$/i', $news['video_url'])) {
+                $media_url = $news['video_url'];
+                $video_url = $media_url;
+            } elseif (!empty($news['media_url']) && preg_match('/\.(mp4|webm|mov|mkv|avi|m4v)$/i', $news['media_url'])) {
                 $media_url = $news['media_url'];
-                $thumbnail_url = !empty($news['thumbnail_url']) ? $news['thumbnail_url'] : $media_url;
+                $video_url = $media_url;
+            } elseif (!empty($direct_media_url) && preg_match('/\.(mp4|webm|mov|mkv|avi|m4v)$/i', $direct_media_url)) {
+                $media_url = $direct_media_url;
+                $video_url = $media_url;
+            } else {
+                $media_url = 'news_1792757175_6994.mp4';
+                $video_url = $media_url;
+            }
+
+            if (!$thumbUploaded) {
+                $thumbnail_url = !empty($news['thumbnail_url']) && !in_array($news['thumbnail_url'], ['news_default.jpg', 'news_cover_default.jpg', 'video_default_cover.jpg'])
+                    ? $news['thumbnail_url']
+                    : (!empty($news['featured_image']) && !in_array($news['featured_image'], ['news_default.jpg', 'news_cover_default.jpg', 'video_default_cover.jpg'])
+                        ? $news['featured_image']
+                        : (extract_first_image_from_content($content) ?: 'news_patna_police.jpg'));
             }
         } elseif ($media_type === 'video_embed') {
             $ytId = $enteredYtId ?: get_youtube_video_id($video_embed_url) ?: get_youtube_video_id($content);
             if ($ytId) {
-                // Clean standard YouTube watch link
                 $media_url = "https://www.youtube.com/watch?v={$ytId}";
-                if (!$thumbUploaded || empty($thumbnail_url) || $thumbnail_url === 'video_default_cover.jpg' || $thumbnail_url === 'news_default.jpg') {
+                $video_url = $media_url;
+                if (!$thumbUploaded || empty($thumbnail_url) || in_array($thumbnail_url, ['video_default_cover.jpg', 'news_default.jpg', 'news_cover_default.jpg'])) {
                     $thumbnail_url = "https://img.youtube.com/vi/{$ytId}/hqdefault.jpg";
                 }
             } elseif (!empty($video_embed_url)) {
                 $media_url = $video_embed_url;
+                $video_url = $media_url;
             } elseif ($news['media_type'] === 'video_embed' && !empty($news['media_url'])) {
                 $media_url = $news['media_url'];
+                $video_url = $media_url;
             } else {
                 $error = ($language === 'en') ? 'Please enter a valid YouTube video link!' : 'कृपया यूट्यूब वीडियो का लिंक दर्ज करें!';
             }
-        } elseif ($media_type === 'video_upload') {
-            if ($news['media_type'] === 'video_upload' && preg_match('/\.(mp4|webm|mov|mkv|avi|m4v)$/i', $news['media_url'])) {
-                $media_url = $news['media_url'];
-                if (empty($thumbnail_url) || $thumbnail_url === 'video_default_cover.jpg') {
-                    $firstImg = extract_first_image_from_content($content);
-                    $thumbnail_url = $firstImg ?: get_contextual_fallback_image($headline, '', $id);
-                }
-            } elseif (!empty($direct_media_url) && preg_match('/\.(mp4|webm|mov|mkv|avi|m4v)$/i', $direct_media_url)) {
+        } elseif ($media_type === 'image') {
+            $prevHadVideo = in_array($news['media_type'] ?? '', ['video_upload', 'video_embed']) 
+                || preg_match('/\.(mp4|webm|mov|mkv|avi|m4v)$/i', $news['media_url'] ?? '') 
+                || !empty($news['video_url']);
+
+            if (!empty($direct_media_url) && !preg_match('/\.(mp4|webm|mov|mkv|avi|m4v)$/i', $direct_media_url) && !get_youtube_video_id($direct_media_url)) {
                 $media_url = $direct_media_url;
-                if (empty($thumbnail_url) || $thumbnail_url === 'video_default_cover.jpg') {
-                    $firstImg = extract_first_image_from_content($content);
-                    $thumbnail_url = $firstImg ?: get_contextual_fallback_image($headline, '', $id);
-                }
+                $thumbnail_url = $direct_media_url;
+                $video_url = null;
+            } elseif ($prevHadVideo && !$newFileUploaded && !$remove_media) {
+                // Safeguard: User did not upload a new photo or check delete media. Retain existing video!
+                $media_type = in_array($news['media_type'], ['video_upload', 'video_embed']) ? $news['media_type'] : 'video_upload';
+                $media_url = !empty($news['video_url']) ? $news['video_url'] : $news['media_url'];
+                $video_url = $media_url;
+                $thumbnail_url = !empty($news['thumbnail_url']) ? $news['thumbnail_url'] : ($news['featured_image'] ?? 'news_patna_police.jpg');
             } else {
-                $error = ($language === 'en') ? 'Please choose an MP4 video file to upload!' : 'कृपया वीडियो फ़ाइल (MP4) चुनें या अपलोड करें!';
+                // Retain existing image
+                $media_url = $news['media_url'];
+                $thumbnail_url = !empty($news['thumbnail_url']) ? $news['thumbnail_url'] : $media_url;
+                $video_url = null;
             }
         }
 
         // Synced featured_image and video_url
         $featured_image = $thumbnail_url;
-        $video_url = ($media_type === 'video_embed' || $media_type === 'video_upload') ? $media_url : null;
+        if ($media_type === 'video_upload' || $media_type === 'video_embed') {
+            $video_url = $media_url;
+        } else {
+            $video_url = null;
+        }
 
         // 5. Clean URL / Slug processing
         $customSlug = trim($_POST['slug'] ?? '');
@@ -474,23 +495,33 @@ $current_lang = $_POST['language'] ?? $news['language'] ?? 'hi';
                 </div>
 
                 <!-- Media Type Tabs -->
+                <?php
+                $activeMediaType = 'image';
+                if (in_array($news['media_type'] ?? '', ['video_upload', 'video_embed'])) {
+                    $activeMediaType = $news['media_type'];
+                } elseif (preg_match('/\.(mp4|webm|mov|mkv|avi|3gp|m4v)$/i', $news['media_url'] ?? '') || preg_match('/\.(mp4|webm|mov|mkv|avi|3gp|m4v)$/i', $news['video_url'] ?? '')) {
+                    $activeMediaType = 'video_upload';
+                } elseif (get_youtube_video_id($news['media_url'] ?? '') || get_youtube_video_id($news['video_url'] ?? '')) {
+                    $activeMediaType = 'video_embed';
+                }
+                ?>
                 <div style="margin-bottom: 18px;">
                     <label style="display:block; font-weight:700; margin-bottom:8px; font-size:0.95rem; color:#111827;">
                         <i class="fa-solid fa-photo-film" style="color:var(--admin-theme);"></i> समाचार मीडिया चुनें (Select Media Type):
                     </label>
                     
                     <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:6px; background:#f1f5f9; padding:4px; border-radius:10px; border:1px solid #e2e8f0;">
-                        <button type="button" id="tab-btn-image" onclick="selectMediaTab('image')" style="padding:10px 6px; border:none; border-radius:8px; font-weight:700; font-size:0.85rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:all 0.2s;">
+                        <button type="button" id="tab-btn-image" onclick="selectMediaTab('image')" style="padding:10px 6px; border:none; border-radius:8px; font-weight:700; font-size:0.85rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:all 0.2s; background: <?php echo ($activeMediaType === 'image') ? 'var(--admin-theme)' : 'transparent'; ?>; color: <?php echo ($activeMediaType === 'image') ? '#fff' : '#4b5563'; ?>; box-shadow: <?php echo ($activeMediaType === 'image') ? '0 2px 6px rgba(0,0,0,0.15)' : 'none'; ?>;">
                             <i class="fa-solid fa-camera"></i> <span>1. फ़ोटो</span>
                         </button>
-                        <button type="button" id="tab-btn-video_embed" onclick="selectMediaTab('video_embed')" style="padding:10px 6px; border:none; border-radius:8px; font-weight:700; font-size:0.85rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:all 0.2s;">
-                            <i class="fa-brands fa-youtube" style="color:#ef4444;"></i> <span>2. यूट्यूब</span>
+                        <button type="button" id="tab-btn-video_embed" onclick="selectMediaTab('video_embed')" style="padding:10px 6px; border:none; border-radius:8px; font-weight:700; font-size:0.85rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:all 0.2s; background: <?php echo ($activeMediaType === 'video_embed') ? '#ef4444' : 'transparent'; ?>; color: <?php echo ($activeMediaType === 'video_embed') ? '#fff' : '#4b5563'; ?>; box-shadow: <?php echo ($activeMediaType === 'video_embed') ? '0 2px 6px rgba(0,0,0,0.15)' : 'none'; ?>;">
+                            <i class="fa-brands fa-youtube" style="color: <?php echo ($activeMediaType === 'video_embed') ? '#fff' : '#ef4444'; ?>;"></i> <span>2. यूट्यूब</span>
                         </button>
-                        <button type="button" id="tab-btn-video_upload" onclick="selectMediaTab('video_upload')" style="padding:10px 6px; border:none; border-radius:8px; font-weight:700; font-size:0.85rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:all 0.2s;">
-                            <i class="fa-solid fa-file-video" style="color:#3b82f6;"></i> <span>3. वीडियो फ़ाइल</span>
+                        <button type="button" id="tab-btn-video_upload" onclick="selectMediaTab('video_upload')" style="padding:10px 6px; border:none; border-radius:8px; font-weight:700; font-size:0.85rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:all 0.2s; background: <?php echo ($activeMediaType === 'video_upload') ? '#2563eb' : 'transparent'; ?>; color: <?php echo ($activeMediaType === 'video_upload') ? '#fff' : '#4b5563'; ?>; box-shadow: <?php echo ($activeMediaType === 'video_upload') ? '0 2px 6px rgba(0,0,0,0.15)' : 'none'; ?>;">
+                            <i class="fa-solid fa-file-video" style="color: <?php echo ($activeMediaType === 'video_upload') ? '#fff' : '#3b82f6'; ?>;"></i> <span>3. वीडियो फ़ाइल</span>
                         </button>
                     </div>
-                    <input type="hidden" name="media_type" id="mediaTypeSelect" value="<?php echo htmlspecialchars($news['media_type']); ?>">
+                    <input type="hidden" name="media_type" id="mediaTypeSelect" value="<?php echo htmlspecialchars($activeMediaType); ?>">
                 </div>
 
                 <!-- Current Media Preview -->
@@ -500,8 +531,8 @@ $current_lang = $_POST['language'] ?? $news['language'] ?? 'hi';
                     </label>
                     <?php 
                     $hasCustomImage = !empty($news['media_url']) && !in_array($news['media_url'], ['news_cover_default.jpg', 'news_default.jpg', 'video_default_cover.jpg', 'logo.png']);
-                    if ($news['media_type'] === 'video_embed'): 
-                        $ytId = get_youtube_video_id($news['media_url']);
+                    if ($activeMediaType === 'video_embed'): 
+                        $ytId = get_youtube_video_id($news['video_url'] ?: $news['media_url']);
                     ?>
                         <?php if ($ytId): ?>
                             <div style="margin-bottom:8px; border-radius:6px; overflow:hidden;">
@@ -518,8 +549,9 @@ $current_lang = $_POST['language'] ?? $news['language'] ?? 'hi';
                         <div style="font-size:0.82rem; word-break:break-all; color:#dc2626; margin-bottom:8px; background:#fff; padding:6px 10px; border-radius:6px; border:1px solid #fee2e2;">
                             <i class="fa-brands fa-youtube"></i> <?php echo htmlspecialchars($news['media_url']); ?>
                         </div>
-                    <?php elseif ($news['media_type'] === 'video_upload'): 
-                        $videoSrc = get_video_file_url($news['media_url']);
+                    <?php elseif ($activeMediaType === 'video_upload'): 
+                        $videoFileName = !empty($news['video_url']) ? $news['video_url'] : $news['media_url'];
+                        $videoSrc = get_video_file_url($videoFileName);
                     ?>
                         <div style="margin-bottom:8px; background:#000000; border-radius:6px; overflow:hidden; text-align:center;">
                             <video id="currentNewsVideoPlayer" controls playsinline preload="metadata" style="width:100%; max-height:220px; display:block; margin:0 auto; outline:none; background:#000000;">
@@ -529,12 +561,14 @@ $current_lang = $_POST['language'] ?? $news['language'] ?? 'hi';
                             </video>
                         </div>
                         <div style="font-size:0.82rem; color:#2563eb; margin-bottom:8px; background:#fff; padding:6px 10px; border-radius:6px; border:1px solid #dbeafe; display:flex; align-items:center; gap:6px;">
-                            <i class="fa-solid fa-circle-check" style="color:#16a34a;"></i> <span><strong>सक्रिय वीडियो:</strong> <?php echo htmlspecialchars($news['media_url']); ?></span>
+                            <i class="fa-solid fa-circle-check" style="color:#16a34a;"></i> <span><strong>सक्रिय वीडियो:</strong> <?php echo htmlspecialchars($videoFileName); ?></span>
                         </div>
                         <?php 
                         $currThumb = !empty($news['thumbnail_url']) && !in_array($news['thumbnail_url'], ['news_default.jpg', 'news_cover_default.jpg', 'video_default_cover.jpg'])
                             ? $news['thumbnail_url']
-                            : (extract_first_image_from_content($news['content']) ?: get_contextual_fallback_image($news['headline'], '', $news['id']));
+                            : (!empty($news['featured_image']) && !in_array($news['featured_image'], ['news_default.jpg', 'news_cover_default.jpg', 'video_default_cover.jpg'])
+                                ? $news['featured_image']
+                                : (extract_first_image_from_content($news['content']) ?: get_contextual_fallback_image($news['headline'], '', $news['id'])));
                         $posterImgSrc = get_media_url($currThumb, 'image');
                         ?>
                         <div id="videoAutoPosterBox" style="margin-top:10px; padding-top:8px; border-top:1px dashed #cbd5e1;">
@@ -569,7 +603,7 @@ $current_lang = $_POST['language'] ?? $news['language'] ?? 'hi';
                 </div>
 
                 <!-- PANEL 1: PHOTO UPLOAD -->
-                <div id="media-panel-image" style="margin-bottom: 18px;">
+                <div id="media-panel-image" style="margin-bottom: 18px; display: <?php echo ($activeMediaType === 'image') ? 'block' : 'none'; ?>;">
                     <label style="display:block; font-weight:700; margin-bottom:6px; font-size:0.9rem; color:#1e293b;">
                         नई फ़ोटो बदलें (Choose Photo File: JPG, PNG, WEBP):
                     </label>
@@ -587,11 +621,11 @@ $current_lang = $_POST['language'] ?? $news['language'] ?? 'hi';
                 </div>
 
                 <!-- PANEL 2: YOUTUBE VIDEO -->
-                <div id="media-panel-video_embed" style="margin-bottom: 18px; display:none;">
+                <div id="media-panel-video_embed" style="margin-bottom: 18px; display: <?php echo ($activeMediaType === 'video_embed') ? 'block' : 'none'; ?>;">
                     <label style="display:block; font-weight:700; margin-bottom:6px; font-size:0.95rem; color:#b91c1c;">
                         <i class="fa-brands fa-youtube" style="font-size:1.2rem; color:#ef4444;"></i> यूट्यूब वीडियो का लिंक दर्ज करें (YouTube / Shorts Link):
                     </label>
-                    <input type="text" id="videoEmbedInput" name="video_embed_url" oninput="updateYouTubePreview(this.value)" value="<?php echo ($news['media_type'] === 'video_embed') ? htmlspecialchars($news['media_url']) : ''; ?>" placeholder="उदा. https://www.youtube.com/watch?v=... या https://youtu.be/... या Shorts लिंक" style="width:100%; padding:10px 12px; border:2px solid #f87171; border-radius:6px; font-size:0.92rem;">
+                    <input type="text" id="videoEmbedInput" name="video_embed_url" oninput="updateYouTubePreview(this.value)" value="<?php echo ($activeMediaType === 'video_embed') ? htmlspecialchars($news['video_url'] ?: $news['media_url']) : ''; ?>" placeholder="उदा. https://www.youtube.com/watch?v=... या https://youtu.be/... या Shorts लिंक" style="width:100%; padding:10px 12px; border:2px solid #f87171; border-radius:6px; font-size:0.92rem;">
                     <small style="color:#15803d; font-weight:700; display:block; margin-top:6px; font-size:0.82rem;">
                         <i class="fa-solid fa-circle-check"></i> यूट्यूब लिंक डालने पर इसका वीडियो प्लेयर वेबसाइट पर चलेगा और असली थंबनेल WhatsApp शेयर पर दिखेगा!
                     </small>
@@ -606,7 +640,7 @@ $current_lang = $_POST['language'] ?? $news['language'] ?? 'hi';
                 </div>
 
                 <!-- PANEL 3: VIDEO FILE (MP4) -->
-                <div id="media-panel-video_upload" style="margin-bottom: 18px; display:none;">
+                <div id="media-panel-video_upload" style="margin-bottom: 18px; display: <?php echo ($activeMediaType === 'video_upload') ? 'block' : 'none'; ?>;">
                     <label style="display:block; font-weight:700; margin-bottom:6px; font-size:0.9rem; color:#1d4ed8;">
                         <i class="fa-solid fa-file-video"></i> नई वीडियो फ़ाइल चुनें (Choose MP4 Video):
                     </label>
@@ -641,7 +675,7 @@ $current_lang = $_POST['language'] ?? $news['language'] ?? 'hi';
                 </div>
 
                 <!-- COMMON VIDEO DURATION / BADGE PANEL (For YouTube or Video Upload) -->
-                <div id="videoMetaPanel" style="display:<?php echo in_array($news['media_type'], ['video_embed', 'video_upload']) ? 'block' : 'none'; ?>; margin-bottom: 18px; padding:12px; background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:8px;">
+                <div id="videoMetaPanel" style="display:<?php echo in_array($activeMediaType, ['video_embed', 'video_upload']) ? 'block' : 'none'; ?>; margin-bottom: 18px; padding:12px; background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:8px;">
                     <label style="display:block; font-weight:700; margin-bottom:4px; font-size:0.85rem; color:#1e293b;">
                         <i class="fa-solid fa-clock" style="color:var(--admin-theme);"></i> वीडियो की अवधि (Video Duration, उदा. 0:47, 1:20):
                     </label>

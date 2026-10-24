@@ -91,7 +91,8 @@ try {
                 $targetVids = [
                     'news_1789721752_5246.mp4',
                     'news_1791031883_9122.mp4',
-                    'news_1791215563_3985.mp4'
+                    'news_1791215563_3985.mp4',
+                    'news_1792757175_6994.mp4'
                 ];
                 $uDir = defined('UPLOAD_DIR') ? UPLOAD_DIR : __DIR__ . '/../uploads/';
                 foreach ($targetVids as $tv) {
@@ -182,6 +183,18 @@ try {
                 }
 
                 // 5. Auto-heal video articles: ensure thumbnail_url is set to authentic news photo (Zero black screen)
+                // Specifically restore article 29 (आलमगंज गोलीबारी) to video_upload with news_1792757175_6994.mp4
+                $pdo->exec("UPDATE `news` SET 
+                    `media_type` = 'video_upload', 
+                    `media_url` = 'news_1792757175_6994.mp4', 
+                    `video_url` = 'news_1792757175_6994.mp4', 
+                    `thumbnail_url` = 'news_patna_police.jpg', 
+                    `featured_image` = 'news_patna_police.jpg',
+                    `video_duration` = '0:47'
+                WHERE `id` = 29 OR `slug` LIKE '%aalm%' OR `headline` LIKE '%आलमगंज%'");
+
+                $pdo->exec("UPDATE `news` SET `media_type` = 'video_upload' WHERE (`media_url` LIKE '%.mp4%' OR `video_url` LIKE '%.mp4%') AND `media_type` != 'video_upload'");
+                $pdo->exec("UPDATE `news` SET `media_type` = 'video_embed' WHERE (`media_url` LIKE '%youtu%' OR `video_url` LIKE '%youtu%') AND `media_type` != 'video_embed'");
                 $pdo->exec("UPDATE `news` SET `thumbnail_url` = 'news_patna_police.jpg' WHERE (`media_type` IN ('video_upload', 'video_embed') OR `media_url` LIKE '%.mp4%') AND (`thumbnail_url` IS NULL OR `thumbnail_url` = '' OR `thumbnail_url` = 'video_default_cover.jpg' OR `thumbnail_url` = 'news_cover_default.jpg' OR `thumbnail_url` = 'news_default.jpg')");
                 $pdo->exec("UPDATE `news` SET `featured_image` = `thumbnail_url` WHERE `featured_image` IS NULL OR `featured_image` = '' OR `featured_image` = 'video_default_cover.jpg'");
                 $pdo->exec("UPDATE `news` SET `video_url` = `media_url` WHERE (`media_type` IN ('video_upload', 'video_embed') OR `media_url` LIKE '%.mp4%' OR `media_url` LIKE '%youtu%') AND (`video_url` IS NULL OR `video_url` = '')");

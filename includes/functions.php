@@ -675,7 +675,7 @@ function get_article_thumbnail_url($article) {
     }
 
     // 4. Video Upload: resolve dedicated video poster or high-res video graphic
-    if (($article['media_type'] ?? '') === 'video_upload' || preg_match('/\.(mp4|webm|mov|mkv|avi)$/i', $article['media_url'] ?? '')) {
+    if (is_video_article($article)) {
         $vidThumb = !empty($article['thumbnail_url']) ? $article['thumbnail_url'] : ($article['featured_image'] ?? '');
         if (!empty($vidThumb) && !in_array($vidThumb, ['news_default.jpg', 'news_cover_default.jpg', 'news_patna_flood.jpg', 'video_default_cover.jpg'])) {
             $tb = basename($vidThumb);
@@ -782,26 +782,69 @@ function clean_article_content_html($html) {
 }
 
 /**
+ * Universal Video Article Detector
+ * Reliable across database columns (media_type, video_url, media_url, content)
+ */
+function is_video_article($article) {
+    if (!is_array($article)) return false;
+    $mediaType = $article['media_type'] ?? '';
+    if (in_array($mediaType, ['video_upload', 'video_embed', 'video'])) {
+        return true;
+    }
+    $mediaUrl = trim($article['media_url'] ?? '');
+    $videoUrl = trim($article['video_url'] ?? '');
+    if (preg_match('/\.(mp4|webm|mov|mkv|avi|3gp|m4v)$/i', $mediaUrl) || preg_match('/\.(mp4|webm|mov|mkv|avi|3gp|m4v)$/i', $videoUrl)) {
+        return true;
+    }
+    if (get_youtube_video_id($mediaUrl) || get_youtube_video_id($videoUrl)) {
+        return true;
+    }
+    if (!empty($article['content']) && get_youtube_video_id($article['content'])) {
+        return true;
+    }
+    return false;
+}
+
+/**
+ * Universal Video URL Resolver
+ */
+function get_article_video_url($article) {
+    if (!is_array($article)) return '';
+    if (!empty($article['video_url'])) {
+        return $article['video_url'];
+    }
+    $mediaUrl = trim($article['media_url'] ?? '');
+    if (preg_match('/\.(mp4|webm|mov|mkv|avi|3gp|m4v)$/i', $mediaUrl) || get_youtube_video_id($mediaUrl)) {
+        return $mediaUrl;
+    }
+    if (!empty($article['content'])) {
+        $yt = get_youtube_video_id($article['content']);
+        if ($yt) return "https://www.youtube.com/watch?v={$yt}";
+    }
+    return '';
+}
+
+/**
  * Render Aspect-Ratio-Safe Media Container (Exact Dainik Bhaskar Card Layout - Image 2)
  */
-function render_media_container($mediaType, $mediaUrl, $headline = '', $content = '', $thumbnailUrl = '', $duration = '0:47', $storyUrl = '') {
+function render_media_container($mediaType, $mediaUrl, $headline = '', $content = '', $thumbnailUrl = '', $duration = '0:47', $storyUrl = '', $videoUrl = '', $articleId = 0) {
     $escapedHeadline = htmlspecialchars($headline, ENT_QUOTES, 'UTF-8');
     $mediaUrl = trim($mediaUrl ?? '');
+    $videoUrl = trim($videoUrl ?? '');
 
-    // Auto-detect format mismatch
-    if (preg_match('/\.(jpg|jpeg|png|webp|gif|avif|jfif|svg|bmp)$/i', $mediaUrl)) {
-        $mediaType = 'image';
-    } elseif (preg_match('/\.(mp4|webm|mov|mkv|avi|3gp|m4v)$/i', $mediaUrl)) {
-        $mediaType = 'video_upload';
-    }
+    $effectiveVideoUrl = !empty($videoUrl) ? $videoUrl : (preg_match('/\.(mp4|webm|mov|mkv|avi|3gp|m4v)$/i', $mediaUrl) ? $mediaUrl : '');
+    $ytId = get_youtube_video_id($effectiveVideoUrl) ?: get_youtube_video_id($mediaUrl) ?: get_youtube_video_id($content);
 
-    $ytId = get_youtube_video_id($mediaUrl) ?: get_youtube_video_id($content);
-    $isVideo = ($mediaType === 'video_upload' || $mediaType === 'video_embed' || !empty($ytId));
+    $isVideo = in_array($mediaType, ['video_upload', 'video_embed', 'video']) || !empty($effectiveVideoUrl) || !empty($ytId);
 
     // Resolve high-res visual poster image (Zero black screen)
     $posterImg = '';
     if (!empty($thumbnailUrl) && !in_array($thumbnailUrl, ['news_default.jpg', 'news_cover_default.jpg', 'news_patna_flood.jpg', 'video_default_cover.jpg'])) {
         $posterImg = get_media_url($thumbnailUrl, 'image');
+    }
+
+    if (empty($posterImg) && !empty($mediaUrl) && preg_match('/\.(jpg|jpeg|png|webp|gif|avif|jfif|svg|bmp)$/i', $mediaUrl) && !in_array($mediaUrl, ['news_default.jpg', 'news_cover_default.jpg', 'news_patna_flood.jpg', 'video_default_cover.jpg'])) {
+        $posterImg = get_media_url($mediaUrl, 'image');
     }
 
     if (empty($posterImg) && $ytId) {
@@ -823,7 +866,7 @@ function render_media_container($mediaType, $mediaUrl, $headline = '', $content 
     if ($isVideo) {
         $videoSrc = '';
         if (!$ytId) {
-            $videoFile = $mediaUrl;
+            $videoFile = !empty($effectiveVideoUrl) ? $effectiveVideoUrl : (preg_match('/\.(mp4|webm|mov|mkv|avi|3gp|m4v)$/i', $mediaUrl) ? $mediaUrl : 'news_sample.mp4');
             if (strpos($videoFile, 'uploads/') === 0) {
                 $videoFile = substr($videoFile, 8);
             }

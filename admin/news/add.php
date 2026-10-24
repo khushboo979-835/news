@@ -391,27 +391,28 @@ $selected_lang = $_POST['language'] ?? 'hi';
                 </div>
 
                 <!-- Media Type Tabs -->
+                <?php $activeAddMediaType = $_POST['media_type'] ?? 'image'; ?>
                 <div style="margin-bottom: 18px;">
                     <label style="display:block; font-weight:700; margin-bottom:8px; font-size:0.95rem; color:#111827;">
                         <i class="fa-solid fa-photo-film" style="color:var(--admin-theme);"></i> समाचार मीडिया चुनें (Select Media Type):
                     </label>
                     
                     <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:6px; background:#f1f5f9; padding:4px; border-radius:10px; border:1px solid #e2e8f0;">
-                        <button type="button" id="tab-btn-image" onclick="selectMediaTab('image')" style="padding:10px 6px; border:none; border-radius:8px; font-weight:700; font-size:0.85rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:all 0.2s;">
+                        <button type="button" id="tab-btn-image" onclick="selectMediaTab('image')" style="padding:10px 6px; border:none; border-radius:8px; font-weight:700; font-size:0.85rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:all 0.2s; background: <?php echo ($activeAddMediaType === 'image') ? 'var(--admin-theme)' : 'transparent'; ?>; color: <?php echo ($activeAddMediaType === 'image') ? '#fff' : '#4b5563'; ?>; box-shadow: <?php echo ($activeAddMediaType === 'image') ? '0 2px 6px rgba(0,0,0,0.15)' : 'none'; ?>;">
                             <i class="fa-solid fa-camera"></i> <span>1. फ़ोटो</span>
                         </button>
-                        <button type="button" id="tab-btn-video_embed" onclick="selectMediaTab('video_embed')" style="padding:10px 6px; border:none; border-radius:8px; font-weight:700; font-size:0.85rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:all 0.2s;">
-                            <i class="fa-brands fa-youtube" style="color:#ef4444;"></i> <span>2. यूट्यूब</span>
+                        <button type="button" id="tab-btn-video_embed" onclick="selectMediaTab('video_embed')" style="padding:10px 6px; border:none; border-radius:8px; font-weight:700; font-size:0.85rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:all 0.2s; background: <?php echo ($activeAddMediaType === 'video_embed') ? '#ef4444' : 'transparent'; ?>; color: <?php echo ($activeAddMediaType === 'video_embed') ? '#fff' : '#4b5563'; ?>; box-shadow: <?php echo ($activeAddMediaType === 'video_embed') ? '0 2px 6px rgba(0,0,0,0.15)' : 'none'; ?>;">
+                            <i class="fa-brands fa-youtube" style="color: <?php echo ($activeAddMediaType === 'video_embed') ? '#fff' : '#ef4444'; ?>;"></i> <span>2. यूट्यूब</span>
                         </button>
-                        <button type="button" id="tab-btn-video_upload" onclick="selectMediaTab('video_upload')" style="padding:10px 6px; border:none; border-radius:8px; font-weight:700; font-size:0.85rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:all 0.2s;">
-                            <i class="fa-solid fa-file-video" style="color:#3b82f6;"></i> <span>3. वीडियो फ़ाइल</span>
+                        <button type="button" id="tab-btn-video_upload" onclick="selectMediaTab('video_upload')" style="padding:10px 6px; border:none; border-radius:8px; font-weight:700; font-size:0.85rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:all 0.2s; background: <?php echo ($activeAddMediaType === 'video_upload') ? '#2563eb' : 'transparent'; ?>; color: <?php echo ($activeAddMediaType === 'video_upload') ? '#fff' : '#4b5563'; ?>; box-shadow: <?php echo ($activeAddMediaType === 'video_upload') ? '0 2px 6px rgba(0,0,0,0.15)' : 'none'; ?>;">
+                            <i class="fa-solid fa-file-video" style="color: <?php echo ($activeAddMediaType === 'video_upload') ? '#fff' : '#3b82f6'; ?>;"></i> <span>3. वीडियो फ़ाइल</span>
                         </button>
                     </div>
-                    <input type="hidden" name="media_type" id="mediaTypeSelect" value="<?php echo htmlspecialchars($_POST['media_type'] ?? 'image'); ?>">
+                    <input type="hidden" name="media_type" id="mediaTypeSelect" value="<?php echo htmlspecialchars($activeAddMediaType); ?>">
                 </div>
 
                 <!-- PANEL 1: PHOTO UPLOAD -->
-                <div id="media-panel-image" style="margin-bottom: 18px;">
+                <div id="media-panel-image" style="margin-bottom: 18px; display: <?php echo ($activeAddMediaType === 'image') ? 'block' : 'none'; ?>;">
                     <label style="display:block; font-weight:700; margin-bottom:6px; font-size:0.9rem; color:#1e293b;">
                         फ़ोटो फ़ाइल चुनें (Choose Photo File: JPG, PNG, WEBP):
                     </label>
@@ -429,7 +430,7 @@ $selected_lang = $_POST['language'] ?? 'hi';
                 </div>
 
                 <!-- PANEL 2: YOUTUBE VIDEO -->
-                <div id="media-panel-video_embed" style="margin-bottom: 18px; display:none;">
+                <div id="media-panel-video_embed" style="margin-bottom: 18px; display: <?php echo ($activeAddMediaType === 'video_embed') ? 'block' : 'none'; ?>;">
                     <label style="display:block; font-weight:700; margin-bottom:6px; font-size:0.95rem; color:#b91c1c;">
                         <i class="fa-brands fa-youtube" style="font-size:1.2rem; color:#ef4444;"></i> यूट्यूब वीडियो का लिंक दर्ज करें (YouTube / Shorts Link):
                     </label>
@@ -448,7 +449,7 @@ $selected_lang = $_POST['language'] ?? 'hi';
                 </div>
 
                 <!-- PANEL 3: VIDEO FILE (MP4) -->
-                <div id="media-panel-video_upload" style="margin-bottom: 18px; display:none;">
+                <div id="media-panel-video_upload" style="margin-bottom: 18px; display: <?php echo ($activeAddMediaType === 'video_upload') ? 'block' : 'none'; ?>;">
                     <label style="display:block; font-weight:700; margin-bottom:6px; font-size:0.9rem; color:#1d4ed8;">
                         <i class="fa-solid fa-file-video"></i> वीडियो फ़ाइल चुनें (Choose MP4 Video):
                     </label>
@@ -483,7 +484,7 @@ $selected_lang = $_POST['language'] ?? 'hi';
                 </div>
 
                 <!-- COMMON VIDEO DURATION / BADGE PANEL (For YouTube or Video Upload) -->
-                <div id="videoMetaPanel" style="display:none; margin-bottom: 18px; padding:12px; background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:8px;">
+                <div id="videoMetaPanel" style="display:<?php echo in_array($activeAddMediaType, ['video_embed', 'video_upload']) ? 'block' : 'none'; ?>; margin-bottom: 18px; padding:12px; background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:8px;">
                     <label style="display:block; font-weight:700; margin-bottom:4px; font-size:0.85rem; color:#1e293b;">
                         <i class="fa-solid fa-clock" style="color:var(--admin-theme);"></i> वीडियो की अवधि (Video Duration, उदा. 0:47, 1:20):
                     </label>

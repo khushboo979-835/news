@@ -147,8 +147,9 @@ $pageDescription = !empty($article['subheadline']) ? $article['subheadline'] : g
 
 // Resolve Article Media Image URL for Open Graph & WhatsApp / Facebook Link Sharing
 // Dynamic Direct Absolute Image URLs (Zero black box, instant preview on WhatsApp)
-$ytId = get_youtube_video_id($article['media_url'] ?? '') ?: get_youtube_video_id($article['content'] ?? '');
-$isVideo = ($article['media_type'] === 'video_upload' || $article['media_type'] === 'video_embed' || !empty($ytId));
+$isVideo = is_video_article($article);
+$articleVidSource = get_article_video_url($article);
+$ytId = get_youtube_video_id($articleVidSource) ?: get_youtube_video_id($article['content'] ?? '');
 
 $thumbFile = trim($article['thumbnail_url'] ?? ($article['featured_image'] ?? ''));
 $full_image_url = '';
@@ -211,8 +212,8 @@ $pageArticleSection = $article['category_name'];
 // If video article, provide og:video tags and video.other type
 if ($ytId) {
     $pageOgType = 'video.other';
-} elseif ($article['media_type'] === 'video_upload' || preg_match('/\.(mp4|webm|mov|mkv|avi)$/i', $article['media_url'] ?? '')) {
-    $pageOgVideo = get_video_file_url($article['media_url']);
+} elseif ($isVideo && !empty($articleVidSource)) {
+    $pageOgVideo = get_video_file_url($articleVidSource);
     $pageOgType = 'video.other';
 }
 
@@ -357,13 +358,14 @@ require_once __DIR__ . '/includes/header.php';
           <!-- Hero Media Presentation (Image or Video) -->
           <div class="db-hero-media-wrapper">
             <?= render_media_container(
-                $article['media_type'], 
-                $article['media_url'], 
+                $isVideo ? 'video_upload' : $article['media_type'], 
+                $articleVidSource ?: $article['media_url'], 
                 $article['headline'], 
                 $article['content'], 
                 $article['thumbnail_url'] ?? '', 
                 $article['video_duration'] ?? '0:47', 
-                $currentUrl
+                $currentUrl,
+                $articleVidSource
             ) ?>
           </div>
 
