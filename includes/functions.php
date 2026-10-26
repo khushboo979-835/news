@@ -514,11 +514,8 @@ function get_media_url($url, $media_type = 'image', $content = '', $thumbnail_ur
  */
 function get_video_file_url($videoFile) {
     $videoFile = trim($videoFile ?? '');
-    $sampleUrl = ASSETS_URL . 'videos/news_sample.mp4';
-    $samplePath = __DIR__ . '/../assets/videos/news_sample.mp4';
-
     if (empty($videoFile)) {
-        return $sampleUrl;
+        return '';
     }
     if (strpos($videoFile, 'http://') === 0 || strpos($videoFile, 'https://') === 0) {
         return $videoFile;
@@ -528,15 +525,6 @@ function get_video_file_url($videoFile) {
 
     if (file_exists($local) && filesize($local) > 1000) {
         return UPLOAD_URL . $clean;
-    }
-
-    // Auto-heal missing server upload from committed sample video
-    if (file_exists($samplePath)) {
-        @copy($samplePath, $local);
-        if (file_exists($local)) {
-            return UPLOAD_URL . $clean;
-        }
-        return $sampleUrl;
     }
 
     return UPLOAD_URL . $clean;
@@ -596,9 +584,9 @@ function get_contextual_fallback_image($headline = '', $category = '', $seed = 0
             return ASSETS_URL . 'images/news_durga_puja_pandal.jpg';
         }
     }
-    // 2. Police Action / Raid / Smuggling / Gambling / Hotel Raid / Crime
-    if (preg_match('/(छापेमारी|तस्कर|सट्टा|गेसिंग|शराब|बदमाश|होटल|रेड|गिरफ्तार|मुठभेड़|एनकाउंटर|गोली|हत्या|मर्डर)/u', $text)) {
-        if (preg_match('/(होटल|सट्टा|गेसिंग|जुआ|कोतवाली)/u', $text)) {
+    // 2. Police Action / Raid / Smuggling / Gambling / Crime
+    if (preg_match('/(छापेमारी|तस्कर|सट्टा|गेसिंग|शराब|बदमाश|रेड|गिरफ्तार|मुठभेड़|एनकाउंटर|गोली|हत्या|मर्डर)/u', $text)) {
+        if (preg_match('/(सट्टा|गेसिंग|जुआ|कोतवाली)/u', $text)) {
             return ASSETS_URL . 'images/news_kotwali_guessing_raid.jpg';
         }
         if (file_exists(__DIR__ . '/../assets/images/news_patna_police.jpg')) {
@@ -862,7 +850,7 @@ function get_article_video_url($article) {
 /**
  * Render Aspect-Ratio-Safe Media Container (Exact Dainik Bhaskar Card Layout - Image 2)
  */
-function render_media_container($mediaType, $mediaUrl, $headline = '', $content = '', $thumbnailUrl = '', $duration = '0:47', $storyUrl = '', $videoUrl = '', $articleId = 0) {
+function render_media_container($mediaType, $mediaUrl, $headline = '', $content = '', $thumbnailUrl = '', $duration = '0:47', $storyUrl = '', $videoUrl = '', $articleId = 0, $isDetailPage = false) {
     $escapedHeadline = htmlspecialchars($headline, ENT_QUOTES, 'UTF-8');
     $mediaUrl = trim($mediaUrl ?? '');
     $videoUrl = trim($videoUrl ?? '');
@@ -897,20 +885,41 @@ function render_media_container($mediaType, $mediaUrl, $headline = '', $content 
         $posterImg = get_contextual_fallback_image($headline);
     }
 
-    // CASE 1: Video (YouTube or Uploaded MP4) - EXACT DAINIK BHASKAR CARD (Image 2)
+    // CASE 1: Video (YouTube or Uploaded MP4)
     if ($isVideo) {
         $videoSrc = '';
         if (!$ytId) {
-            $videoFile = !empty($effectiveVideoUrl) ? $effectiveVideoUrl : (preg_match('/\.(mp4|webm|mov|mkv|avi|3gp|m4v)$/i', $mediaUrl) ? $mediaUrl : 'news_sample.mp4');
-            if (strpos($videoFile, 'uploads/') === 0) {
-                $videoFile = substr($videoFile, 8);
+            $videoFile = !empty($effectiveVideoUrl) ? $effectiveVideoUrl : (preg_match('/\.(mp4|webm|mov|mkv|avi|3gp|m4v)$/i', $mediaUrl) ? $mediaUrl : '');
+            if (!empty($videoFile)) {
+                if (strpos($videoFile, 'uploads/') === 0) {
+                    $videoFile = substr($videoFile, 8);
+                }
+                $videoSrc = get_video_file_url($videoFile);
             }
-            $videoSrc = get_video_file_url($videoFile);
         }
 
         $formattedDuration = !empty($duration) ? htmlspecialchars($duration) : '0:47';
         $escapedPoster = htmlspecialchars($posterImg, ENT_QUOTES, 'UTF-8');
 
+        // On article detail page: render the REAL working video player directly!
+        if ($isDetailPage) {
+            if ($ytId) {
+                return '
+                <div class="bhaskar-detail-video-box" style="position:relative; width:100%; aspect-ratio:16/9; background:#0f172a; border-radius:10px; overflow:hidden; margin:14px 0 18px 0; box-shadow:0 4px 16px rgba(0,0,0,0.18);">
+                    <iframe src="https://www.youtube-nocookie.com/embed/' . htmlspecialchars($ytId, ENT_QUOTES, 'UTF-8') . '?rel=0&autoplay=0" title="' . $escapedHeadline . '" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position:absolute; top:0; left:0; width:100%; height:100%; border:0;"></iframe>
+                </div>';
+            } elseif (!empty($videoSrc)) {
+                return '
+                <div class="bhaskar-detail-video-box" style="position:relative; width:100%; background:#000000; border-radius:10px; overflow:hidden; margin:14px 0 18px 0; box-shadow:0 4px 16px rgba(0,0,0,0.18); text-align:center;">
+                    <video controls playsinline webkit-playsinline preload="metadata" poster="' . $escapedPoster . '" style="width:100%; max-height:480px; display:block; margin:0 auto; background:#000000;">
+                        <source src="' . htmlspecialchars($videoSrc, ENT_QUOTES, 'UTF-8') . '" type="video/mp4">
+                        आपका ब्राउज़र वीडियो चलाने में असमर्थ है।
+                    </video>
+                </div>';
+            }
+        }
+
+        // On feed & listing cards: render Dainik Bhaskar card facade
         return '
         <div class="bhaskar-video-card-facade js-bhaskar-video-facade" 
              data-yt-id="' . htmlspecialchars($ytId ?? '', ENT_QUOTES, 'UTF-8') . '" 
@@ -942,7 +951,7 @@ function render_media_container($mediaType, $mediaUrl, $headline = '', $content 
 }
 
 /**
- * Fetch Main Hero Article (Rank 1 / Lowest priority_order)
+ * Fetch Main Hero Article (Rank 1 / Lowest priority_order, latest ID first)
  */
 function get_main_story($pdo_conn = null) {
     global $pdo;
@@ -953,7 +962,7 @@ function get_main_story($pdo_conn = null) {
             SELECT n.*, c.name AS category_name, c.slug AS category_slug 
             FROM news n 
             JOIN categories c ON n.category_id = c.id 
-            ORDER BY n.priority_order ASC, n.created_at DESC 
+            ORDER BY n.priority_order ASC, n.id DESC 
             LIMIT 1
         ");
         return $stmt->fetch();
@@ -980,7 +989,7 @@ function get_prioritized_news($pdo_conn = null, $limit = 50, $exclude_ids = []) 
             FROM news n 
             LEFT JOIN categories c ON n.category_id = c.id 
             WHERE (n.status = 'published' OR n.status IS NULL) $excludeClause 
-            ORDER BY n.priority_order ASC, n.created_at DESC 
+            ORDER BY n.priority_order ASC, n.id DESC 
             LIMIT :limit
         ";
         $stmt = $db->prepare($sql);

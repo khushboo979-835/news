@@ -96,7 +96,6 @@ require_once __DIR__ . '/includes/header.php';
                   <div class="bhaskar-hero-video-box js-autovideo-wrapper" data-video-id="<?= (int)$heroStory['id'] ?>">
                     <video class="bhaskar-autovideo" controls playsinline webkit-playsinline muted loop preload="metadata" poster="<?= htmlspecialchars($heroPoster) ?>">
                       <source src="<?= htmlspecialchars($heroVideoSrc) ?>" type="video/mp4">
-                      <source src="<?= ASSETS_URL ?>videos/news_sample.mp4" type="video/mp4">
                       आपका ब्राउज़र वीडियो चलाने में असमर्थ है।
                     </video>
                     

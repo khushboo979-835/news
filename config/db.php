@@ -72,6 +72,12 @@ try {
                 $pdo->exec("UPDATE `news` SET `published_at` = `created_at` WHERE `published_at` IS NULL");
             }
 
+            // Add old_slugs column if not present
+            $checkOldSlugs = $pdo->query("SHOW COLUMNS FROM `news` LIKE 'old_slugs'");
+            if ($checkOldSlugs && $checkOldSlugs->rowCount() === 0) {
+                $pdo->exec("ALTER TABLE `news` ADD COLUMN `old_slugs` TEXT NULL AFTER `slug`");
+            }
+
             // Self-repair: Ensure physical default image on server is clean Dainik Khabar card, NOT flood photo
             $uploadDefault = defined('UPLOAD_DIR') ? UPLOAD_DIR . 'news_default.jpg' : __DIR__ . '/../uploads/news_default.jpg';
             $cleanDefault = __DIR__ . '/../assets/images/news_cover_default.jpg';
@@ -85,92 +91,26 @@ try {
                 }
             }
 
-            // Self-repair: Ensure physical video files on server exist for published video articles
-            $sampleVid = __DIR__ . '/../assets/videos/news_sample.mp4';
-            if (file_exists($sampleVid)) {
-                $targetVids = [
-                    'news_1789721752_5246.mp4',
-                    'news_1791031883_9122.mp4',
-                    'news_1791215563_3985.mp4',
-                    'news_1792757175_6994.mp4'
-                ];
-                $uDir = defined('UPLOAD_DIR') ? UPLOAD_DIR : __DIR__ . '/../uploads/';
-                foreach ($targetVids as $tv) {
-                    $tvPath = $uDir . $tv;
-                    if (!file_exists($tvPath) || filesize($tvPath) < 1000) {
-                        @copy($sampleVid, $tvPath);
-                        @chmod($tvPath, 0644);
-                    }
-                }
-
-                // Self-repair: Ensure physical video thumbnail frames exist
-                $targetThumbs = [
-                    'thumb_news_1792757175_6994.jpg',
-                    'thumb_video_1792757175_6994.jpg'
-                ];
-                foreach ($targetThumbs as $tt) {
-                    $ttPath = $uDir . $tt;
-                    $ttSrc = __DIR__ . '/../assets/images/' . $tt;
-                    if ((!file_exists($ttPath) || filesize($ttPath) < 1000) && file_exists($ttSrc)) {
-                        @copy($ttSrc, $ttPath);
-                        @chmod($ttPath, 0644);
-                    }
-                }
-            }
-
-            // Auto-heal news articles whose media_url is news_default.jpg or empty
+            // One-time self-repair of database records (Fix wrong photos & remove sample flower video replacements)
             try {
-                // 1. If content has an image, use it!
-                $stmtFix = $pdo->query("SELECT id, content FROM `news` WHERE (media_url = 'news_default.jpg' OR media_url = '' OR media_url IS NULL) AND content LIKE '%<img%' LIMIT 100");
-                $fixRows = $stmtFix ? $stmtFix->fetchAll() : [];
-                if (!empty($fixRows)) {
-                    $updStmt = $pdo->prepare("UPDATE `news` SET `media_type` = 'image', `media_url` = ?, `thumbnail_url` = ? WHERE `id` = ?");
-                    foreach ($fixRows as $fr) {
-                        if (preg_match('/<img[^>]+src=["\']([^"\']+)["\']/i', $fr['content'], $mImg)) {
-                            $srcImg = trim($mImg[1]);
-                            if (preg_match('#/(uploads/[^"\'\s>]+)#i', $srcImg, $mUp)) {
-                                $srcImg = basename($mUp[1]);
-                            } elseif (preg_match('#(content_\d+_\d+\.[a-zA-Z0-9]+)#i', $srcImg, $mC)) {
-                                $srcImg = $mC[1];
-                            } elseif (preg_match('#(news_\d+_\d+\.[a-zA-Z0-9]+)#i', $srcImg, $mN)) {
-                                $srcImg = $mN[1];
-                            }
-                            if (!empty($srcImg) && $srcImg !== 'news_default.jpg') {
-                                $updStmt->execute([$srcImg, $srcImg, $fr['id']]);
-                            }
-                        }
-                    }
-                }
+                // 1. Fix Hotel Taj (Client Associates) stories - set real photo from admin upload
+                $tajImg = 'news_1793024895_6738.jpg';
+                $pdo->exec("UPDATE `news` SET `media_type` = 'image', `media_url` = '{$tajImg}', `thumbnail_url` = '{$tajImg}', `featured_image` = '{$tajImg}', `video_url` = NULL WHERE `headline` LIKE '%Client Associates%' OR `slug` LIKE '%client-associat%'");
 
-                // 2. For video articles without thumbnail_url, if content has an image, set it as thumbnail_url
-                $stmtVidFix = $pdo->query("SELECT id, content FROM `news` WHERE (media_type IN ('video_upload', 'video_embed') OR media_url LIKE '%.mp4%') AND (thumbnail_url IS NULL OR thumbnail_url = '' OR thumbnail_url = 'news_default.jpg') AND content LIKE '%<img%' LIMIT 100");
-                $vidRows = $stmtVidFix ? $stmtVidFix->fetchAll() : [];
-                if (!empty($vidRows)) {
-                    $updVid = $pdo->prepare("UPDATE `news` SET `thumbnail_url` = ? WHERE `id` = ?");
-                    foreach ($vidRows as $vr) {
-                        if (preg_match('/<img[^>]+src=["\']([^"\']+)["\']/i', $vr['content'], $mImg)) {
-                            $srcImg = trim($mImg[1]);
-                            if (preg_match('#/(uploads/[^"\'\s>]+)#i', $srcImg, $mUp)) {
-                                $srcImg = basename($mUp[1]);
-                            } elseif (preg_match('#(content_\d+_\d+\.[a-zA-Z0-9]+)#i', $srcImg, $mC)) {
-                                $srcImg = $mC[1];
-                            } elseif (preg_match('#(news_\d+_\d+\.[a-zA-Z0-9]+)#i', $srcImg, $mN)) {
-                                $srcImg = $mN[1];
-                            }
-                            if (!empty($srcImg) && $srcImg !== 'news_default.jpg') {
-                                $updVid->execute([$srcImg, $vr['id']]);
-                            }
-                        }
-                    }
-                }
+                // 2. Fix Patna Civil Court story - restore as image with authentic police photo, NOT video
+                $courtImg = 'news_patna_police.jpg';
+                $pdo->exec("UPDATE `news` SET `media_type` = 'image', `media_url` = '{$courtImg}', `thumbnail_url` = '{$courtImg}', `featured_image` = '{$courtImg}', `video_url` = NULL WHERE `slug` LIKE '%patna-sivil-court%' OR `headline` LIKE '%सिविल कोर्ट%'");
 
-                // 3. Update any leftover news_default.jpg or wrong flood image to clean news_cover_default.jpg
+                // 3. Fix Almganj firing story (Article 29) - ensure clean thumbnail
+                $pdo->exec("UPDATE `news` SET `thumbnail_url` = 'news_patna_police.jpg', `featured_image` = 'news_patna_police.jpg' WHERE (`id` = 29 OR `slug` LIKE '%aalm%' OR `headline` LIKE '%आलमगंज%') AND (`thumbnail_url` LIKE '%thumb_video%' OR `thumbnail_url` IS NULL)");
+
+                // 4. Update any leftover news_default.jpg or wrong flood image to clean news_cover_default.jpg
                 $pdo->exec("UPDATE `news` SET `media_url` = 'news_cover_default.jpg' WHERE `media_url` = 'news_default.jpg'");
                 $pdo->exec("UPDATE `news` SET `thumbnail_url` = 'news_cover_default.jpg' WHERE `thumbnail_url` = 'news_default.jpg'");
                 $pdo->exec("UPDATE `news` SET `media_url` = 'news_cover_default.jpg' WHERE `media_url` = 'news_patna_flood.jpg' AND `slug` NOT LIKE '%ganga-water-level%'");
                 $pdo->exec("UPDATE `news` SET `thumbnail_url` = 'news_cover_default.jpg' WHERE `thumbnail_url` = 'news_patna_flood.jpg' AND `slug` NOT LIKE '%ganga-water-level%'");
 
-                // 4. Auto-heal YouTube articles: extract YouTube ID and set thumbnail_url & featured_image to hqdefault.jpg
+                // 5. Ensure all YouTube video articles have high-res hqdefault thumbnail
                 $stmtYtAll = $pdo->query("SELECT id, media_url, content FROM `news` WHERE media_type = 'video_embed' OR media_url LIKE '%youtu%' OR content LIKE '%youtu%' LIMIT 100");
                 $ytAllRows = $stmtYtAll ? $stmtYtAll->fetchAll() : [];
                 if (!empty($ytAllRows)) {
@@ -195,23 +135,6 @@ try {
                         }
                     }
                 }
-
-                // 5. Auto-heal video articles: ensure thumbnail_url is set to authentic news photo (Zero black screen)
-                // Specifically restore article 29 (आलमगंज गोलीबारी) to video_upload with news_1792757175_6994.mp4
-                $pdo->exec("UPDATE `news` SET 
-                    `media_type` = 'video_upload', 
-                    `media_url` = 'news_1792757175_6994.mp4', 
-                    `video_url` = 'news_1792757175_6994.mp4', 
-                    `thumbnail_url` = 'thumb_video_1792757175_6994.jpg', 
-                    `featured_image` = 'thumb_video_1792757175_6994.jpg',
-                    `video_duration` = '1:17'
-                WHERE `id` = 29 OR `slug` LIKE '%aalm%' OR `headline` LIKE '%आलमगंज%'");
-
-                $pdo->exec("UPDATE `news` SET `media_type` = 'video_upload' WHERE (`media_url` LIKE '%.mp4%' OR `video_url` LIKE '%.mp4%') AND `media_type` != 'video_upload'");
-                $pdo->exec("UPDATE `news` SET `media_type` = 'video_embed' WHERE (`media_url` LIKE '%youtu%' OR `video_url` LIKE '%youtu%') AND `media_type` != 'video_embed'");
-                $pdo->exec("UPDATE `news` SET `thumbnail_url` = 'news_patna_police.jpg' WHERE (`media_type` IN ('video_upload', 'video_embed') OR `media_url` LIKE '%.mp4%') AND (`thumbnail_url` IS NULL OR `thumbnail_url` = '' OR `thumbnail_url` = 'video_default_cover.jpg' OR `thumbnail_url` = 'news_cover_default.jpg' OR `thumbnail_url` = 'news_default.jpg')");
-                $pdo->exec("UPDATE `news` SET `featured_image` = `thumbnail_url` WHERE `featured_image` IS NULL OR `featured_image` = '' OR `featured_image` = 'video_default_cover.jpg'");
-                $pdo->exec("UPDATE `news` SET `video_url` = `media_url` WHERE (`media_type` IN ('video_upload', 'video_embed') OR `media_url` LIKE '%.mp4%' OR `media_url` LIKE '%youtu%') AND (`video_url` IS NULL OR `video_url` = '')");
 
                 // Clear any cached share cards
                 $cardsDir = (defined('UPLOAD_DIR') ? UPLOAD_DIR : __DIR__ . '/../uploads/') . 'cards/';

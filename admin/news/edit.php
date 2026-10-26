@@ -30,22 +30,35 @@ if (!$news) {
 $categories = get_all_categories();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $language = in_array($_POST['language'] ?? 'hi', ['hi', 'en']) ? $_POST['language'] : 'hi';
-    $headline = trim($_POST['headline'] ?? '');
-    $subheadline = trim($_POST['subheadline'] ?? '');
-    $category_id = (int)($_POST['category_id'] ?? 1);
-    $content = trim($_POST['content'] ?? '');
-    $media_type = $_POST['media_type'] ?? 'image';
-    $priority_order = (int)($_POST['priority_order'] ?? 1);
-    $is_breaking = isset($_POST['is_breaking']) ? 1 : 0;
-    $remove_media = isset($_POST['remove_media']) ? 1 : 0;
-    $video_embed_url = trim($_POST['video_embed_url'] ?? '');
-    $direct_media_url = trim($_POST['direct_media_url'] ?? '');
-    $video_duration = trim($_POST['video_duration'] ?? ($news['video_duration'] ?? '0:47'));
-    if (empty($video_duration)) $video_duration = '0:47';
-    
-    $media_url = $news['media_url'];
-    $thumbnail_url = $news['thumbnail_url'] ?? '';
+    if (empty($_POST) && !empty($_SERVER['CONTENT_LENGTH'])) {
+        $error = 'अपलोड की गई फ़ाइल बहुत बड़ी है (सर्वर सीमा पार)। कृपया छोटी फ़ाइल चुनें या YouTube लिंक का उपयोग करें।';
+    } else {
+        $language = in_array($_POST['language'] ?? 'hi', ['hi', 'en']) ? $_POST['language'] : 'hi';
+        $headline = trim($_POST['headline'] ?? '');
+        $subheadline = trim($_POST['subheadline'] ?? '');
+        $category_id = (int)($_POST['category_id'] ?? 1);
+        $content = trim($_POST['content'] ?? '');
+        $media_type = $_POST['media_type'] ?? 'image';
+        $priority_order = (int)($_POST['priority_order'] ?? 1);
+        if ($priority_order <= 0) $priority_order = 1;
+        $is_breaking = isset($_POST['is_breaking']) ? 1 : 0;
+        $remove_media = isset($_POST['remove_media']) ? 1 : 0;
+        $video_embed_url = trim($_POST['video_embed_url'] ?? '');
+        $direct_media_url = trim($_POST['direct_media_url'] ?? '');
+        $video_duration = trim($_POST['video_duration'] ?? ($news['video_duration'] ?? '0:47'));
+        if (empty($video_duration)) $video_duration = '0:47';
+        
+        $media_url = $news['media_url'];
+        $thumbnail_url = $news['thumbnail_url'] ?? '';
+
+        // Category validation against Foreign Key
+        if ($pdo) {
+            $catCheck = $pdo->prepare("SELECT id FROM categories WHERE id = ? LIMIT 1");
+            $catCheck->execute([$category_id]);
+            if (!$catCheck->fetchColumn()) {
+                $category_id = (int)($news['category_id'] ?? 1);
+            }
+        }
 
     if (empty($headline) || empty($content)) {
         $error = ($language === 'en') ? 'Please enter headline and news content!' : 'कृपया मुख्य शीर्षक (Headline) और समाचार का पूरा विवरण (Content) दर्ज करें!';
@@ -190,7 +203,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $media_url = $direct_media_url;
                 $video_url = $media_url;
             } else {
-                $media_url = 'news_1792757175_6994.mp4';
+                $media_url = !empty($news['video_url']) ? $news['video_url'] : ($news['media_url'] ?? '');
                 $video_url = $media_url;
             }
 
@@ -272,70 +285,68 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (empty($error) && $pdo) {
             try {
-                // Ensure old_slugs column exists
-                $chkOld = $pdo->query("SHOW COLUMNS FROM `news` LIKE 'old_slugs'");
-                if ($chkOld && $chkOld->rowCount() === 0) {
-                    $pdo->exec("ALTER TABLE `news` ADD COLUMN `old_slugs` TEXT NULL AFTER `slug`");
+                // Inspect existing columns in table
+                $colStmt = $pdo->query("SHOW COLUMNS FROM `news`");
+                $existingCols = [];
+                while ($c = $colStmt->fetch()) {
+                    $existingCols[strtolower($c['Field'])] = true;
                 }
 
-                // Ensure columns exist in table
-                try {
-                    $pdo->exec("ALTER TABLE `news` ADD COLUMN `thumbnail_url` VARCHAR(500) NULL DEFAULT NULL AFTER `media_url`");
-                } catch (Exception $e) {}
-                try {
-                    $pdo->exec("ALTER TABLE `news` ADD COLUMN `featured_image` VARCHAR(500) NULL DEFAULT NULL AFTER `thumbnail_url`");
-                } catch (Exception $e) {}
-                try {
-                    $pdo->exec("ALTER TABLE `news` ADD COLUMN `video_url` VARCHAR(500) NULL DEFAULT NULL AFTER `featured_image`");
-                } catch (Exception $e) {}
-                try {
-                    $pdo->exec("ALTER TABLE `news` ADD COLUMN `video_duration` VARCHAR(20) NULL DEFAULT '0:47' AFTER `video_url`");
-                } catch (Exception $e) {}
+                $neededColumns = [
+                    'language'       => "ALTER TABLE `news` ADD COLUMN `language` VARCHAR(10) NOT NULL DEFAULT 'hi' AFTER `category_id`",
+                    'thumbnail_url'  => "ALTER TABLE `news` ADD COLUMN `thumbnail_url` VARCHAR(500) NULL DEFAULT NULL AFTER `media_url`",
+                    'featured_image' => "ALTER TABLE `news` ADD COLUMN `featured_image` VARCHAR(500) NULL DEFAULT NULL AFTER `thumbnail_url`",
+                    'video_url'      => "ALTER TABLE `news` ADD COLUMN `video_url` VARCHAR(500) NULL DEFAULT NULL AFTER `featured_image`",
+                    'video_duration' => "ALTER TABLE `news` ADD COLUMN `video_duration` VARCHAR(20) NULL DEFAULT '0:47' AFTER `video_url`",
+                    'status'         => "ALTER TABLE `news` ADD COLUMN `status` ENUM('published', 'draft', 'archived') NOT NULL DEFAULT 'published' AFTER `priority_order`",
+                    'published_at'   => "ALTER TABLE `news` ADD COLUMN `published_at` DATETIME NULL AFTER `status`",
+                    'old_slugs'      => "ALTER TABLE `news` ADD COLUMN `old_slugs` TEXT NULL AFTER `slug`",
+                ];
+                foreach ($neededColumns as $colName => $alterSql) {
+                    if (!isset($existingCols[$colName])) {
+                        try {
+                            $pdo->exec($alterSql);
+                            $existingCols[$colName] = true;
+                        } catch (Exception $e) {}
+                    }
+                }
 
                 $status = ($_POST['action'] ?? 'publish') === 'draft' ? 'draft' : 'published';
                 $published_at = ($status === 'published') 
                     ? ($news['published_at'] ?: date('Y-m-d H:i:s')) 
                     : null;
 
-                $stmt = $pdo->prepare("UPDATE news SET 
-                                        category_id = ?, 
-                                        language = ?, 
-                                        slug = ?, 
-                                        old_slugs = ?, 
-                                        headline = ?, 
-                                        subheadline = ?, 
-                                        content = ?, 
-                                        media_type = ?, 
-                                        media_url = ?, 
-                                        thumbnail_url = ?, 
-                                        featured_image = ?,
-                                        video_url = ?,
-                                        video_duration = ?,
-                                        priority_order = ?, 
-                                        is_breaking = ?,
-                                        status = ?,
-                                        published_at = ?
-                                        WHERE id = ?");
-                $stmt->execute([
-                    $category_id,
-                    $language,
-                    $slug,
-                    $oldSlugsStr,
-                    $headline,
-                    $subheadline,
-                    $content,
-                    $media_type,
-                    $media_url,
-                    $thumbnail_url,
-                    $featured_image,
-                    $video_url,
-                    $video_duration,
-                    $priority_order,
-                    $is_breaking,
-                    $status,
-                    $published_at,
-                    $id
-                ]);
+                $updateData = [
+                    'category_id'    => $category_id,
+                    'headline'       => $headline,
+                    'content'        => $content,
+                    'slug'           => $slug,
+                    'media_type'     => $media_type,
+                    'media_url'      => $media_url,
+                    'priority_order' => $priority_order,
+                    'is_breaking'    => $is_breaking,
+                ];
+                if (isset($existingCols['subheadline'])) $updateData['subheadline'] = $subheadline;
+                if (isset($existingCols['language'])) $updateData['language'] = $language;
+                if (isset($existingCols['old_slugs'])) $updateData['old_slugs'] = $oldSlugsStr;
+                if (isset($existingCols['thumbnail_url'])) $updateData['thumbnail_url'] = $thumbnail_url;
+                if (isset($existingCols['featured_image'])) $updateData['featured_image'] = $featured_image;
+                if (isset($existingCols['video_url'])) $updateData['video_url'] = $video_url;
+                if (isset($existingCols['video_duration'])) $updateData['video_duration'] = $video_duration;
+                if (isset($existingCols['status'])) $updateData['status'] = $status;
+                if (isset($existingCols['published_at'])) $updateData['published_at'] = $published_at;
+
+                $setClauses = [];
+                $params = [];
+                foreach ($updateData as $col => $val) {
+                    $setClauses[] = "`{$col}` = ?";
+                    $params[] = $val;
+                }
+                $params[] = $id;
+
+                $sql = "UPDATE news SET " . implode(', ', $setClauses) . " WHERE id = ?";
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute($params);
 
                 $success = ($language === 'en') ? 'News updated successfully!' : 'समाचार सफलतापूर्वक अपडेट कर दिया गया!';
                 
@@ -345,6 +356,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 // Refresh data
                 $stmt = $pdo->prepare("SELECT * FROM news WHERE id = ? LIMIT 1");
+                $stmt->execute([$id]);
+                $news = $stmt->fetch();
+            } catch (PDOException $e) {
                 $stmt->execute([$id]);
                 $news = $stmt->fetch();
             } catch (PDOException $e) {
@@ -382,7 +396,8 @@ $current_lang = $_POST['language'] ?? $news['language'] ?? 'hi';
     </div>
 <?php endif; ?>
 
-<form method="POST" action="" enctype="multipart/form-data">
+<form method="POST" action="" enctype="multipart/form-data" onsubmit="return handleEditNewsSubmit(this);">
+    <input type="hidden" name="action" id="formActionInput" value="publish">
     <!-- Language Selection Bar -->
     <div class="card" style="padding:16px 20px; margin-bottom:20px; border-left:4px solid var(--admin-theme); background:#fff;">
         <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
@@ -556,7 +571,6 @@ $current_lang = $_POST['language'] ?? $news['language'] ?? 'hi';
                         <div style="margin-bottom:8px; background:#000000; border-radius:6px; overflow:hidden; text-align:center;">
                             <video id="currentNewsVideoPlayer" controls playsinline preload="metadata" style="width:100%; max-height:220px; display:block; margin:0 auto; outline:none; background:#000000;">
                                 <source src="<?php echo htmlspecialchars($videoSrc); ?>" type="video/mp4">
-                                <source src="<?php echo ASSETS_URL; ?>videos/news_sample.mp4" type="video/mp4">
                                 आपका ब्राउज़र वीडियो चलाने में असमर्थ है।
                             </video>
                         </div>
@@ -686,10 +700,10 @@ $current_lang = $_POST['language'] ?? $news['language'] ?? 'hi';
                 <hr style="margin: 20px 0; border: none; border-top: 1px solid var(--admin-border);">
 
                 <div style="display:flex; gap:10px; margin-top:10px;">
-                    <button type="submit" name="action" value="draft" class="btn" style="flex:1; justify-content:center; padding:12px; font-size:0.95rem; font-weight:700; background:#fef3c7; color:#92400e; border:1.5px solid #fde68a; border-radius:8px; cursor:pointer;">
+                    <button type="submit" onclick="document.getElementById('formActionInput').value='draft';" class="btn" style="flex:1; justify-content:center; padding:12px; font-size:0.95rem; font-weight:700; background:#fef3c7; color:#92400e; border:1.5px solid #fde68a; border-radius:8px; cursor:pointer;">
                         <i class="fa-solid fa-file-pen"></i> ड्राफ्ट सहेजें (Save Draft)
                     </button>
-                    <button type="submit" name="action" value="publish" id="submitBtn" class="btn btn-primary" style="flex:1.2; justify-content:center; padding:12px; font-size:0.95rem; font-weight:700; border-radius:8px;">
+                    <button type="submit" onclick="document.getElementById('formActionInput').value='publish';" id="submitBtn" class="btn btn-primary" style="flex:1.2; justify-content:center; padding:12px; font-size:0.95rem; font-weight:700; border-radius:8px;">
                         <i class="fa-solid fa-floppy-disk"></i> प्रकाशित / अपडेट करें (Publish & Update)
                     </button>
                 </div>
@@ -1080,14 +1094,17 @@ function switchFormLang(lang) {
     }
 }
 
-document.querySelector('form').addEventListener('submit', function(e) {
-    const btn = document.getElementById('submitBtn');
-    if (btn && !btn.disabled) {
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> परिवर्तन सहेजा जा रहा है... (Updating...)';
-        this.submit();
+function handleEditNewsSubmit(form) {
+    if (window.jQuery && $('#contentEditor').length && $.fn.summernote) {
+        const code = $('#contentEditor').summernote('code');
+        $('#contentEditor').val(code);
     }
-});
+    const btn = document.getElementById('submitBtn');
+    if (btn) {
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> परिवर्तन सहेजा जा रहा है...';
+    }
+    return true;
+}
 </script>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

@@ -220,12 +220,11 @@ $pageOgType = 'article';
 $pageArticlePublished = $article['created_at'];
 $pageArticleSection = $article['category_name'];
 
-// If video article, provide og:video tags and video.other type
+// If video article, provide og:video tags while keeping og:type='article' for maximum WhatsApp card support
 if ($ytId) {
-    $pageOgType = 'video.other';
+    $pageOgVideo = "https://www.youtube.com/watch?v={$ytId}";
 } elseif ($isVideo && !empty($articleVidSource)) {
     $pageOgVideo = get_video_file_url($articleVidSource);
-    $pageOgType = 'video.other';
 }
 
 $currentUrl = $pageOgUrl;
@@ -378,7 +377,9 @@ require_once __DIR__ . '/includes/header.php';
                 $article['thumbnail_url'] ?? '', 
                 $article['video_duration'] ?? '0:47', 
                 $currentUrl,
-                $articleVidSource
+                $articleVidSource,
+                $article['id'] ?? 0,
+                true
             ) ?>
           </div>
 
