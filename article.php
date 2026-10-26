@@ -165,7 +165,7 @@ if ($isVideo && !$ytId) {
     }
 }
 
-if (empty($full_image_url) && !empty($thumbFile) && !in_array($thumbFile, ['news_default.jpg', 'news_cover_default.jpg', 'video_default_cover.jpg', 'news_patna_flood.jpg'])) {
+if (empty($full_image_url) && !empty($thumbFile) && !in_array($thumbFile, ['news_default.jpg', 'news_cover_default.jpg', 'video_default_cover.jpg'])) {
     if (strpos($thumbFile, 'http://') === 0 || strpos($thumbFile, 'https://') === 0) {
         $full_image_url = $thumbFile;
     } else {
@@ -180,7 +180,7 @@ if (empty($full_image_url) && !empty($thumbFile) && !in_array($thumbFile, ['news
     }
 } elseif (empty($full_image_url) && $ytId) {
     $full_image_url = "https://img.youtube.com/vi/{$ytId}/hqdefault.jpg";
-} elseif (!empty($article['media_url']) && !in_array($article['media_url'], ['news_default.jpg', 'news_cover_default.jpg', 'video_default_cover.jpg', 'news_patna_flood.jpg']) && !preg_match('/\.(mp4|webm|mov|mkv|avi|3gp)$/i', $article['media_url'])) {
+} elseif (!empty($article['media_url']) && !in_array($article['media_url'], ['news_default.jpg', 'news_cover_default.jpg', 'video_default_cover.jpg']) && !preg_match('/\.(mp4|webm|mov|mkv|avi|3gp)$/i', $article['media_url'])) {
     if (strpos($article['media_url'], 'http://') === 0 || strpos($article['media_url'], 'https://') === 0) {
         $full_image_url = $article['media_url'];
     } else {
@@ -370,7 +370,7 @@ require_once __DIR__ . '/includes/header.php';
           <!-- Hero Media Presentation (Image or Video) -->
           <div class="db-hero-media-wrapper">
             <?= render_media_container(
-                $isVideo ? 'video_upload' : $article['media_type'], 
+                $isVideo ? ($ytId ? 'video_embed' : 'video_upload') : $article['media_type'], 
                 $articleVidSource ?: $article['media_url'], 
                 $article['headline'], 
                 $article['content'], 

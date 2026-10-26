@@ -422,7 +422,7 @@ function get_media_url($url, $media_type = 'image', $content = '', $thumbnail_ur
     }
 
     // 2. If explicit thumbnail provided and we need an image
-    if ($media_type === 'image' && !empty($thumbnail_url) && $thumbnail_url !== 'news_default.jpg' && $thumbnail_url !== 'news_patna_flood.jpg' && $thumbnail_url !== 'news_cover_default.jpg') {
+    if ($media_type === 'image' && !empty($thumbnail_url) && $thumbnail_url !== 'news_default.jpg' && $thumbnail_url !== 'news_cover_default.jpg' && $thumbnail_url !== 'video_default_cover.jpg') {
         $ytThumbId = get_youtube_video_id($thumbnail_url);
         if ($ytThumbId) {
             return "https://img.youtube.com/vi/{$ytThumbId}/hqdefault.jpg";
@@ -436,14 +436,14 @@ function get_media_url($url, $media_type = 'image', $content = '', $thumbnail_ur
     }
 
     // 3. Default or empty media URL fallback
-    if (empty($url) || $url === 'news_default.jpg' || $url === 'news_cover_default.jpg' || $url === 'news_patna_flood.jpg') {
+    if (empty($url) || $url === 'news_default.jpg' || $url === 'news_cover_default.jpg' || $url === 'video_default_cover.jpg') {
         if (!empty($content)) {
             $ytContentId = get_youtube_video_id($content);
             if ($ytContentId) {
                 return ($media_type === 'image') ? "https://img.youtube.com/vi/{$ytContentId}/hqdefault.jpg" : "https://www.youtube.com/watch?v={$ytContentId}";
             }
             $extracted = extract_first_image_from_content($content);
-            if ($extracted && $extracted !== 'news_default.jpg' && $extracted !== 'news_patna_flood.jpg' && $extracted !== 'news_cover_default.jpg') {
+            if ($extracted && $extracted !== 'news_default.jpg' && $extracted !== 'news_cover_default.jpg' && $extracted !== 'video_default_cover.jpg') {
                 return get_media_url($extracted, 'image');
             }
         }
@@ -463,7 +463,7 @@ function get_media_url($url, $media_type = 'image', $content = '', $thumbnail_ur
     
     if ($media_type === 'video_upload') {
         // Video files (.mp4) cannot be rendered directly in <img> tags or og:image
-        if (!empty($thumbnail_url) && $thumbnail_url !== 'news_default.jpg' && $thumbnail_url !== 'news_patna_flood.jpg' && $thumbnail_url !== 'news_cover_default.jpg') {
+        if (!empty($thumbnail_url) && $thumbnail_url !== 'news_default.jpg' && $thumbnail_url !== 'news_cover_default.jpg' && $thumbnail_url !== 'video_default_cover.jpg') {
             return get_media_url($thumbnail_url, 'image');
         }
         if (!empty($content)) {
@@ -472,7 +472,7 @@ function get_media_url($url, $media_type = 'image', $content = '', $thumbnail_ur
                 return "https://img.youtube.com/vi/{$ytContentId}/hqdefault.jpg";
             }
             $extracted = extract_first_image_from_content($content);
-            if ($extracted && $extracted !== 'news_default.jpg' && $extracted !== 'news_patna_flood.jpg' && $extracted !== 'news_cover_default.jpg') {
+            if ($extracted && $extracted !== 'news_default.jpg' && $extracted !== 'news_cover_default.jpg' && $extracted !== 'video_default_cover.jpg') {
                 return get_media_url($extracted, 'image');
             }
         }
@@ -666,7 +666,7 @@ function get_article_thumbnail_url($article) {
 
     // 2. Explicit Dedicated Thumbnail or Featured Image
     $thumbCandidate = !empty($article['thumbnail_url']) ? $article['thumbnail_url'] : ($article['featured_image'] ?? '');
-    if (!empty($thumbCandidate) && !in_array($thumbCandidate, ['news_default.jpg', 'news_cover_default.jpg', 'news_patna_flood.jpg', 'video_default_cover.jpg'])) {
+    if (!empty($thumbCandidate) && !in_array($thumbCandidate, ['news_default.jpg', 'news_cover_default.jpg', 'video_default_cover.jpg'])) {
         $ytThumbId = get_youtube_video_id($thumbCandidate);
         if ($ytThumbId) {
             return "https://img.youtube.com/vi/{$ytThumbId}/hqdefault.jpg";
@@ -684,7 +684,7 @@ function get_article_thumbnail_url($article) {
     }
 
     // 3. Direct Image Media (Must physically exist on disk or be remote URL)
-    if (($article['media_type'] ?? '') === 'image' && !empty($article['media_url']) && !in_array($article['media_url'], ['news_default.jpg', 'news_cover_default.jpg', 'news_patna_flood.jpg'])) {
+    if (($article['media_type'] ?? '') === 'image' && !empty($article['media_url']) && !in_array($article['media_url'], ['news_default.jpg', 'news_cover_default.jpg', 'video_default_cover.jpg'])) {
         $mediaFile = basename($article['media_url']);
         if (file_exists(UPLOAD_DIR . $mediaFile)) {
             return UPLOAD_URL . $mediaFile;
@@ -700,7 +700,7 @@ function get_article_thumbnail_url($article) {
     // 4. Video Upload: resolve dedicated video poster or high-res video graphic
     if (is_video_article($article)) {
         $vidThumb = !empty($article['thumbnail_url']) ? $article['thumbnail_url'] : ($article['featured_image'] ?? '');
-        if (!empty($vidThumb) && !in_array($vidThumb, ['news_default.jpg', 'news_cover_default.jpg', 'news_patna_flood.jpg', 'video_default_cover.jpg'])) {
+        if (!empty($vidThumb) && !in_array($vidThumb, ['news_default.jpg', 'news_cover_default.jpg', 'video_default_cover.jpg'])) {
             $tb = basename($vidThumb);
             if (file_exists(UPLOAD_DIR . $tb)) {
                 return UPLOAD_URL . $tb;
@@ -714,7 +714,7 @@ function get_article_thumbnail_url($article) {
         }
         // Fallback A: Check if content has an inline image
         $contentImg = extract_first_image_from_content($article['content'] ?? '');
-        if ($contentImg && !in_array($contentImg, ['news_default.jpg', 'news_cover_default.jpg', 'news_patna_flood.jpg'])) {
+        if ($contentImg && !in_array($contentImg, ['news_default.jpg', 'news_cover_default.jpg', 'video_default_cover.jpg'])) {
             $cBase = basename($contentImg);
             if (file_exists(UPLOAD_DIR . $cBase)) {
                 return UPLOAD_URL . $cBase;
@@ -734,12 +734,12 @@ function get_article_thumbnail_url($article) {
             return "https://img.youtube.com/vi/{$ytContentId}/hqdefault.jpg";
         }
         $contentImg = extract_first_image_from_content($article['content']);
-        if ($contentImg && !in_array($contentImg, ['news_default.jpg', 'news_cover_default.jpg', 'news_patna_flood.jpg'])) {
+        if ($contentImg && !in_array($contentImg, ['news_default.jpg', 'news_cover_default.jpg', 'video_default_cover.jpg'])) {
             $cBase = basename($contentImg);
             if (file_exists(UPLOAD_DIR . $cBase)) {
                 return UPLOAD_URL . $cBase;
             }
-            if (strpos($contentImg, 'http://') === 0 || strpos($contentImg, 'https://') === 0) {
+            if (strpos($contentImg, 'http') === 0) {
                 return $contentImg;
             }
         }
@@ -896,11 +896,11 @@ function render_media_container($mediaType, $mediaUrl, $headline = '', $content 
 
     // Resolve high-res visual poster image (Zero black screen)
     $posterImg = '';
-    if (!empty($thumbnailUrl) && !in_array($thumbnailUrl, ['news_default.jpg', 'news_cover_default.jpg', 'news_patna_flood.jpg', 'video_default_cover.jpg'])) {
+    if (!empty($thumbnailUrl) && !in_array($thumbnailUrl, ['news_default.jpg', 'news_cover_default.jpg', 'video_default_cover.jpg'])) {
         $posterImg = get_media_url($thumbnailUrl, 'image');
     }
 
-    if (empty($posterImg) && !empty($mediaUrl) && preg_match('/\.(jpg|jpeg|png|webp|gif|avif|jfif|svg|bmp)$/i', $mediaUrl) && !in_array($mediaUrl, ['news_default.jpg', 'news_cover_default.jpg', 'news_patna_flood.jpg', 'video_default_cover.jpg'])) {
+    if (empty($posterImg) && !empty($mediaUrl) && preg_match('/\.(jpg|jpeg|png|webp|gif|avif|jfif|svg|bmp)$/i', $mediaUrl) && !in_array($mediaUrl, ['news_default.jpg', 'news_cover_default.jpg', 'video_default_cover.jpg'])) {
         $posterImg = get_media_url($mediaUrl, 'image');
     }
 

@@ -212,7 +212,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ? $news['thumbnail_url']
                     : (!empty($news['featured_image']) && !in_array($news['featured_image'], ['news_default.jpg', 'news_cover_default.jpg', 'video_default_cover.jpg'])
                         ? $news['featured_image']
-                        : (extract_first_image_from_content($content) ?: 'news_patna_police.jpg'));
+                        : (extract_first_image_from_content($content) ?: get_contextual_fallback_image($headline, '', $id)));
             }
         } elseif ($media_type === 'video_embed') {
             $ytId = $enteredYtId ?: get_youtube_video_id($video_embed_url) ?: get_youtube_video_id($content);
@@ -245,7 +245,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $media_type = in_array($news['media_type'], ['video_upload', 'video_embed']) ? $news['media_type'] : 'video_upload';
                 $media_url = !empty($news['video_url']) ? $news['video_url'] : $news['media_url'];
                 $video_url = $media_url;
-                $thumbnail_url = !empty($news['thumbnail_url']) ? $news['thumbnail_url'] : ($news['featured_image'] ?? 'news_patna_police.jpg');
+                $thumbnail_url = !empty($news['thumbnail_url']) ? $news['thumbnail_url'] : ($news['featured_image'] ?? get_contextual_fallback_image($headline, '', $id));
             } else {
                 // Retain existing image
                 $media_url = $news['media_url'];
@@ -359,13 +359,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->execute([$id]);
                 $news = $stmt->fetch();
             } catch (PDOException $e) {
-                $stmt->execute([$id]);
-                $news = $stmt->fetch();
-            } catch (PDOException $e) {
                 $error = 'डेटाबेस त्रुटि: ' . $e->getMessage();
             }
         }
     }
+}
 }
 
 require_once __DIR__ . '/../includes/header.php';
