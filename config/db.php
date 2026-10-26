@@ -97,12 +97,26 @@ try {
                 $tajImg = 'news_1793024895_6738.jpg';
                 $pdo->exec("UPDATE `news` SET `media_type` = 'image', `media_url` = '{$tajImg}', `thumbnail_url` = '{$tajImg}', `featured_image` = '{$tajImg}', `video_url` = NULL WHERE `headline` LIKE '%Client Associates%' OR `slug` LIKE '%client-associat%'");
 
-                // 2. Fix Patna Civil Court story - restore as image with authentic police photo, NOT video
-                $courtImg = 'news_patna_police.jpg';
-                $pdo->exec("UPDATE `news` SET `media_type` = 'image', `media_url` = '{$courtImg}', `thumbnail_url` = '{$courtImg}', `featured_image` = '{$courtImg}', `video_url` = NULL WHERE `slug` LIKE '%patna-sivil-court%' OR `headline` LIKE '%सिविल कोर्ट%'");
+                // 2. Convert all dummy flower sample articles back to clean authentic image news stories
+                $policeImg = 'news_patna_police.jpg';
+                $pdo->exec("UPDATE `news` SET 
+                    `media_type` = 'image', 
+                    `media_url` = '{$policeImg}', 
+                    `thumbnail_url` = '{$policeImg}', 
+                    `featured_image` = '{$policeImg}', 
+                    `video_url` = NULL 
+                WHERE `media_url` IN ('news_1789721752_5246.mp4', 'news_1791031883_9122.mp4', 'news_1791215563_3985.mp4', 'news_1792757175_6994.mp4', 'news_sample.mp4')
+                   OR `video_url` IN ('news_1789721752_5246.mp4', 'news_1791031883_9122.mp4', 'news_1791215563_3985.mp4', 'news_1792757175_6994.mp4', 'news_sample.mp4')
+                   OR `slug` IN ('aalmgnj-golibari-men-police-ka-khulasa', 'patna-ke-sguna-mod-aur-gola-rod-ke-hotelon-men-chhapemari', 'mlc-namankn-men-umda-smrthkon-ka-hujum', 'patna-sivil-court-ke-mel-pr-dhamki')");
 
-                // 3. Fix Almganj firing story (Article 29) - ensure clean thumbnail
-                $pdo->exec("UPDATE `news` SET `thumbnail_url` = 'news_patna_police.jpg', `featured_image` = 'news_patna_police.jpg' WHERE (`id` = 29 OR `slug` LIKE '%aalm%' OR `headline` LIKE '%आलमगंज%') AND (`thumbnail_url` LIKE '%thumb_video%' OR `thumbnail_url` IS NULL)");
+                // 3. Remove physical dummy flower sample files from uploads
+                $dummyFiles = ['news_1789721752_5246.mp4', 'news_1791031883_9122.mp4', 'news_1791215563_3985.mp4', 'news_1792757175_6994.mp4', 'thumb_video_1792757175_6994.jpg'];
+                $uDir = defined('UPLOAD_DIR') ? UPLOAD_DIR : __DIR__ . '/../uploads/';
+                foreach ($dummyFiles as $df) {
+                    if (file_exists($uDir . $df)) {
+                        @unlink($uDir . $df);
+                    }
+                }
 
                 // 4. Update any leftover news_default.jpg or wrong flood image to clean news_cover_default.jpg
                 $pdo->exec("UPDATE `news` SET `media_url` = 'news_cover_default.jpg' WHERE `media_url` = 'news_default.jpg'");

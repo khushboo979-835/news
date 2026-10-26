@@ -811,20 +811,42 @@ function clean_article_content_html($html) {
 function is_video_article($article) {
     if (!is_array($article)) return false;
     $mediaType = $article['media_type'] ?? '';
-    if (in_array($mediaType, ['video_upload', 'video_embed', 'video'])) {
-        return true;
-    }
     $mediaUrl = trim($article['media_url'] ?? '');
     $videoUrl = trim($article['video_url'] ?? '');
-    if (preg_match('/\.(mp4|webm|mov|mkv|avi|3gp|m4v)$/i', $mediaUrl) || preg_match('/\.(mp4|webm|mov|mkv|avi|3gp|m4v)$/i', $videoUrl)) {
-        return true;
+
+    $dummySamples = ['news_1789721752_5246.mp4', 'news_1791031883_9122.mp4', 'news_1791215563_3985.mp4', 'news_1792757175_6994.mp4', 'news_sample.mp4'];
+    $mBase = basename($mediaUrl);
+    $vBase = basename($videoUrl);
+
+    // If pointing to dummy flower sample files, treat strictly as image news
+    if ((in_array($mBase, $dummySamples) || empty($mediaUrl)) && (in_array($vBase, $dummySamples) || empty($videoUrl))) {
+        if (!get_youtube_video_id($mediaUrl) && !get_youtube_video_id($videoUrl) && (empty($article['content']) || !get_youtube_video_id($article['content']))) {
+            return false;
+        }
     }
-    if (get_youtube_video_id($mediaUrl) || get_youtube_video_id($videoUrl)) {
+
+    // Check YouTube video
+    if ($mediaType === 'video_embed' || get_youtube_video_id($mediaUrl) || get_youtube_video_id($videoUrl)) {
         return true;
     }
     if (!empty($article['content']) && get_youtube_video_id($article['content'])) {
         return true;
     }
+
+    // Check real direct video file upload (MP4/WebM)
+    if ($mediaType === 'video_upload' || $mediaType === 'video') {
+        $candidate = !empty($videoUrl) ? $videoUrl : $mediaUrl;
+        if (!empty($candidate) && !in_array(basename($candidate), $dummySamples) && preg_match('/\.(mp4|webm|mov|mkv|avi|3gp|m4v)$/i', $candidate)) {
+            return true;
+        }
+    }
+    if (!empty($videoUrl) && !in_array($vBase, $dummySamples) && preg_match('/\.(mp4|webm|mov|mkv|avi|3gp|m4v)$/i', $videoUrl)) {
+        return true;
+    }
+    if (!empty($mediaUrl) && !in_array($mBase, $dummySamples) && preg_match('/\.(mp4|webm|mov|mkv|avi|3gp|m4v)$/i', $mediaUrl)) {
+        return true;
+    }
+
     return false;
 }
 
@@ -833,12 +855,16 @@ function is_video_article($article) {
  */
 function get_article_video_url($article) {
     if (!is_array($article)) return '';
-    if (!empty($article['video_url'])) {
+    $dummySamples = ['news_1789721752_5246.mp4', 'news_1791031883_9122.mp4', 'news_1791215563_3985.mp4', 'news_1792757175_6994.mp4', 'news_sample.mp4'];
+
+    if (!empty($article['video_url']) && !in_array(basename($article['video_url']), $dummySamples)) {
         return $article['video_url'];
     }
     $mediaUrl = trim($article['media_url'] ?? '');
-    if (preg_match('/\.(mp4|webm|mov|mkv|avi|3gp|m4v)$/i', $mediaUrl) || get_youtube_video_id($mediaUrl)) {
-        return $mediaUrl;
+    if (!empty($mediaUrl) && !in_array(basename($mediaUrl), $dummySamples)) {
+        if (preg_match('/\.(mp4|webm|mov|mkv|avi|3gp|m4v)$/i', $mediaUrl) || get_youtube_video_id($mediaUrl)) {
+            return $mediaUrl;
+        }
     }
     if (!empty($article['content'])) {
         $yt = get_youtube_video_id($article['content']);
@@ -855,10 +881,18 @@ function render_media_container($mediaType, $mediaUrl, $headline = '', $content 
     $mediaUrl = trim($mediaUrl ?? '');
     $videoUrl = trim($videoUrl ?? '');
 
+    $dummySamples = ['news_1789721752_5246.mp4', 'news_1791031883_9122.mp4', 'news_1791215563_3985.mp4', 'news_1792757175_6994.mp4', 'news_sample.mp4'];
     $effectiveVideoUrl = !empty($videoUrl) ? $videoUrl : (preg_match('/\.(mp4|webm|mov|mkv|avi|3gp|m4v)$/i', $mediaUrl) ? $mediaUrl : '');
+    if (in_array(basename($effectiveVideoUrl), $dummySamples)) {
+        $effectiveVideoUrl = '';
+    }
+
     $ytId = get_youtube_video_id($effectiveVideoUrl) ?: get_youtube_video_id($mediaUrl) ?: get_youtube_video_id($content);
 
-    $isVideo = in_array($mediaType, ['video_upload', 'video_embed', 'video']) || !empty($effectiveVideoUrl) || !empty($ytId);
+    $isVideo = ($mediaType === 'video_embed' && !empty($ytId)) 
+            || ($mediaType === 'video_upload' && !empty($effectiveVideoUrl)) 
+            || (!empty($ytId)) 
+            || (!empty($effectiveVideoUrl));
 
     // Resolve high-res visual poster image (Zero black screen)
     $posterImg = '';
