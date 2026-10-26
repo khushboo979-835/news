@@ -9,7 +9,6 @@ $res = [
 ];
 
 if ($pdo) {
-    // Force repair directly and report
     try {
         $videoNewsConfig = [
             [
@@ -45,15 +44,17 @@ if ($pdo) {
                 'duration' => '1:30'
             ]
         ];
-        $updVidStmt = $pdo->prepare("UPDATE `news` SET `media_type` = :type, `media_url` = :vid, `video_url` = :vid, `thumbnail_url` = :thumb, `featured_image` = :thumb, `video_duration` = :dur WHERE `id` = :id OR `slug` = :slug");
+        $updVidStmt = $pdo->prepare("UPDATE `news` SET `media_type` = ?, `media_url` = ?, `video_url` = ?, `thumbnail_url` = ?, `featured_image` = ?, `video_duration` = ? WHERE `id` = ? OR `slug` = ?");
         foreach ($videoNewsConfig as $vc) {
             $updVidStmt->execute([
-                ':type' => $vc['type'],
-                ':vid' => $vc['vid'],
-                ':thumb' => $vc['thumb'],
-                ':dur' => $vc['duration'],
-                ':id' => $vc['id'],
-                ':slug' => $vc['slug']
+                $vc['type'],
+                $vc['vid'],
+                $vc['vid'],
+                $vc['thumb'],
+                $vc['thumb'],
+                $vc['duration'],
+                $vc['id'],
+                $vc['slug']
             ]);
             $res['repair_result']['video_' . $vc['id']] = 'updated to ' . $vc['vid'];
         }
@@ -84,9 +85,9 @@ if ($pdo) {
             2  => 'news_regent_cinema.jpg',
             1  => 'news_bihar_daroga_protest.jpg'
         ];
-        $updImgStmt = $pdo->prepare("UPDATE `news` SET `media_type` = 'image', `media_url` = :img, `thumbnail_url` = :img, `featured_image` = :img, `video_url` = NULL WHERE `id` = :id");
+        $updImgStmt = $pdo->prepare("UPDATE `news` SET `media_type` = 'image', `media_url` = ?, `thumbnail_url` = ?, `featured_image` = ?, `video_url` = NULL WHERE `id` = ?");
         foreach ($imageMappings as $aid => $aimg) {
-            $updImgStmt->execute([':img' => $aimg, ':id' => $aid]);
+            $updImgStmt->execute([$aimg, $aimg, $aimg, $aid]);
             $res['repair_result']['img_' . $aid] = 'updated to ' . $aimg;
         }
 
