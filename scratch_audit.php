@@ -9,7 +9,7 @@ $res = [
 ];
 
 if ($pdo) {
-    $stmt = $pdo->query("SELECT id, title, slug, media_type, media_url, thumbnail_url, featured_image, video_url, video_duration FROM news ORDER BY id DESC");
+    $stmt = $pdo->query("SELECT id, headline, slug, media_type, media_url, thumbnail_url, featured_image, video_url, video_duration FROM news ORDER BY id DESC");
     $res['news'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
