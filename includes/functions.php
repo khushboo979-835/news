@@ -795,6 +795,9 @@ function get_excerpt($text, $limit = 120) {
  */
 function clean_article_content_html($html) {
     if (empty($html)) return '';
+    // Strip broken legacy content image placeholders
+    $html = preg_replace('/<p[^>]*>\s*<img[^>]*content_17910315\d+_\d+\.[a-z0-9]+[^>]*>\s*<\/p>/iu', '', $html);
+    $html = preg_replace('/<img[^>]*content_17910315\d+_\d+\.[a-z0-9]+[^>]*>/iu', '', $html);
     // 1. Remove empty paragraphs with br or &nbsp; or unicode spaces
     $html = preg_replace('/<p[^>]*>\s*(?:<br\s*\/?>|&nbsp;|\x{00a0}|\s)*<\/p>/iu', '', $html);
     // 2. Remove empty divs
@@ -814,6 +817,13 @@ function is_video_article($article) {
     $mediaUrl = trim($article['media_url'] ?? '');
     $videoUrl = trim($article['video_url'] ?? '');
 
+    $blacklistedYt = ['9de_xASAKUE', 'Nz-kHNLXhVY', 'nuC47zQshs4', 'k1tSrkVhUHo'];
+    $yt1 = get_youtube_video_id($mediaUrl);
+    $yt2 = get_youtube_video_id($videoUrl);
+    if (($yt1 && in_array($yt1, $blacklistedYt)) || ($yt2 && in_array($yt2, $blacklistedYt))) {
+        return false;
+    }
+
     $dummySamples = ['news_1789721752_5246.mp4', 'news_1791031883_9122.mp4', 'news_1791215563_3985.mp4', 'news_1792757175_6994.mp4', 'news_sample.mp4'];
     $mBase = basename($mediaUrl);
     $vBase = basename($videoUrl);
@@ -826,11 +836,14 @@ function is_video_article($article) {
     }
 
     // Check YouTube video
-    if ($mediaType === 'video_embed' || get_youtube_video_id($mediaUrl) || get_youtube_video_id($videoUrl)) {
+    if ($mediaType === 'video_embed' || $yt1 || $yt2) {
         return true;
     }
-    if (!empty($article['content']) && get_youtube_video_id($article['content'])) {
-        return true;
+    if ($mediaType !== 'image' && !empty($article['content'])) {
+        $contentYt = get_youtube_video_id($article['content']);
+        if ($contentYt && !in_array($contentYt, $blacklistedYt)) {
+            return true;
+        }
     }
 
     // Check real direct video file upload (MP4/WebM)
@@ -856,19 +869,27 @@ function is_video_article($article) {
 function get_article_video_url($article) {
     if (!is_array($article)) return '';
     $dummySamples = ['news_1789721752_5246.mp4', 'news_1791031883_9122.mp4', 'news_1791215563_3985.mp4', 'news_1792757175_6994.mp4', 'news_sample.mp4'];
+    $blacklistedYt = ['9de_xASAKUE', 'Nz-kHNLXhVY', 'nuC47zQshs4', 'k1tSrkVhUHo'];
 
     if (!empty($article['video_url']) && !in_array(basename($article['video_url']), $dummySamples)) {
-        return $article['video_url'];
+        $y = get_youtube_video_id($article['video_url']);
+        if (!$y || !in_array($y, $blacklistedYt)) {
+            return $article['video_url'];
+        }
     }
     $mediaUrl = trim($article['media_url'] ?? '');
     if (!empty($mediaUrl) && !in_array(basename($mediaUrl), $dummySamples)) {
-        if (preg_match('/\.(mp4|webm|mov|mkv|avi|3gp|m4v)$/i', $mediaUrl) || get_youtube_video_id($mediaUrl)) {
+        $y = get_youtube_video_id($mediaUrl);
+        if ($y && in_array($y, $blacklistedYt)) {
+            return '';
+        }
+        if (preg_match('/\.(mp4|webm|mov|mkv|avi|3gp|m4v)$/i', $mediaUrl) || $y) {
             return $mediaUrl;
         }
     }
-    if (!empty($article['content'])) {
+    if (($article['media_type'] ?? '') !== 'image' && !empty($article['content'])) {
         $yt = get_youtube_video_id($article['content']);
-        if ($yt) return "https://www.youtube.com/watch?v={$yt}";
+        if ($yt && !in_array($yt, $blacklistedYt)) return "https://www.youtube.com/watch?v={$yt}";
     }
     return '';
 }

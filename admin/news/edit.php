@@ -43,6 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($priority_order <= 0) $priority_order = 1;
         $is_breaking = isset($_POST['is_breaking']) ? 1 : 0;
         $remove_media = isset($_POST['remove_media']) ? 1 : 0;
+        $delete_video = isset($_POST['delete_video']) && $_POST['delete_video'] == '1';
         $video_embed_url = trim($_POST['video_embed_url'] ?? '');
         $direct_media_url = trim($_POST['direct_media_url'] ?? '');
         $video_duration = trim($_POST['video_duration'] ?? ($news['video_duration'] ?? '0:47'));
@@ -166,8 +167,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         };
 
-        // 3. Media & Thumbnail Resolution (Priority: New Upload > Remove Media > Retain)
-        if ($newFileUploaded) {
+        // 3. Media & Thumbnail Resolution (Priority: Delete Video > New Upload > Remove Media > Tabs)
+        if ($delete_video) {
+            // User explicitly requested to delete the video
+            $media_type = 'image';
+            $video_url = null;
+            $video_duration = null;
+            if (!empty($news['video_url'])) $safeUnlinkUpload($news['video_url']);
+            if (!empty($news['media_url']) && preg_match('/\.(mp4|webm|mov|mkv|avi|3gp|m4v)$/i', $news['media_url'])) {
+                $safeUnlinkUpload($news['media_url']);
+            }
+            if ($newFileUploaded) {
+                $media_url = $new_filename;
+                $thumbnail_url = $new_filename;
+            } else {
+                $cleanImg = '';
+                foreach ([$news['featured_image'] ?? '', $news['thumbnail_url'] ?? '', $news['media_url'] ?? ''] as $cand) {
+                    $cb = basename($cand);
+                    if (!empty($cand) && strpos($cand, 'http') !== 0 && !preg_match('/\.(mp4|webm|mov|mkv|avi|3gp|m4v)$/i', $cand) && !in_array($cb, ['video_default_cover.jpg', 'news_default.jpg'])) {
+                        $cleanImg = $cand;
+                        break;
+                    }
+                }
+                $media_url = $cleanImg ?: (extract_first_image_from_content($content) ?: get_contextual_fallback_image($headline, '', $id));
+                $thumbnail_url = $media_url;
+            }
+            $remove_media = 0;
+            @unlink(UPLOAD_DIR . 'cards/card_' . (int)$id . '.jpg');
+        } elseif ($newFileUploaded) {
             // New upload takes ABSOLUTE priority over remove_media flag
             if (!empty($news['media_url']) && $news['media_url'] !== $media_url) {
                 $safeUnlinkUpload($news['media_url']);
@@ -188,6 +215,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $media_type = 'image';
             $media_url = $firstImg ?: 'news_cover_default.jpg';
             $thumbnail_url = $media_url;
+            $video_url = null;
+            $video_duration = null;
             @unlink(UPLOAD_DIR . 'cards/card_' . (int)$id . '.jpg');
         } elseif ($media_type === 'video_upload') {
             if ($newFileUploaded) {
@@ -225,32 +254,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } elseif (!empty($video_embed_url)) {
                 $media_url = $video_embed_url;
                 $video_url = $media_url;
-            } elseif ($news['media_type'] === 'video_embed' && !empty($news['media_url'])) {
-                $media_url = $news['media_url'];
-                $video_url = $media_url;
             } else {
-                $error = ($language === 'en') ? 'Please enter a valid YouTube video link!' : 'कृपया यूट्यूब वीडियो का लिंक दर्ज करें!';
+                // If user left/cleared YouTube URL, convert cleanly to image article without error
+                $media_type = 'image';
+                $video_url = null;
+                $video_duration = null;
+                $cleanImg = '';
+                foreach ([$news['featured_image'] ?? '', $news['thumbnail_url'] ?? '', $news['media_url'] ?? ''] as $cand) {
+                    $cb = basename($cand);
+                    if (!empty($cand) && strpos($cand, 'http') !== 0 && !preg_match('/\.(mp4|webm|mov|mkv|avi|3gp|m4v)$/i', $cand) && !in_array($cb, ['video_default_cover.jpg', 'news_default.jpg'])) {
+                        $cleanImg = $cand;
+                        break;
+                    }
+                }
+                $media_url = $cleanImg ?: (extract_first_image_from_content($content) ?: get_contextual_fallback_image($headline, '', $id));
+                $thumbnail_url = $media_url;
             }
         } elseif ($media_type === 'image') {
-            $prevHadVideo = in_array($news['media_type'] ?? '', ['video_upload', 'video_embed']) 
-                || preg_match('/\.(mp4|webm|mov|mkv|avi|m4v)$/i', $news['media_url'] ?? '') 
-                || !empty($news['video_url']);
+            // User selected Photo tab - remove any video association cleanly
+            $video_url = null;
+            $video_duration = null;
+            if (!empty($news['video_url'])) $safeUnlinkUpload($news['video_url']);
 
             if (!empty($direct_media_url) && !preg_match('/\.(mp4|webm|mov|mkv|avi|m4v)$/i', $direct_media_url) && !get_youtube_video_id($direct_media_url)) {
                 $media_url = $direct_media_url;
                 $thumbnail_url = $direct_media_url;
-                $video_url = null;
-            } elseif ($prevHadVideo && !$newFileUploaded && !$remove_media) {
-                // Safeguard: User did not upload a new photo or check delete media. Retain existing video!
-                $media_type = in_array($news['media_type'], ['video_upload', 'video_embed']) ? $news['media_type'] : 'video_upload';
-                $media_url = !empty($news['video_url']) ? $news['video_url'] : $news['media_url'];
-                $video_url = $media_url;
-                $thumbnail_url = !empty($news['thumbnail_url']) ? $news['thumbnail_url'] : ($news['featured_image'] ?? get_contextual_fallback_image($headline, '', $id));
+            } elseif ($newFileUploaded) {
+                // Already updated with new uploaded photo above
             } else {
-                // Retain existing image
-                $media_url = $news['media_url'];
-                $thumbnail_url = !empty($news['thumbnail_url']) ? $news['thumbnail_url'] : $media_url;
-                $video_url = null;
+                // Retain existing authentic image
+                $cleanImg = '';
+                foreach ([$news['featured_image'] ?? '', $news['thumbnail_url'] ?? '', $news['media_url'] ?? ''] as $cand) {
+                    $cb = basename($cand);
+                    if (!empty($cand) && strpos($cand, 'http') !== 0 && !preg_match('/\.(mp4|webm|mov|mkv|avi|3gp|m4v)$/i', $cand) && !in_array($cb, ['video_default_cover.jpg', 'news_default.jpg'])) {
+                        $cleanImg = $cand;
+                        break;
+                    }
+                }
+                $media_url = $cleanImg ?: (extract_first_image_from_content($content) ?: get_contextual_fallback_image($headline, '', $id));
+                $thumbnail_url = $media_url;
             }
         }
 
@@ -260,6 +302,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $video_url = $media_url;
         } else {
             $video_url = null;
+            $video_duration = null;
         }
 
         // 5. Clean URL / Slug processing
@@ -542,6 +585,10 @@ $current_lang = $_POST['language'] ?? $news['language'] ?? 'hi';
                     <label style="display:block; font-weight:700; font-size:0.85rem; color:#334155; margin-bottom:8px;">
                         <i class="fa-solid fa-eye"></i> मौजूदा मीडिया (Current Media):
                     </label>
+                    <input type="hidden" name="delete_video" id="deleteVideoInput" value="0">
+                    <input type="hidden" id="originalMediaType" value="<?php echo htmlspecialchars($activeMediaType); ?>">
+
+                    <div id="currentMediaDisplayBox" style="transition:opacity 0.2s;">
                     <?php 
                     $hasCustomImage = !empty($news['media_url']) && !in_array($news['media_url'], ['news_cover_default.jpg', 'news_default.jpg', 'video_default_cover.jpg', 'logo.png']);
                     if ($activeMediaType === 'video_embed'): 
@@ -561,6 +608,21 @@ $current_lang = $_POST['language'] ?? $news['language'] ?? 'hi';
                         <?php endif; ?>
                         <div style="font-size:0.82rem; word-break:break-all; color:#dc2626; margin-bottom:8px; background:#fff; padding:6px 10px; border-radius:6px; border:1px solid #fee2e2;">
                             <i class="fa-brands fa-youtube"></i> <?php echo htmlspecialchars($news['media_url']); ?>
+                        </div>
+
+                        <!-- Explicit Video Deletion Button -->
+                        <div id="videoDeleteActionBox" style="margin-top:10px; padding:10px 12px; background:#fff1f2; border:1.5px solid #fecdd3; border-radius:8px; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+                            <div>
+                                <span style="font-weight:700; color:#be123c; font-size:0.85rem; display:block;">
+                                    <i class="fa-solid fa-trash-can"></i> क्या आप यह यूट्यूब वीडियो हटाना चाहते हैं?
+                                </span>
+                                <span style="font-size:0.76rem; color:#64748b;">
+                                    क्लिक करने पर वीडियो हट जाएगा और यह सामान्य फ़ोटो समाचार बन जाएगा।
+                                </span>
+                            </div>
+                            <button type="button" onclick="deleteExistingVideo()" style="background:#e11d48; color:#fff; border:none; padding:7px 14px; border-radius:6px; font-weight:700; font-size:0.82rem; cursor:pointer; display:inline-flex; align-items:center; gap:6px; box-shadow:0 2px 5px rgba(225,29,72,0.3);">
+                                <i class="fa-solid fa-trash-can"></i> यह वीडियो हटाएं (Delete Video)
+                            </button>
                         </div>
                     <?php elseif ($activeMediaType === 'video_upload'): 
                         $videoFileName = !empty($news['video_url']) ? $news['video_url'] : $news['media_url'];
@@ -587,6 +649,21 @@ $current_lang = $_POST['language'] ?? $news['language'] ?? 'hi';
                             </span>
                             <img id="currentVideoPosterImg" src="<?php echo htmlspecialchars($posterImgSrc); ?>" alt="Video Poster" style="max-height:100px; border-radius:6px; border:1.5px solid #86efac; display:block;">
                         </div>
+
+                        <!-- Explicit Video Deletion Button -->
+                        <div id="videoDeleteActionBox" style="margin-top:10px; padding:10px 12px; background:#fff1f2; border:1.5px solid #fecdd3; border-radius:8px; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+                            <div>
+                                <span style="font-weight:700; color:#be123c; font-size:0.85rem; display:block;">
+                                    <i class="fa-solid fa-trash-can"></i> क्या आप यह वीडियो हटाना चाहते हैं?
+                                </span>
+                                <span style="font-size:0.76rem; color:#64748b;">
+                                    क्लिक करने पर वीडियो हट जाएगा और यह सामान्य फ़ोटो समाचार बन जाएगा।
+                                </span>
+                            </div>
+                            <button type="button" onclick="deleteExistingVideo()" style="background:#e11d48; color:#fff; border:none; padding:7px 14px; border-radius:6px; font-weight:700; font-size:0.82rem; cursor:pointer; display:inline-flex; align-items:center; gap:6px; box-shadow:0 2px 5px rgba(225,29,72,0.3);">
+                                <i class="fa-solid fa-trash-can"></i> यह वीडियो हटाएं (Delete Video)
+                            </button>
+                        </div>
                     <?php else: ?>
                         <?php if ($hasCustomImage): ?>
                             <div style="margin-bottom:8px; border-radius:6px; overflow:hidden; border:1px solid #e2e8f0; background:#0f172a;">
@@ -605,6 +682,19 @@ $current_lang = $_POST['language'] ?? $news['language'] ?? 'hi';
                             </div>
                         <?php endif; ?>
                     <?php endif; ?>
+                    </div>
+
+                    <!-- Video Deleted Confirmation Notice -->
+                    <div id="videoDeletedNotice" style="display:none; margin-top:10px; padding:10px 12px; background:#ecfdf5; border:1.5px solid #a7f3d0; border-radius:8px;">
+                        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+                            <span style="color:#065f46; font-size:0.84rem; font-weight:700;">
+                                <i class="fa-solid fa-circle-check" style="color:#10b981;"></i> वीडियो हटा दिया गया है। नीचे <strong>'अपडेट करें'</strong> पर क्लिक करके सेव करें।
+                            </span>
+                            <button type="button" onclick="undoDeleteVideo()" style="background:#f8fafc; color:#334155; border:1px solid #cbd5e1; padding:4px 10px; border-radius:4px; font-size:0.76rem; font-weight:700; cursor:pointer;">
+                                <i class="fa-solid fa-rotate-left"></i> Undo
+                            </button>
+                        </div>
+                    </div>
                     
                     <label style="display:flex; align-items:center; gap:6px; font-size:0.82rem; color:#dc2626; font-weight:600; cursor:pointer; margin-top:10px; border-top:1px dashed #e2e8f0; padding-top:8px;">
                         <input type="checkbox" id="removeMediaCheckbox" name="remove_media" value="1" style="accent-color:#dc2626;">
@@ -632,9 +722,14 @@ $current_lang = $_POST['language'] ?? $news['language'] ?? 'hi';
 
                 <!-- PANEL 2: YOUTUBE VIDEO -->
                 <div id="media-panel-video_embed" style="margin-bottom: 18px; display: <?php echo ($activeMediaType === 'video_embed') ? 'block' : 'none'; ?>;">
-                    <label style="display:block; font-weight:700; margin-bottom:6px; font-size:0.95rem; color:#b91c1c;">
-                        <i class="fa-brands fa-youtube" style="font-size:1.2rem; color:#ef4444;"></i> यूट्यूब वीडियो का लिंक दर्ज करें (YouTube / Shorts Link):
-                    </label>
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+                        <label style="font-weight:700; font-size:0.92rem; color:#b91c1c; margin:0;">
+                            <i class="fa-brands fa-youtube" style="font-size:1.1rem; color:#ef4444;"></i> यूट्यूब वीडियो का लिंक (नया डालें या बदलें):
+                        </label>
+                        <button type="button" onclick="clearYouTubeInput()" style="background:#fee2e2; color:#b91c1c; border:1px solid #fca5a5; padding:3px 8px; border-radius:4px; font-size:0.75rem; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:4px;">
+                            <i class="fa-solid fa-xmark"></i> लिंक साफ़ करें
+                        </button>
+                    </div>
                     <input type="text" id="videoEmbedInput" name="video_embed_url" oninput="updateYouTubePreview(this.value)" value="<?php echo ($activeMediaType === 'video_embed') ? htmlspecialchars($news['video_url'] ?: $news['media_url']) : ''; ?>" placeholder="उदा. https://www.youtube.com/watch?v=... या https://youtu.be/... या Shorts लिंक" style="width:100%; padding:10px 12px; border:2px solid #f87171; border-radius:6px; font-size:0.92rem;">
                     <small style="color:#15803d; font-weight:700; display:block; margin-top:6px; font-size:0.82rem;">
                         <i class="fa-solid fa-circle-check"></i> यूट्यूब लिंक डालने पर इसका वीडियो प्लेयर वेबसाइट पर चलेगा और असली थंबनेल WhatsApp शेयर पर दिखेगा!
@@ -798,6 +893,46 @@ function selectMediaTab(tab) {
     const metaPanel = document.getElementById('videoMetaPanel');
     if (metaPanel) {
         metaPanel.style.display = (tab === 'video_embed' || tab === 'video_upload') ? 'block' : 'none';
+    }
+}
+
+function deleteExistingVideo() {
+    if (!confirm('क्या आप वाकई इस वीडियो को हटाना चाहते हैं? सेव करने पर यह खबर सामान्य फ़ोटो समाचार बन जाएगी।')) return;
+    const delInput = document.getElementById('deleteVideoInput');
+    if (delInput) delInput.value = '1';
+    const veInput = document.getElementById('videoEmbedInput');
+    if (veInput) {
+        veInput.value = '';
+        updateYouTubePreview('');
+    }
+    const delBox = document.getElementById('videoDeleteActionBox');
+    if (delBox) delBox.style.display = 'none';
+    const delNotice = document.getElementById('videoDeletedNotice');
+    if (delNotice) delNotice.style.display = 'block';
+    const curMedia = document.getElementById('currentMediaDisplayBox');
+    if (curMedia) curMedia.style.opacity = '0.35';
+    selectMediaTab('image');
+}
+
+function undoDeleteVideo() {
+    const delInput = document.getElementById('deleteVideoInput');
+    if (delInput) delInput.value = '0';
+    const delBox = document.getElementById('videoDeleteActionBox');
+    if (delBox) delBox.style.display = 'flex';
+    const delNotice = document.getElementById('videoDeletedNotice');
+    if (delNotice) delNotice.style.display = 'none';
+    const curMedia = document.getElementById('currentMediaDisplayBox');
+    if (curMedia) curMedia.style.opacity = '1';
+    const origType = document.getElementById('originalMediaType') ? document.getElementById('originalMediaType').value : 'video_embed';
+    selectMediaTab(origType);
+}
+
+function clearYouTubeInput() {
+    const veInput = document.getElementById('videoEmbedInput');
+    if (veInput) {
+        veInput.value = '';
+        updateYouTubePreview('');
+        veInput.focus();
     }
 }
 

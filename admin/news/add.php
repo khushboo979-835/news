@@ -467,9 +467,14 @@ $selected_lang = $_POST['language'] ?? 'hi';
 
                 <!-- PANEL 2: YOUTUBE VIDEO -->
                 <div id="media-panel-video_embed" style="margin-bottom: 18px; display: <?php echo ($activeAddMediaType === 'video_embed') ? 'block' : 'none'; ?>;">
-                    <label style="display:block; font-weight:700; margin-bottom:6px; font-size:0.95rem; color:#b91c1c;">
-                        <i class="fa-brands fa-youtube" style="font-size:1.2rem; color:#ef4444;"></i> यूट्यूब वीडियो का लिंक दर्ज करें (YouTube / Shorts Link):
-                    </label>
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+                        <label style="font-weight:700; font-size:0.95rem; color:#b91c1c; margin:0;">
+                            <i class="fa-brands fa-youtube" style="font-size:1.2rem; color:#ef4444;"></i> यूट्यूब वीडियो का लिंक दर्ज करें (YouTube / Shorts Link):
+                        </label>
+                        <button type="button" onclick="clearYouTubeInput()" style="background:#fee2e2; color:#b91c1c; border:1px solid #fca5a5; padding:3px 8px; border-radius:4px; font-size:0.75rem; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:4px;">
+                            <i class="fa-solid fa-xmark"></i> लिंक साफ़ करें
+                        </button>
+                    </div>
                     <input type="text" id="videoEmbedInput" name="video_embed_url" oninput="updateYouTubePreview(this.value)" value="<?php echo htmlspecialchars($_POST['video_embed_url'] ?? ''); ?>" placeholder="उदा. https://www.youtube.com/watch?v=... या https://youtu.be/... या Shorts लिंक" style="width:100%; padding:10px 12px; border:2px solid #f87171; border-radius:6px; font-size:0.92rem;">
                     <small style="color:#15803d; font-weight:700; display:block; margin-top:6px; font-size:0.82rem;">
                         <i class="fa-solid fa-circle-check"></i> यूट्यूब लिंक डालने पर इसका वीडियो प्लेयर वेबसाइट पर चलेगा और असली थंबनेल WhatsApp शेयर पर दिखेगा!
@@ -633,6 +638,15 @@ function selectMediaTab(tab) {
     const metaPanel = document.getElementById('videoMetaPanel');
     if (metaPanel) {
         metaPanel.style.display = (tab === 'video_embed' || tab === 'video_upload') ? 'block' : 'none';
+    }
+}
+
+function clearYouTubeInput() {
+    const veInput = document.getElementById('videoEmbedInput');
+    if (veInput) {
+        veInput.value = '';
+        updateYouTubePreview('');
+        veInput.focus();
     }
 }
 

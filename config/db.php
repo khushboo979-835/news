@@ -91,91 +91,68 @@ try {
                 }
             }
 
-            // One-time self-repair of database records (Restore authentic video articles & distinct images)
+            // One-time self-repair of database records (Remove copyrighted news channel video embeds and restore distinct images)
             try {
-                $checkVids = $pdo->query("SELECT id FROM `news` WHERE `id` = 29 AND `media_type` = 'video_embed' AND `media_url` LIKE '%9de_xASAKUE%' LIMIT 1");
-                if (!$checkVids || $checkVids->rowCount() === 0) {
-                    // 1. Restore the 4 Video News Articles with distinct YouTube videos and thumbnails
-                    $videoNewsConfig = [
-                        // Article 29: Alamganj firing
-                        [
-                            'id' => 29,
-                            'slug' => 'aalmgnj-golibari-men-police-ka-khulasa',
-                            'type' => 'video_embed',
-                            'vid' => 'https://www.youtube.com/watch?v=9de_xASAKUE',
-                            'thumb' => 'https://img.youtube.com/vi/9de_xASAKUE/hqdefault.jpg',
-                            'duration' => '1:17'
-                        ],
-                        // Article 14: Saguna More hotel raid
-                        [
-                            'id' => 14,
-                            'slug' => 'patna-ke-sguna-mod-aur-gola-rod-ke-hotelon-men-chhapemari',
-                            'type' => 'video_embed',
-                            'vid' => 'https://www.youtube.com/watch?v=Nz-kHNLXhVY',
-                            'thumb' => 'https://img.youtube.com/vi/Nz-kHNLXhVY/hqdefault.jpg',
-                            'duration' => '2:45'
-                        ],
-                        // Article 19: MLC nomination crowd
-                        [
-                            'id' => 19,
-                            'slug' => 'mlc-namankn-men-umda-smrthkon-ka-hujum',
-                            'type' => 'video_embed',
-                            'vid' => 'https://www.youtube.com/watch?v=nuC47zQshs4',
-                            'thumb' => 'https://img.youtube.com/vi/nuC47zQshs4/hqdefault.jpg',
-                            'duration' => '3:12'
-                        ],
-                        // Article 7: Patna civil court bomb threat
-                        [
-                            'id' => 7,
-                            'slug' => 'patna-sivil-court-ke-mel-pr-dhamki',
-                            'type' => 'video_embed',
-                            'vid' => 'https://www.youtube.com/watch?v=k1tSrkVhUHo',
-                            'thumb' => 'https://img.youtube.com/vi/k1tSrkVhUHo/hqdefault.jpg',
-                            'duration' => '1:30'
-                        ]
+                $checkVids = $pdo->query("SELECT id FROM `news` WHERE `media_url` LIKE '%9de_xASAKUE%' OR `media_url` LIKE '%Nz-kHNLXhVY%' OR `media_url` LIKE '%nuC47zQshs4%' OR `media_url` LIKE '%k1tSrkVhUHo%' LIMIT 1");
+                if ($checkVids && $checkVids->rowCount() > 0) {
+                    // Reset third-party channel video articles to clean image news (No copyright strikes)
+                    $resetVideos = [
+                        29 => 'news_patna_police.jpg',
+                        14 => 'news_1792742617_6047.jpg',
+                        19 => 'news_bihar_daroga_protest.jpg',
+                        7  => 'news_kotwali_guessing_raid.jpg'
                     ];
-                    $updVidStmt = $pdo->prepare("UPDATE `news` SET `media_type` = ?, `media_url` = ?, `video_url` = ?, `thumbnail_url` = ?, `featured_image` = ?, `video_duration` = ? WHERE `id` = ? OR `slug` = ?");
-                    foreach ($videoNewsConfig as $vc) {
-                        $updVidStmt->execute([
-                            $vc['type'],
-                            $vc['vid'],
-                            $vc['vid'],
-                            $vc['thumb'],
-                            $vc['thumb'],
-                            $vc['duration'],
-                            $vc['id'],
-                            $vc['slug']
-                        ]);
+                    $cleanVidStmt = $pdo->prepare("UPDATE `news` SET `media_type` = 'image', `media_url` = ?, `thumbnail_url` = ?, `featured_image` = ?, `video_url` = NULL, `video_duration` = NULL WHERE `id` = ?");
+                    foreach ($resetVideos as $rvId => $rvImg) {
+                        $cleanVidStmt->execute([$rvImg, $rvImg, $rvImg, $rvId]);
                     }
 
-                    // 2. Ensure each remaining article has its OWN distinct image (no duplicates across stories)
-                    $imageMappings = [
-                        32 => 'news_1793024895_6738.jpg',
-                        31 => 'content_1793024818_1749.jpg',
-                        30 => 'news_1792890544_6556.jpg',
-                        26 => 'news_1792039400_1536.jpg',
-                        25 => 'content_1792044617_6331.png',
-                        24 => 'news_patna_police.jpg',
-                        23 => 'content_1792890571_1730.jpg',
-                        22 => 'news_durga_puja_pandal.jpg',
-                        20 => 'content_1792043165_2166.jpg',
-                        17 => 'news_1792742617_6047.jpg',
-                        16 => 'news_hospital_emergency.jpg',
-                        15 => 'news_1792742617_6047.jpg',
-                        13 => 'content_1792890585_7182.jpg',
-                        12 => 'content_1792890599_3707.jpg',
-                        11 => 'thumb_news_1792757175_6994.jpg',
-                        10 => 'news_cover_default.jpg',
-                        9  => 'news_patna_airport.jpg',
-                        8  => 'news_regent_cinema.jpg',
-                        6  => 'news_marine_drive_stunt.jpg',
-                        5  => 'news_kotwali_guessing_raid.jpg',
-                        4  => 'news_bike_theft_police.jpg',
-                        3  => 'news_patna_flood.jpg',
-                        2  => 'news_regent_cinema.jpg',
-                        1  => 'news_bihar_daroga_protest.jpg'
-                    ];
-                    $updImgStmt = $pdo->prepare("UPDATE `news` SET `media_type` = 'image', `media_url` = ?, `thumbnail_url` = ?, `featured_image` = ?, `video_url` = NULL WHERE `id` = ?");
+                    // Catch any other rows with these copyrighted video links
+                    $pdo->exec("UPDATE `news` SET `media_type` = 'image', `video_url` = NULL, `video_duration` = NULL WHERE `media_url` LIKE '%9de_xASAKUE%' OR `media_url` LIKE '%Nz-kHNLXhVY%' OR `media_url` LIKE '%nuC47zQshs4%' OR `media_url` LIKE '%k1tSrkVhUHo%'");
+                }
+
+                // Sanitize Article 14 content: remove broken/missing content image tags
+                try {
+                    $pdo->exec("UPDATE `news` SET `content` = REPLACE(`content`, '<p><img src=\"https://dainikkhabr.com/uploads/content_1791031580_7158.jpg\" style=\"width: 100%;\"></p>', '') WHERE `id` = 14");
+                    $pdo->exec("UPDATE `news` SET `content` = REPLACE(`content`, '<p><img src=\"https://dainikkhabr.com/uploads/content_1791031597_9608.jpg\" style=\"width: 100%;\"></p>', '') WHERE `id` = 14");
+                    $pdo->exec("UPDATE `news` SET `content` = REPLACE(`content`, '<img src=\"https://dainikkhabr.com/uploads/content_1791031580_7158.jpg\" style=\"width: 100%;\">', '') WHERE `id` = 14");
+                    $pdo->exec("UPDATE `news` SET `content` = REPLACE(`content`, '<img src=\"https://dainikkhabr.com/uploads/content_1791031597_9608.jpg\" style=\"width: 100%;\">', '') WHERE `id` = 14");
+                } catch (Exception $eClean14) {}
+
+                // Ensure all articles have their OWN distinct image (no duplicates across stories)
+                $imageMappings = [
+                    32 => 'news_1793024895_6738.jpg',
+                    31 => 'content_1793024818_1749.jpg',
+                    30 => 'news_1792890544_6556.jpg',
+                    29 => 'news_patna_police.jpg',
+                    26 => 'news_1792039400_1536.jpg',
+                    25 => 'content_1792044617_6331.png',
+                    24 => 'news_patna_police.jpg',
+                    23 => 'content_1792890571_1730.jpg',
+                    22 => 'news_durga_puja_pandal.jpg',
+                    20 => 'content_1792043165_2166.jpg',
+                    19 => 'news_bihar_daroga_protest.jpg',
+                    17 => 'news_1792742617_6047.jpg',
+                    16 => 'news_hospital_emergency.jpg',
+                    15 => 'news_1792742617_6047.jpg',
+                    14 => 'news_1792742617_6047.jpg',
+                    13 => 'content_1792890585_7182.jpg',
+                    12 => 'content_1792890599_3707.jpg',
+                    11 => 'thumb_news_1792757175_6994.jpg',
+                    10 => 'news_cover_default.jpg',
+                    9  => 'news_patna_airport.jpg',
+                    8  => 'news_regent_cinema.jpg',
+                    7  => 'news_kotwali_guessing_raid.jpg',
+                    6  => 'news_marine_drive_stunt.jpg',
+                    5  => 'news_kotwali_guessing_raid.jpg',
+                    4  => 'news_bike_theft_police.jpg',
+                    3  => 'news_patna_flood.jpg',
+                    2  => 'news_regent_cinema.jpg',
+                    1  => 'news_bihar_daroga_protest.jpg'
+                ];
+                $checkFix = $pdo->query("SELECT id FROM `news` WHERE `id` = 29 AND `media_type` = 'video_embed' LIMIT 1");
+                if ($checkFix && $checkFix->rowCount() > 0) {
+                    $updImgStmt = $pdo->prepare("UPDATE `news` SET `media_type` = 'image', `media_url` = ?, `thumbnail_url` = ?, `featured_image` = ?, `video_url` = NULL, `video_duration` = NULL WHERE `id` = ?");
                     foreach ($imageMappings as $aid => $aimg) {
                         $updImgStmt->execute([$aimg, $aimg, $aimg, $aid]);
                     }
@@ -196,12 +173,13 @@ try {
                 $pdo->exec("UPDATE `news` SET `media_url` = 'news_cover_default.jpg' WHERE `media_url` = 'news_patna_flood.jpg' AND `slug` NOT LIKE '%ganga-water-level%'");
                 $pdo->exec("UPDATE `news` SET `thumbnail_url` = 'news_cover_default.jpg' WHERE `thumbnail_url` = 'news_patna_flood.jpg' AND `slug` NOT LIKE '%ganga-water-level%'");
 
-                // 5. Ensure all YouTube video articles have high-res hqdefault thumbnail
-                $stmtYtAll = $pdo->query("SELECT id, media_url, content FROM `news` WHERE media_type = 'video_embed' OR media_url LIKE '%youtu%' OR content LIKE '%youtu%' LIMIT 100");
+                // 5. Ensure legitimate user-entered YouTube video articles have high-res hqdefault thumbnail
+                $stmtYtAll = $pdo->query("SELECT id, media_url, content FROM `news` WHERE media_type = 'video_embed' LIMIT 100");
                 $ytAllRows = $stmtYtAll ? $stmtYtAll->fetchAll() : [];
                 if (!empty($ytAllRows)) {
                     $updYtAll = $pdo->prepare("UPDATE `news` SET `thumbnail_url` = :thumb, `featured_image` = :feat, `video_url` = :vid WHERE `id` = :id");
                     $ytPattern = '/(?:youtube(?:-nocookie)?\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?|shorts|live)\/|.*[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/i';
+                    $blacklistedYt = ['9de_xASAKUE', 'Nz-kHNLXhVY', 'nuC47zQshs4', 'k1tSrkVhUHo'];
                     foreach ($ytAllRows as $yar) {
                         $yid = null;
                         if (preg_match($ytPattern, $yar['media_url'], $my)) {
@@ -209,7 +187,7 @@ try {
                         } elseif (preg_match($ytPattern, $yar['content'], $my)) {
                             $yid = $my[1];
                         }
-                        if ($yid) {
+                        if ($yid && !in_array($yid, $blacklistedYt)) {
                             $thumb = "https://img.youtube.com/vi/{$yid}/hqdefault.jpg";
                             $vidWatch = "https://www.youtube.com/watch?v={$yid}";
                             $updYtAll->execute([
